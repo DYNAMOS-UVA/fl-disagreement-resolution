@@ -22,7 +22,44 @@ A modular, flexible framework for federated learning experiments that supports b
 - File-based model communication (simulating distributed environments)
 - IID and non-IID data distribution for MNIST
 - Smart data management (download once, reuse for multiple experiments)
-- Comprehensive logging and visualization
+- Comprehensive metrics and visualizations:
+  - N-CMAPSS: RMSE, MAE, R², % within tolerance ranges, color-coded plots
+  - MNIST: Accuracy, precision, recall, F1 score, per-class performance, enhanced visualizations
+
+## Metrics and Visualizations
+
+### N-CMAPSS (RUL Prediction)
+
+The framework provides rich metrics for the N-CMAPSS Remaining Useful Life (RUL) prediction task:
+
+- **RMSE (Root Mean Squared Error)**: Traditional error metric (lower is better)
+- **MAE (Mean Absolute Error)**: Average absolute difference in cycles (lower is better)
+- **R² (Coefficient of Determination)**: How well the model explains the variance (higher is better, max 1.0)
+- **Within ±10 cycles**: Percentage of predictions within 10 cycles of actual RUL (higher is better)
+- **Within ±20 cycles**: Percentage of predictions within 20 cycles of actual RUL (higher is better)
+
+Visualizations include:
+- Color-coded scatter plots (green: within 10 cycles, orange: within 20 cycles, red: beyond 20 cycles)
+- Performance metrics over rounds (RMSE, MAE, R², within tolerance percentages)
+- Reference lines showing perfect prediction and tolerance ranges
+
+### MNIST (Image Classification)
+
+For the MNIST classification task, the framework provides:
+
+- **Overall Accuracy**: Percentage of correctly classified images
+- **Precision**: Overall precision (weighted) and per-class precision values
+- **Recall**: Overall recall (weighted) and per-class recall values
+- **F1 Score**: Overall F1 score (weighted) and per-class F1 values
+- **Per-class Accuracy**: Accuracy for each individual digit class
+- **Confusion Matrix**: Raw counts and normalized matrices to show classification performance across classes
+- **Per-round progression**: Tracks how all metrics improve over federated learning rounds
+
+Visualizations include:
+- Dual confusion matrices (raw counts and normalized by true label)
+- Comprehensive metrics dashboard with accuracy, precision, recall, and F1 score trends
+- Per-class metrics bar charts comparing accuracy, precision, recall, and F1 for each digit
+- Summary statistics displayed within visualizations for quick interpretation
 
 ## Quick Start
 

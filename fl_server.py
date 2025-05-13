@@ -7,7 +7,7 @@ import torch.nn as nn
 import matplotlib.pyplot as plt
 import json
 from datetime import datetime
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, precision_recall_fscore_support, accuracy_score
 import seaborn as sns
 import glob
 
@@ -325,13 +325,99 @@ class FederatedServer:
         # Calculate average test loss
         test_loss /= len(self.test_loader)
 
-        # For RUL prediction, calculate RMSE
+        # For RUL prediction, calculate RMSE and additional metrics
         if self.experiment_type == "n_cmapss":
-            test_loss = np.sqrt(test_loss)
+            rmse = np.sqrt(test_loss)
+            test_loss = rmse  # Keep RMSE as the primary test loss metric
+
+            # Convert to numpy arrays for calculation
+            predictions = np.array(predictions)
+            actual = np.array(actual)
+
+            # Calculate Mean Absolute Error (MAE)
+            mae = np.mean(np.abs(predictions - actual))
+
+            # Calculate R² (coefficient of determination)
+            mean_actual = np.mean(actual)
+            ss_total = np.sum((actual - mean_actual) ** 2)
+            ss_residual = np.sum((actual - predictions) ** 2)
+            r_squared = 1 - (ss_residual / ss_total)
+
+            # Calculate % of predictions within ±10 cycles (a more intuitive metric)
+            within_10_cycles = np.mean(np.abs(predictions - actual) <= 10.0) * 100
+            within_20_cycles = np.mean(np.abs(predictions - actual) <= 20.0) * 100
+
+            # Print all metrics
+            print(f"Round {self.round} - RUL Prediction Metrics:")
+            print(f"  RMSE: {rmse:.2f} cycles")
+            print(f"  MAE: {mae:.2f} cycles")
+            print(f"  R²: {r_squared:.4f}")
+            print(f"  Within ±10 cycles: {within_10_cycles:.2f}%")
+            print(f"  Within ±20 cycles: {within_20_cycles:.2f}%")
+
+            # Store additional metrics in training history
+            if "rul_mae" not in self.training_history:
+                self.training_history["rul_mae"] = []
+            if "rul_r_squared" not in self.training_history:
+                self.training_history["rul_r_squared"] = []
+            if "rul_within_10" not in self.training_history:
+                self.training_history["rul_within_10"] = []
+            if "rul_within_20" not in self.training_history:
+                self.training_history["rul_within_20"] = []
+
+            self.training_history["rul_mae"].append(mae)
+            self.training_history["rul_r_squared"].append(r_squared)
+            self.training_history["rul_within_10"].append(within_10_cycles)
+            self.training_history["rul_within_20"].append(within_20_cycles)
+
             accuracy = None
+
         # For classification, calculate accuracy
         elif self.experiment_type == "mnist":
             accuracy = correct / total
+
+            # Calculate precision, recall, and F1 score for each class
+            precision, recall, f1, _ = precision_recall_fscore_support(
+                actual, predictions, average=None, zero_division=0
+            )
+
+            # Calculate mean metrics (weighted by support)
+            mean_precision, mean_recall, mean_f1, _ = precision_recall_fscore_support(
+                actual, predictions, average='weighted', zero_division=0
+            )
+
+            # Calculate per-class accuracy
+            class_labels = np.unique(actual)
+            per_class_accuracy = []
+            for c in class_labels:
+                # Mask for this class
+                mask = np.array(actual) == c
+                # Accuracy for this class
+                class_acc = np.mean(np.array(predictions)[mask] == c) if np.sum(mask) > 0 else 0
+                per_class_accuracy.append(class_acc)
+
+            # Print detailed metrics
+            print(f"Round {self.round} - MNIST Classification Metrics:")
+            print(f"  Overall Accuracy: {accuracy:.4f}")
+            print(f"  Mean Precision: {mean_precision:.4f}")
+            print(f"  Mean Recall: {mean_recall:.4f}")
+            print(f"  Mean F1 Score: {mean_f1:.4f}")
+
+            # Store additional metrics in training history
+            if "mnist_precision" not in self.training_history:
+                self.training_history["mnist_precision"] = []
+            if "mnist_recall" not in self.training_history:
+                self.training_history["mnist_recall"] = []
+            if "mnist_f1" not in self.training_history:
+                self.training_history["mnist_f1"] = []
+            if "mnist_per_class_accuracy" not in self.training_history:
+                self.training_history["mnist_per_class_accuracy"] = []
+
+            self.training_history["mnist_precision"].append(mean_precision)
+            self.training_history["mnist_recall"].append(mean_recall)
+            self.training_history["mnist_f1"].append(mean_f1)
+            self.training_history["mnist_per_class_accuracy"].append(per_class_accuracy)
+
             print(f"Round {self.round} - Global model test accuracy: {accuracy:.4f}")
 
         # Store history
@@ -363,6 +449,7 @@ class FederatedServer:
 
             if self.experiment_type == "n_cmapss":
                 pred_plot_path = os.path.join(self.output_dir, "plots", f"rul_prediction_round_{self.round}.png")
+                metric_plot_path = os.path.join(self.output_dir, "plots", f"rul_metrics_round_{self.round}.png")
             else:
                 cm_plot_path = os.path.join(self.output_dir, "plots", f"mnist_confusion_matrix_round_{self.round}.png")
                 acc_plot_path = os.path.join(self.output_dir, "plots", f"global_model_accuracy_round_{self.round}.png")
@@ -372,13 +459,24 @@ class FederatedServer:
 
             if self.experiment_type == "n_cmapss":
                 pred_plot_path = f"output/plots/rul_prediction_round_{self.round}_{timestamp}.png"
+                metric_plot_path = f"output/plots/rul_metrics_round_{self.round}_{timestamp}.png"
             else:
                 cm_plot_path = f"output/plots/mnist_confusion_matrix_round_{self.round}_{timestamp}.png"
                 acc_plot_path = f"output/plots/global_model_accuracy_round_{self.round}_{timestamp}.png"
 
+        # Convert numpy values to Python native types for JSON serialization
+        history_for_json = {}
+        for key, value in self.training_history.items():
+            if isinstance(value, list):
+                # Convert each item in the list if it's a numpy type
+                history_for_json[key] = [float(item) if hasattr(item, 'dtype') else item for item in value]
+            else:
+                # Convert the value if it's a numpy type
+                history_for_json[key] = float(value) if hasattr(value, 'dtype') else value
+
         # Save training history
         with open(history_path, "w") as f:
-            json.dump(self.training_history, f)
+            json.dump(history_for_json, f)
 
         # Plot and save loss history
         plt.figure(figsize=(10, 6))
@@ -395,36 +493,215 @@ class FederatedServer:
             predictions = np.array(predictions)
             actual = np.array(actual)
 
+            # Calculate error thresholds for coloring
+            errors = predictions - actual
+            within_10 = np.abs(errors) <= 10
+            within_20 = np.logical_and(np.abs(errors) > 10, np.abs(errors) <= 20)
+            beyond_20 = np.abs(errors) > 20
+
+            # Create prediction scatter plot with colored points based on error
             plt.figure(figsize=(10, 6))
-            plt.scatter(actual, predictions, alpha=0.5)
-            plt.plot([min(actual), max(actual)], [min(actual), max(actual)], 'r')
-            plt.xlabel('Actual RUL')
-            plt.ylabel('Predicted RUL')
-            plt.title(f'RUL Prediction (RMSE: {self.training_history["global_test_loss"][-1]:.4f})')
+
+            # Plot points outside 20 cycles first (red)
+            plt.scatter(actual[beyond_20], predictions[beyond_20], color='red', alpha=0.5, label='Error > 20 cycles')
+
+            # Plot points within 10-20 cycles (yellow)
+            plt.scatter(actual[within_20], predictions[within_20], color='orange', alpha=0.5, label='Error 10-20 cycles')
+
+            # Plot points within 10 cycles last (green)
+            plt.scatter(actual[within_10], predictions[within_10], color='green', alpha=0.5, label='Error ≤ 10 cycles')
+
+            # Add perfect prediction line
+            min_val = min(np.min(actual), np.min(predictions))
+            max_val = max(np.max(actual), np.max(predictions))
+            plt.plot([min_val, max_val], [min_val, max_val], 'k--', label='Perfect Prediction')
+
+            # Add ±10 cycle lines
+            plt.plot([min_val, max_val], [min_val + 10, max_val + 10], 'g--', alpha=0.3)
+            plt.plot([min_val, max_val], [min_val - 10, max_val - 10], 'g--', alpha=0.3)
+
+            # Add ±20 cycle lines
+            plt.plot([min_val, max_val], [min_val + 20, max_val + 20], 'orange', linestyle='--', alpha=0.3)
+            plt.plot([min_val, max_val], [min_val - 20, max_val - 20], 'orange', linestyle='--', alpha=0.3)
+
+            plt.xlabel('Actual RUL (cycles)')
+            plt.ylabel('Predicted RUL (cycles)')
+
+            # Get current metrics
+            rmse = self.training_history["global_test_loss"][-1]
+            mae = self.training_history["rul_mae"][-1]
+            r2 = self.training_history["rul_r_squared"][-1]
+            within_10_pct = self.training_history["rul_within_10"][-1]
+            within_20_pct = self.training_history["rul_within_20"][-1]
+
+            plt.title(f'RUL Prediction - Round {self.round}\n'
+                     f'RMSE: {rmse:.2f}, MAE: {mae:.2f}, R²: {r2:.4f}\n'
+                     f'Within ±10 cycles: {within_10_pct:.2f}%, Within ±20 cycles: {within_20_pct:.2f}%')
+
+            plt.legend()
+            plt.grid(True)
             plt.savefig(pred_plot_path)
             plt.close()
 
+            # Plot additional metrics across rounds if we have at least 2 rounds
+            if len(self.training_history["rounds"]) >= 2:
+                plt.figure(figsize=(15, 10))
+
+                # Create a 2x2 grid of subplots
+                plt.subplot(2, 2, 1)
+                plt.plot(self.training_history["rounds"], self.training_history["global_test_loss"], marker='o')
+                plt.xlabel('Federated Learning Round')
+                plt.ylabel('RMSE (cycles)')
+                plt.title('Root Mean Squared Error')
+                plt.grid(True)
+
+                plt.subplot(2, 2, 2)
+                plt.plot(self.training_history["rounds"], self.training_history["rul_mae"], marker='o', color='orange')
+                plt.xlabel('Federated Learning Round')
+                plt.ylabel('MAE (cycles)')
+                plt.title('Mean Absolute Error')
+                plt.grid(True)
+
+                plt.subplot(2, 2, 3)
+                plt.plot(self.training_history["rounds"], self.training_history["rul_within_10"], marker='o', color='green')
+                plt.xlabel('Federated Learning Round')
+                plt.ylabel('Percentage (%)')
+                plt.title('Predictions Within ±10 Cycles')
+                plt.grid(True)
+
+                plt.subplot(2, 2, 4)
+                plt.plot(self.training_history["rounds"], self.training_history["rul_r_squared"], marker='o', color='purple')
+                plt.xlabel('Federated Learning Round')
+                plt.ylabel('R²')
+                plt.title('Coefficient of Determination (R²)')
+                plt.grid(True)
+
+                plt.tight_layout()
+                plt.savefig(metric_plot_path)
+                plt.close()
+
         # For MNIST, plot confusion matrix and accuracy
         elif self.experiment_type == "mnist":
+            predictions = np.array(predictions)
+            actual = np.array(actual)
+
+            # Get the current metrics from the training history
+            current_accuracy = self.training_history["global_test_accuracy"][-1]
+            current_precision = self.training_history["mnist_precision"][-1]
+            current_recall = self.training_history["mnist_recall"][-1]
+            current_f1 = self.training_history["mnist_f1"][-1]
+            current_per_class_acc = self.training_history["mnist_per_class_accuracy"][-1]
+
             # Plot confusion matrix
             plt.figure(figsize=(10, 8))
             cm = confusion_matrix(actual, predictions)
-            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-            plt.xlabel('Predicted Labels')
-            plt.ylabel('True Labels')
-            plt.title(f'Confusion Matrix (Accuracy: {self.training_history["global_test_accuracy"][-1]:.4f})')
+            # Normalize confusion matrix
+            cm_norm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+            # Create a figure with two subplots for raw and normalized confusion matrices
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 8))
+
+            # Raw counts
+            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax1)
+            ax1.set_xlabel('Predicted Labels')
+            ax1.set_ylabel('True Labels')
+            ax1.set_title('Confusion Matrix (Raw Counts)')
+
+            # Normalized by row (true label)
+            sns.heatmap(cm_norm, annot=True, fmt='.2f', cmap='Blues', ax=ax2)
+            ax2.set_xlabel('Predicted Labels')
+            ax2.set_ylabel('True Labels')
+            ax2.set_title('Confusion Matrix (Normalized by True Label)')
+
+            plt.suptitle(f'MNIST Classification Results - Round {self.round}')
+            plt.tight_layout()
             plt.savefig(cm_plot_path)
             plt.close()
 
-            # Plot accuracy history if we have at least 2 rounds
-            if len(self.training_history["global_test_accuracy"]) >= 2:
-                plt.figure(figsize=(10, 6))
-                plt.plot(self.training_history["rounds"], self.training_history["global_test_accuracy"], marker='o')
+            # Plot metrics history if we have at least 2 rounds
+            if len(self.training_history["rounds"]) >= 2:
+                # Create a 2x2 subplot for accuracy, precision, recall, and F1 score
+                plt.figure(figsize=(15, 10))
+
+                # Accuracy
+                plt.subplot(2, 2, 1)
+                plt.plot(self.training_history["rounds"], self.training_history["global_test_accuracy"],
+                         marker='o', color='blue')
                 plt.xlabel('Federated Learning Round')
-                plt.ylabel('Test Accuracy')
-                plt.title('Global Model Accuracy (MNIST)')
+                plt.ylabel('Accuracy')
+                plt.title('Overall Accuracy')
                 plt.grid(True)
+
+                # Precision
+                plt.subplot(2, 2, 2)
+                plt.plot(self.training_history["rounds"], self.training_history["mnist_precision"],
+                         marker='o', color='green')
+                plt.xlabel('Federated Learning Round')
+                plt.ylabel('Precision')
+                plt.title('Weighted Precision')
+                plt.grid(True)
+
+                # Recall
+                plt.subplot(2, 2, 3)
+                plt.plot(self.training_history["rounds"], self.training_history["mnist_recall"],
+                         marker='o', color='orange')
+                plt.xlabel('Federated Learning Round')
+                plt.ylabel('Recall')
+                plt.title('Weighted Recall')
+                plt.grid(True)
+
+                # F1 Score
+                plt.subplot(2, 2, 4)
+                plt.plot(self.training_history["rounds"], self.training_history["mnist_f1"],
+                         marker='o', color='purple')
+                plt.xlabel('Federated Learning Round')
+                plt.ylabel('F1 Score')
+                plt.title('Weighted F1 Score')
+                plt.grid(True)
+
+                plt.tight_layout()
                 plt.savefig(acc_plot_path)
+                plt.close()
+
+                # Plot per-class metrics for the current round
+                num_classes = len(current_per_class_acc)
+                plt.figure(figsize=(12, 6))
+
+                # Retrieve per-class metrics for the latest round
+                # We re-calculate precision, recall, and F1 scores per class
+                precision_per_class, recall_per_class, f1_per_class, _ = precision_recall_fscore_support(
+                    actual, predictions, average=None, zero_division=0
+                )
+
+                classes = np.arange(num_classes)
+                x = np.arange(len(classes))
+                width = 0.2
+
+                # Bar chart with per-class metrics
+                plt.bar(x - 1.5*width, current_per_class_acc, width, label='Accuracy', color='blue')
+                plt.bar(x - 0.5*width, precision_per_class, width, label='Precision', color='green')
+                plt.bar(x + 0.5*width, recall_per_class, width, label='Recall', color='orange')
+                plt.bar(x + 1.5*width, f1_per_class, width, label='F1 Score', color='purple')
+
+                plt.xlabel('Class')
+                plt.ylabel('Score')
+                plt.title(f'Per-class Metrics - Round {self.round}')
+                plt.xticks(x, classes)
+                plt.legend()
+                plt.grid(True, axis='y')
+
+                # Add the current round's metrics as a subtitle
+                plt.figtext(0.5, 0.01,
+                           f"Overall: Acc={current_accuracy:.4f}, Prec={current_precision:.4f}, Rec={current_recall:.4f}, F1={current_f1:.4f}",
+                           ha="center", fontsize=11, bbox={"facecolor":"orange", "alpha":0.1, "pad":5})
+
+                if self.storage_dir:
+                    per_class_path = os.path.join(self.output_dir, "plots", f"mnist_per_class_metrics_round_{self.round}.png")
+                else:
+                    per_class_path = f"output/plots/mnist_per_class_metrics_round_{self.round}_{timestamp}.png"
+
+                plt.tight_layout()
+                plt.savefig(per_class_path)
                 plt.close()
 
         # Save model
