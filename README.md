@@ -8,9 +8,28 @@ A modular, flexible framework for federated learning experiments that supports b
 - `fl_client.py`: Client-side code for local model training
 - `fl_server.py`: Server-side code for model aggregation and evaluation
 - `models.py`: Model definitions for different experiments
-- `data_utils.py`: Data loading and preprocessing utilities
+- `data_module/`: Modular data loading and preprocessing utilities
+  - `data_module/n_cmapss/`: N-CMAPSS dataset utilities
+  - `data_module/mnist/`: MNIST dataset utilities
+- `setup_mnist_data.py`: Utility script to set up MNIST data for federated learning
+- `run_federated_experiment.sh`: Convenient shell script to run experiments
 
 ## Quick Start
+
+### Using the Convenience Script
+
+The easiest way to run experiments is with the provided shell script:
+
+```bash
+# Run N-CMAPSS experiment
+./run_federated_experiment.sh -e n_cmapss -c "0 1 2 3 4 5" -r 3
+
+# Run MNIST experiment with data setup and IID distribution
+./run_federated_experiment.sh -e mnist -c "0 1 2 3 4 5" -r 3 -s -i
+
+# Get help for script options
+./run_federated_experiment.sh --help
+```
 
 ### Run Federated Learning with N-CMAPSS
 
@@ -24,10 +43,10 @@ First, you need to set up the MNIST dataset:
 
 ```bash
 # Download and distribute MNIST data to clients (IID distribution)
-python fl_orchestrator.py --experiment mnist --clients 0 1 2 3 4 5 --setup_data --iid
+python setup_mnist_data.py --iid
 
 # Download and distribute MNIST data to clients (Non-IID distribution)
-python fl_orchestrator.py --experiment mnist --clients 0 1 2 3 4 5 --setup_data
+python setup_mnist_data.py
 ```
 
 Then run the federated learning process:
@@ -112,6 +131,15 @@ The framework supports two types of data distribution for MNIST:
 - `output/orchestrator_results/`: Overall federated learning results
 - `output/models/`: Saved models for each round
 - `output/plots/`: Performance plots and visualizations (confusion matrices for MNIST, RUL predictions for N-CMAPSS)
+
+## Extending the Framework
+
+To add a new dataset or experiment type:
+
+1. Create a new module in `data_module/` for your dataset
+2. Implement the dataset class, and data loading/preprocessing utilities
+3. Add a new model class in `models.py`
+4. Update the orchestrator, client, and server to support the new experiment type
 
 ## Requirements
 

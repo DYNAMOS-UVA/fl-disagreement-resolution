@@ -1,3 +1,5 @@
+"""Federated learning server implementation."""
+
 import os
 import numpy as np
 import torch
@@ -9,15 +11,11 @@ from sklearn.metrics import confusion_matrix
 import seaborn as sns
 
 from models import create_model
-from data_utils import (
-    load_test_data,
-    preprocess_ncmapss_data,
-    create_test_dataloader,
-    load_mnist_test_data,
-    create_mnist_test_dataloader
-)
+import data_module
 
 class FederatedServer:
+    """Server-side implementation for federated learning."""
+
     def __init__(
         self,
         experiment_type,
@@ -25,6 +23,14 @@ class FederatedServer:
         test_units=None,
         device=None
     ):
+        """Initialize the federated learning server.
+
+        Args:
+            experiment_type: Type of experiment ('n_cmapss' or 'mnist')
+            test_dir: Directory containing test data
+            test_units: List of unit IDs to use for testing (for N-CMAPSS)
+            device: Device to run the model on ('cuda' or 'cpu')
+        """
         self.experiment_type = experiment_type
         self.test_dir = test_dir
         self.test_units = test_units
@@ -48,7 +54,7 @@ class FederatedServer:
         self._init_model()
 
     def _init_model(self):
-        """Initialize global model based on experiment type"""
+        """Initialize global model based on experiment type."""
         if self.experiment_type == "n_cmapss":
             self.seq_len = 50
             self.n_features = 20
@@ -69,23 +75,27 @@ class FederatedServer:
         print(f"Initialized global {self.experiment_type} model")
 
     def load_test_data(self, sample_size=500):
-        """Load test data for model evaluation"""
+        """Load test data for model evaluation.
+
+        Args:
+            sample_size: Maximum number of samples to load per test unit
+        """
         if self.experiment_type == "n_cmapss":
             if not self.test_dir or not self.test_units:
                 raise ValueError("Test directory and test units must be provided for N-CMAPSS")
 
             # Load test data
-            test_samples, test_labels = load_test_data(
+            test_samples, test_labels = data_module.load_ncmapss_test_data(
                 self.test_dir,
                 self.test_units,
                 sample_size=sample_size
             )
 
             # Preprocess test data
-            _, test_normalized, _ = preprocess_ncmapss_data(test_samples, test_samples)
+            _, test_normalized, _ = data_module.preprocess_ncmapss_data(test_samples, test_samples)
 
             # Create test dataloader
-            self.test_loader = create_test_dataloader(
+            self.test_loader = data_module.create_ncmapss_test_dataloader(
                 test_normalized,
                 test_labels,
                 batch_size=64
@@ -97,12 +107,12 @@ class FederatedServer:
                 raise ValueError("Test directory must be provided for MNIST")
 
             # Load MNIST test data
-            test_images, test_labels = load_mnist_test_data(
+            test_images, test_labels = data_module.load_mnist_test_data(
                 test_dir=self.test_dir
             )
 
             # Create test dataloader - no preprocessing needed as it's done during download
-            self.test_loader = create_mnist_test_dataloader(
+            self.test_loader = data_module.create_mnist_test_dataloader(
                 test_images,
                 test_labels,
                 batch_size=64
@@ -114,11 +124,23 @@ class FederatedServer:
             raise NotImplementedError(f"{self.experiment_type} test data loading not implemented yet")
 
     def get_model_parameters(self):
-        """Get current global model parameters to send to clients"""
+        """Get current global model parameters to send to clients.
+
+        Returns:
+            list: List of model parameter tensors
+        """
         return self.global_model.get_parameters()
 
     def aggregate_models(self, client_parameters, aggregation_weights=None):
-        """Aggregate model parameters from clients using weighted average"""
+        """Aggregate model parameters from clients using weighted average.
+
+        Args:
+            client_parameters: Dictionary mapping client IDs to model parameters
+            aggregation_weights: Optional dictionary mapping client IDs to weights
+
+        Returns:
+            list: List of aggregated model parameter tensors
+        """
         self.round += 1
         print(f"Starting aggregation round {self.round}")
 
@@ -147,7 +169,11 @@ class FederatedServer:
         return global_parameters
 
     def evaluate_model(self):
-        """Evaluate global model on test data"""
+        """Evaluate global model on test data.
+
+        Returns:
+            tuple: (test_loss, accuracy) where accuracy is None for regression tasks
+        """
         self.global_model.eval()
 
         # Set criterion based on experiment type
@@ -209,7 +235,12 @@ class FederatedServer:
         return test_loss, accuracy
 
     def _save_results(self, predictions, actual):
-        """Save evaluation results and plots"""
+        """Save evaluation results and plots.
+
+        Args:
+            predictions: List of model predictions
+            actual: List of actual values
+        """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # Save training history
@@ -269,8 +300,9 @@ class FederatedServer:
 
         print(f"Saved results for round {self.round}")
 
-# Main function for standalone server execution
+
 def main():
+    """Run the server as a standalone application."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Federated Learning Server")
@@ -304,6 +336,7 @@ def main():
     # Note: This doesn't actually run aggregation since it needs client models
     # This is just for testing the server initialization
     print("Server initialized successfully. In practice, it would be called by the orchestrator.")
+
 
 if __name__ == "__main__":
     main()

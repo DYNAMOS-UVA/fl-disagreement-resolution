@@ -1,3 +1,5 @@
+"""Federated learning orchestrator implementation."""
+
 import os
 import argparse
 import json
@@ -5,9 +7,11 @@ from datetime import datetime
 
 from fl_client import FederatedClient
 from fl_server import FederatedServer
-from data_utils import setup_mnist_federated_data
+import data_module
 
 class FederatedOrchestrator:
+    """Orchestrator for coordinating clients and server in federated learning."""
+
     def __init__(
         self,
         experiment_type,
@@ -24,6 +28,23 @@ class FederatedOrchestrator:
         setup_data=False,
         iid=True
     ):
+        """Initialize the federated learning orchestrator.
+
+        Args:
+            experiment_type: Type of experiment ('n_cmapss' or 'mnist')
+            clients: List of client IDs to include in the experiment
+            train_dir: Directory containing training data
+            test_dir: Directory containing test data
+            test_units: List of unit IDs to use for testing (for N-CMAPSS)
+            client_sample_size: Maximum number of samples to load per client
+            test_sample_size: Maximum number of samples to load per test unit
+            batch_size: Batch size for training and testing
+            local_epochs: Number of local training epochs per round
+            learning_rate: Learning rate for optimization
+            fl_rounds: Number of federated learning rounds
+            setup_data: Whether to set up experiment data
+            iid: Whether to use IID data distribution (for MNIST)
+        """
         self.experiment_type = experiment_type
         self.client_ids = clients
         self.client_sample_size = client_sample_size
@@ -64,7 +85,7 @@ class FederatedOrchestrator:
         # Setup MNIST data if needed
         if self.experiment_type == "mnist" and self.setup_data:
             print("Setting up MNIST federated data...")
-            setup_mnist_federated_data(
+            data_module.setup_mnist_federated_data(
                 num_clients=len(self.client_ids),
                 samples_per_client=client_sample_size,
                 iid=self.iid
@@ -110,7 +131,11 @@ class FederatedOrchestrator:
         print(f"Initialized federated learning orchestrator with {len(clients)} clients for {experiment_type} experiment")
 
     def run_federated_learning(self):
-        """Execute federated learning process for specified number of rounds"""
+        """Execute federated learning process for specified number of rounds.
+
+        Returns:
+            dict: Results of the federated learning process
+        """
         print(f"Starting federated learning with {self.fl_rounds} rounds...")
 
         # Initial evaluation of the global model
@@ -174,7 +199,7 @@ class FederatedOrchestrator:
         return self.results
 
     def _save_results(self):
-        """Save orchestrator results"""
+        """Save orchestrator results to a JSON file."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         results_path = f"output/orchestrator_results/fl_results_{self.experiment_type}_{timestamp}.json"
 
@@ -183,7 +208,9 @@ class FederatedOrchestrator:
 
         print(f"Saved orchestrator results to {results_path}")
 
+
 def main():
+    """Run the orchestrator as a standalone application."""
     parser = argparse.ArgumentParser(description="Federated Learning Orchestrator")
     parser.add_argument("--experiment", type=str, default="n_cmapss", choices=["n_cmapss", "mnist"], help="Experiment type")
     parser.add_argument("--clients", type=int, nargs="+", default=[0, 1, 2, 3, 4, 5], help="Client IDs")
@@ -220,6 +247,7 @@ def main():
 
     # Run federated learning
     orchestrator.run_federated_learning()
+
 
 if __name__ == "__main__":
     main()

@@ -1,7 +1,15 @@
+"""
+Script to set up MNIST data for federated learning.
+
+This script downloads the MNIST dataset and distributes it to multiple clients
+for federated learning experiments.
+"""
+
 import argparse
-from data_utils import setup_mnist_federated_data
+from data_module.mnist.utils import setup_federated_data
 
 def main():
+    """Set up MNIST data for federated learning."""
     parser = argparse.ArgumentParser(description="Setup MNIST data for federated learning")
     parser.add_argument("--num_clients", type=int, default=6, help="Number of clients")
     parser.add_argument("--samples_per_client", type=int, default=1000, help="Number of samples per client")
@@ -13,7 +21,7 @@ def main():
     print(f"Setting up MNIST data for {args.num_clients} clients with {'IID' if args.iid else 'Non-IID'} distribution")
     print(f"Each client will have approximately {args.samples_per_client} samples")
 
-    setup_mnist_federated_data(
+    setup_federated_data(
         num_clients=args.num_clients,
         samples_per_client=args.samples_per_client,
         iid=args.iid,

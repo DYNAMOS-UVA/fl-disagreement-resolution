@@ -1,21 +1,53 @@
+"""Model definitions for federated learning experiments."""
+
 import torch
 import torch.nn as nn
 
 # Base model class
 class BaseModel(nn.Module):
+    """Base model class with parameter management for federated learning.
+
+    All model classes should inherit from this class to ensure
+    compatibility with the federated learning framework.
+    """
+
     def __init__(self):
+        """Initialize the base model."""
         super(BaseModel, self).__init__()
 
     def get_parameters(self):
+        """Get model parameters for federated learning.
+
+        Returns:
+            list: List of parameter tensors
+        """
         return [param.data.clone() for param in self.parameters()]
 
     def set_parameters(self, parameters):
+        """Set model parameters received from server.
+
+        Args:
+            parameters: List of parameter tensors
+        """
         for param, new_param in zip(self.parameters(), parameters):
             param.data = new_param.clone()
 
 # N-CMAPSS RUL prediction model
 class RULPredictor(BaseModel):
+    """N-CMAPSS RUL prediction model.
+
+    A simple MLP model for predicting Remaining Useful Life (RUL)
+    from N-CMAPSS sensor data.
+    """
+
     def __init__(self, input_dim, hidden_dim=32, output_dim=1):
+        """Initialize the RUL predictor model.
+
+        Args:
+            input_dim: Dimension of flattened input features
+            hidden_dim: Number of neurons in hidden layer
+            output_dim: Dimension of output (1 for RUL prediction)
+        """
         super(RULPredictor, self).__init__()
         self.flatten = nn.Flatten()
         self.fc1 = nn.Linear(input_dim, hidden_dim)
@@ -24,6 +56,14 @@ class RULPredictor(BaseModel):
         self.fc2 = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, x):
+        """Forward pass through the model.
+
+        Args:
+            x: Input tensor of shape (batch_size, seq_len, n_features)
+
+        Returns:
+            torch.Tensor: Output tensor of shape (batch_size, output_dim)
+        """
         x = self.flatten(x)
         x = self.fc1(x)
         x = self.relu(x)
@@ -33,7 +73,10 @@ class RULPredictor(BaseModel):
 
 # Simple CNN model for MNIST (for future use)
 class MNISTClassifier(BaseModel):
+    """Simple CNN model for MNIST image classification."""
+
     def __init__(self):
+        """Initialize the MNIST classifier model."""
         super(MNISTClassifier, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1)
         self.relu = nn.ReLU()
@@ -43,6 +86,14 @@ class MNISTClassifier(BaseModel):
         self.fc2 = nn.Linear(128, 10)
 
     def forward(self, x):
+        """Forward pass through the model.
+
+        Args:
+            x: Input tensor of shape (batch_size, 1, 28, 28)
+
+        Returns:
+            torch.Tensor: Output tensor of shape (batch_size, 10)
+        """
         x = self.conv1(x)
         x = self.relu(x)
         x = self.pool(x)
@@ -57,6 +108,18 @@ class MNISTClassifier(BaseModel):
 
 # Factory function to create model based on experiment type
 def create_model(experiment_type, **kwargs):
+    """Factory function to create model based on experiment type.
+
+    Args:
+        experiment_type: Type of experiment ('n_cmapss' or 'mnist')
+        **kwargs: Additional arguments to pass to the model constructor
+
+    Returns:
+        BaseModel: Instantiated model for the specified experiment
+
+    Raises:
+        ValueError: If experiment_type is not supported
+    """
     if experiment_type == "n_cmapss":
         return RULPredictor(**kwargs)
     elif experiment_type == "mnist":

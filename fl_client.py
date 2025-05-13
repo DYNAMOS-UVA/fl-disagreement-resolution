@@ -1,3 +1,5 @@
+"""Federated learning client implementation."""
+
 import os
 import numpy as np
 import torch
@@ -7,15 +9,11 @@ import json
 from datetime import datetime
 
 from models import create_model
-from data_utils import (
-    load_client_data,
-    preprocess_ncmapss_data,
-    create_client_dataloaders,
-    load_mnist_client_data,
-    create_mnist_dataloaders
-)
+import data_module
 
 class FederatedClient:
+    """Client-side implementation for federated learning."""
+
     def __init__(
         self,
         client_id,
@@ -26,6 +24,17 @@ class FederatedClient:
         learning_rate=0.001,
         device=None
     ):
+        """Initialize the federated learning client.
+
+        Args:
+            client_id: Client ID
+            experiment_type: Type of experiment ('n_cmapss' or 'mnist')
+            data_dir: Directory containing client data
+            batch_size: Batch size for training
+            epochs: Number of local training epochs
+            learning_rate: Learning rate for optimization
+            device: Device to run the model on ('cuda' or 'cpu')
+        """
         self.client_id = client_id
         self.experiment_type = experiment_type
         self.data_dir = data_dir
@@ -56,20 +65,24 @@ class FederatedClient:
         os.makedirs("output/client_results", exist_ok=True)
 
     def load_data(self, sample_size=1000):
-        """Load and preprocess client data"""
+        """Load and preprocess client data.
+
+        Args:
+            sample_size: Maximum number of samples to load
+        """
         if self.experiment_type == "n_cmapss":
             # Load data for this client
-            samples, labels = load_client_data(
+            samples, labels = data_module.load_ncmapss_client_data(
                 self.client_id,
                 self.data_dir,
                 sample_size=sample_size
             )
 
             # Preprocess data
-            samples_normalized, _ = preprocess_ncmapss_data(samples)
+            samples_normalized, _ = data_module.preprocess_ncmapss_data(samples)
 
             # Create dataloaders
-            self.train_loader, self.valid_loader = create_client_dataloaders(
+            self.train_loader, self.valid_loader = data_module.create_ncmapss_client_dataloaders(
                 samples_normalized,
                 labels,
                 batch_size=self.batch_size
@@ -78,14 +91,14 @@ class FederatedClient:
             print(f"Client {self.client_id} loaded {len(samples)} samples")
         elif self.experiment_type == "mnist":
             # Load MNIST data for this client
-            images, labels = load_mnist_client_data(
+            images, labels = data_module.load_mnist_client_data(
                 self.client_id,
                 train_dir=self.data_dir,
                 sample_size=sample_size
             )
 
             # Create dataloaders
-            self.train_loader, self.valid_loader = create_mnist_dataloaders(
+            self.train_loader, self.valid_loader = data_module.create_mnist_client_dataloaders(
                 images,
                 labels,
                 batch_size=self.batch_size
@@ -97,7 +110,14 @@ class FederatedClient:
             raise NotImplementedError(f"{self.experiment_type} data loading not implemented yet")
 
     def train(self, epochs=None):
-        """Train the model on client data"""
+        """Train the model on client data.
+
+        Args:
+            epochs: Number of epochs to train (defaults to self.epochs)
+
+        Returns:
+            tuple: (train_losses, valid_losses) lists of losses for each epoch
+        """
         epochs = epochs or self.epochs
 
         # Set criterion based on experiment type
@@ -198,16 +218,25 @@ class FederatedClient:
         return train_losses, valid_losses
 
     def get_model_parameters(self):
-        """Get model parameters to send to the server"""
+        """Get model parameters to send to the server.
+
+        Returns:
+            list: List of model parameter tensors
+        """
         return self.model.get_parameters()
 
     def set_model_parameters(self, parameters):
-        """Update model with parameters from the server"""
+        """Update model with parameters from the server.
+
+        Args:
+            parameters: List of model parameter tensors
+        """
         self.model.set_parameters(parameters)
         print(f"Client {self.client_id} updated model with parameters from server")
 
-# Main function for standalone client execution
+
 def main():
+    """Run the client as a standalone application."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Federated Learning Client")
@@ -240,6 +269,7 @@ def main():
 
     client.load_data(sample_size=args.sample_size)
     client.train()
+
 
 if __name__ == "__main__":
     main()
