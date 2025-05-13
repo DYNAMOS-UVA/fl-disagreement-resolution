@@ -9,6 +9,7 @@ import json
 from datetime import datetime
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
+import glob
 
 from models import create_model
 import data_module
@@ -21,7 +22,8 @@ class FederatedServer:
         experiment_type,
         test_dir=None,
         test_units=None,
-        device=None
+        device=None,
+        storage_dir=None
     ):
         """Initialize the federated learning server.
 
@@ -30,11 +32,13 @@ class FederatedServer:
             test_dir: Directory containing test data
             test_units: List of unit IDs to use for testing (for N-CMAPSS)
             device: Device to run the model on ('cuda' or 'cpu')
+            storage_dir: Directory for storing models and results
         """
         self.experiment_type = experiment_type
         self.test_dir = test_dir
         self.test_units = test_units
         self.device = device if device else torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.storage_dir = storage_dir
         self.round = 0
         self.global_model = None
         self.client_models = {}
@@ -45,10 +49,15 @@ class FederatedServer:
             "global_test_accuracy": []  # For classification tasks like MNIST
         }
 
-        # Prepare output directories
-        os.makedirs("output/server_results", exist_ok=True)
-        os.makedirs("output/plots", exist_ok=True)
-        os.makedirs("output/models", exist_ok=True)
+        # Create output directories
+        if storage_dir:
+            self.output_dir = os.path.join(storage_dir, "output", "server")
+            os.makedirs(self.output_dir, exist_ok=True)
+            os.makedirs(os.path.join(self.output_dir, "plots"), exist_ok=True)
+        else:
+            os.makedirs("output/server_results", exist_ok=True)
+            os.makedirs("output/plots", exist_ok=True)
+            os.makedirs("output/models", exist_ok=True)
 
         # Initialize model based on experiment type
         self._init_model()
@@ -131,6 +140,53 @@ class FederatedServer:
         """
         return self.global_model.get_parameters()
 
+    def save_model(self, model_dir):
+        """Save global model to a directory.
+
+        Args:
+            model_dir: Directory to save the model to
+        """
+        os.makedirs(model_dir, exist_ok=True)
+
+        # Save model state dict
+        model_path = os.path.join(model_dir, "model.pt")
+        torch.save(self.global_model.state_dict(), model_path)
+
+        # Save model metadata
+        metadata = {
+            "experiment_type": self.experiment_type,
+            "round": self.round,
+            "timestamp": datetime.now().isoformat()
+        }
+
+        metadata_path = os.path.join(model_dir, "metadata.json")
+        with open(metadata_path, "w") as f:
+            json.dump(metadata, f, indent=2)
+
+        print(f"Saved global model to {model_dir}")
+
+    def load_model(self, model_dir):
+        """Load global model from a directory.
+
+        Args:
+            model_dir: Directory containing the model
+        """
+        model_path = os.path.join(model_dir, "model.pt")
+        metadata_path = os.path.join(model_dir, "metadata.json")
+
+        # Load model state dict
+        self.global_model.load_state_dict(torch.load(model_path, map_location=self.device))
+
+        # Load metadata if available
+        if os.path.exists(metadata_path):
+            with open(metadata_path, "r") as f:
+                metadata = json.load(f)
+                if "round" in metadata:
+                    # Keep track of the round but don't overwrite current round
+                    print(f"Loaded model from round {metadata['round']}")
+
+        print(f"Loaded global model from {model_dir}")
+
     def aggregate_models(self, client_parameters, aggregation_weights=None):
         """Aggregate model parameters from clients using weighted average.
 
@@ -165,6 +221,63 @@ class FederatedServer:
         # Update global model
         self.global_model.set_parameters(global_parameters)
         print(f"Updated global model with parameters from {len(client_parameters)} clients")
+
+        return global_parameters
+
+    def aggregate_models_from_files(self, clients_dir, aggregation_weights=None):
+        """Aggregate models from client files.
+
+        Args:
+            clients_dir: Directory containing client model directories
+            aggregation_weights: Optional dictionary mapping client IDs to weights
+
+        Returns:
+            list: List of aggregated model parameter tensors
+        """
+        self.round += 1
+        print(f"Starting file-based aggregation for round {self.round}")
+
+        # Find all client directories
+        client_dirs = glob.glob(os.path.join(clients_dir, "client_*"))
+        client_ids = [int(os.path.basename(d).split("_")[1]) for d in client_dirs]
+
+        print(f"Found {len(client_dirs)} clients: {client_ids}")
+
+        # If no weights provided, use equal weighting
+        if aggregation_weights is None:
+            n_clients = len(client_dirs)
+            aggregation_weights = {client_id: 1.0 / n_clients for client_id in client_ids}
+
+        # Initialize temporary model for loading client models
+        temp_model = create_model(
+            self.experiment_type,
+            input_dim=self.input_dim if self.experiment_type == "n_cmapss" else None,
+            hidden_dim=self.hidden_dim if self.experiment_type == "n_cmapss" else None,
+            output_dim=self.output_dim if self.experiment_type == "n_cmapss" else None
+        ).to(self.device)
+
+        # Initialize new global parameters with zeros
+        global_parameters = [torch.zeros_like(param) for param in self.global_model.parameters()]
+
+        # Load each client model and aggregate parameters
+        for client_dir, client_id in zip(client_dirs, client_ids):
+            # Load client model
+            model_path = os.path.join(client_dir, "model.pt")
+            temp_model.load_state_dict(torch.load(model_path, map_location=self.device))
+
+            # Get client parameters
+            client_parameters = temp_model.get_parameters()
+
+            # Get client weight
+            weight = aggregation_weights.get(client_id, 1.0 / len(client_dirs))
+
+            # Add weighted parameters to global parameters
+            for i, param in enumerate(client_parameters):
+                global_parameters[i] += param * weight
+
+        # Update global model with aggregated parameters
+        self.global_model.set_parameters(global_parameters)
+        print(f"Updated global model with parameters from {len(client_dirs)} clients")
 
         return global_parameters
 
@@ -243,8 +356,28 @@ class FederatedServer:
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
+        # Determine output paths based on storage_dir
+        if self.storage_dir:
+            history_path = os.path.join(self.output_dir, f"training_history_round_{self.round}.json")
+            loss_plot_path = os.path.join(self.output_dir, "plots", f"global_model_loss_round_{self.round}.png")
+
+            if self.experiment_type == "n_cmapss":
+                pred_plot_path = os.path.join(self.output_dir, "plots", f"rul_prediction_round_{self.round}.png")
+            else:
+                cm_plot_path = os.path.join(self.output_dir, "plots", f"mnist_confusion_matrix_round_{self.round}.png")
+                acc_plot_path = os.path.join(self.output_dir, "plots", f"global_model_accuracy_round_{self.round}.png")
+        else:
+            history_path = f"output/server_results/training_history_round_{self.round}_{timestamp}.json"
+            loss_plot_path = f"output/plots/global_model_loss_round_{self.round}_{timestamp}.png"
+
+            if self.experiment_type == "n_cmapss":
+                pred_plot_path = f"output/plots/rul_prediction_round_{self.round}_{timestamp}.png"
+            else:
+                cm_plot_path = f"output/plots/mnist_confusion_matrix_round_{self.round}_{timestamp}.png"
+                acc_plot_path = f"output/plots/global_model_accuracy_round_{self.round}_{timestamp}.png"
+
         # Save training history
-        with open(f"output/server_results/training_history_round_{self.round}_{timestamp}.json", "w") as f:
+        with open(history_path, "w") as f:
             json.dump(self.training_history, f)
 
         # Plot and save loss history
@@ -254,7 +387,7 @@ class FederatedServer:
         plt.ylabel('Test Loss')
         plt.title(f'Global Model Performance ({self.experiment_type})')
         plt.grid(True)
-        plt.savefig(f'output/plots/global_model_loss_round_{self.round}_{timestamp}.png')
+        plt.savefig(loss_plot_path)
         plt.close()
 
         # For RUL prediction, plot predictions vs actual
@@ -268,7 +401,7 @@ class FederatedServer:
             plt.xlabel('Actual RUL')
             plt.ylabel('Predicted RUL')
             plt.title(f'RUL Prediction (RMSE: {self.training_history["global_test_loss"][-1]:.4f})')
-            plt.savefig(f'output/plots/rul_prediction_round_{self.round}_{timestamp}.png')
+            plt.savefig(pred_plot_path)
             plt.close()
 
         # For MNIST, plot confusion matrix and accuracy
@@ -280,7 +413,7 @@ class FederatedServer:
             plt.xlabel('Predicted Labels')
             plt.ylabel('True Labels')
             plt.title(f'Confusion Matrix (Accuracy: {self.training_history["global_test_accuracy"][-1]:.4f})')
-            plt.savefig(f'output/plots/mnist_confusion_matrix_round_{self.round}_{timestamp}.png')
+            plt.savefig(cm_plot_path)
             plt.close()
 
             # Plot accuracy history if we have at least 2 rounds
@@ -291,12 +424,17 @@ class FederatedServer:
                 plt.ylabel('Test Accuracy')
                 plt.title('Global Model Accuracy (MNIST)')
                 plt.grid(True)
-                plt.savefig(f'output/plots/global_model_accuracy_round_{self.round}_{timestamp}.png')
+                plt.savefig(acc_plot_path)
                 plt.close()
 
         # Save model
-        torch.save(self.global_model.state_dict(),
-                  f'output/models/{self.experiment_type}_global_model_round_{self.round}_{timestamp}.pth')
+        if self.storage_dir:
+            model_path = os.path.join(self.storage_dir, f"output/models/round_{self.round}_model.pt")
+        else:
+            model_path = f'output/models/{self.experiment_type}_global_model_round_{self.round}_{timestamp}.pth'
+
+        os.makedirs(os.path.dirname(model_path), exist_ok=True)
+        torch.save(self.global_model.state_dict(), model_path)
 
         print(f"Saved results for round {self.round}")
 
@@ -310,6 +448,7 @@ def main():
     parser.add_argument("--test_dir", type=str, help="Test data directory (defaults to experiment-specific location)")
     parser.add_argument("--test_units", type=int, nargs="+", default=[11, 14, 15], help="Test units (for N-CMAPSS)")
     parser.add_argument("--sample_size", type=int, default=500, help="Sample size per test unit (for N-CMAPSS)")
+    parser.add_argument("--storage_dir", type=str, help="Storage directory for models and results")
 
     args = parser.parse_args()
 
@@ -324,7 +463,8 @@ def main():
     server = FederatedServer(
         experiment_type=args.experiment,
         test_dir=args.test_dir,
-        test_units=args.test_units if args.experiment == "n_cmapss" else None
+        test_units=args.test_units if args.experiment == "n_cmapss" else None,
+        storage_dir=args.storage_dir
     )
 
     # Load test data

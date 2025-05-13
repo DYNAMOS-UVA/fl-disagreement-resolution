@@ -13,12 +13,16 @@ usage() {
   echo "  -l, --local-epochs <num> Number of local epochs (default: 5)"
   echo "  -b, --batch-size <num>   Batch size (default: 64)"
   echo "  -s, --setup-data         Setup data (for MNIST only)"
+  echo "  -f, --force-setup        Force data setup even if it exists (for MNIST only)"
   echo "  -i, --iid                Use IID data distribution (for MNIST only)"
+  echo "  -d, --storage-dir <dir>  Custom storage directory (default: auto-generated)"
   echo "  -h, --help               Display this help and exit"
   echo
   echo "Examples:"
   echo "  $0 -e n_cmapss -c '0 1 2' -r 5"
   echo "  $0 -e mnist -c '0 1 2 3 4 5' -s -i"
+  echo "  $0 -e mnist -c '0 1 2 3' -d 'storage/my_experiment'"
+  echo "  $0 -e mnist -c '0 1 2 3' -s -f -i  # Force new data setup with IID distribution"
   exit 1
 }
 
@@ -29,7 +33,9 @@ ROUNDS=3
 LOCAL_EPOCHS=5
 BATCH_SIZE=64
 SETUP_DATA=""
+FORCE_SETUP=""
 IID=""
+STORAGE_DIR=""
 
 # Parse arguments
 while [ "$1" != "" ]; do
@@ -57,8 +63,15 @@ while [ "$1" != "" ]; do
     -s | --setup-data )
       SETUP_DATA="--setup_data"
       ;;
+    -f | --force-setup )
+      FORCE_SETUP="--force_setup_data"
+      ;;
     -i | --iid )
       IID="--iid"
+      ;;
+    -d | --storage-dir )
+      shift
+      STORAGE_DIR="--storage_dir $1"
       ;;
     -h | --help )
       usage
@@ -82,11 +95,18 @@ fi
 if [ "$EXPERIMENT" = "mnist" ] && [ "$SETUP_DATA" = "--setup_data" ]; then
   echo "Setting up MNIST data..."
 
+  SETUP_CMD="uv run setup_mnist_data.py"
+
   if [ "$IID" = "--iid" ]; then
-    uv run setup_mnist_data.py --iid
-  else
-    uv run setup_mnist_data.py
+    SETUP_CMD="$SETUP_CMD --iid"
   fi
+
+  if [ "$FORCE_SETUP" = "--force_setup_data" ]; then
+    SETUP_CMD="$SETUP_CMD --force"
+    echo "Using --force to recreate data if it exists."
+  fi
+
+  eval $SETUP_CMD
 
   echo "MNIST data setup complete."
 fi
@@ -95,12 +115,19 @@ fi
 echo "Running $EXPERIMENT federated learning experiment with clients: $CLIENTS"
 echo "Parameters: rounds=$ROUNDS, local_epochs=$LOCAL_EPOCHS, batch_size=$BATCH_SIZE"
 
+if [ "$STORAGE_DIR" != "" ]; then
+  echo "Using custom storage directory: $(echo $STORAGE_DIR | cut -d ' ' -f 2)"
+fi
+
 uv run fl_orchestrator.py \
   --experiment $EXPERIMENT \
   --clients $CLIENTS \
   --fl_rounds $ROUNDS \
   --local_epochs $LOCAL_EPOCHS \
   --batch_size $BATCH_SIZE \
-  $IID
+  $SETUP_DATA \
+  $FORCE_SETUP \
+  $IID \
+  $STORAGE_DIR
 
 echo "Experiment completed."

@@ -3,6 +3,8 @@
 import os
 import argparse
 import json
+import time
+import shutil
 from datetime import datetime
 
 from fl_client import FederatedClient
@@ -26,7 +28,9 @@ class FederatedOrchestrator:
         learning_rate=0.001,
         fl_rounds=3,
         setup_data=False,
-        iid=True
+        force_setup_data=False,
+        iid=True,
+        storage_dir=None
     ):
         """Initialize the federated learning orchestrator.
 
@@ -43,7 +47,9 @@ class FederatedOrchestrator:
             learning_rate: Learning rate for optimization
             fl_rounds: Number of federated learning rounds
             setup_data: Whether to set up experiment data
+            force_setup_data: Whether to force data setup even if it exists
             iid: Whether to use IID data distribution (for MNIST)
+            storage_dir: Custom storage directory path
         """
         self.experiment_type = experiment_type
         self.client_ids = clients
@@ -54,7 +60,23 @@ class FederatedOrchestrator:
         self.learning_rate = learning_rate
         self.fl_rounds = fl_rounds
         self.setup_data = setup_data
+        self.force_setup_data = force_setup_data
         self.iid = iid
+
+        # Create simulation ID based on timestamp
+        self.simulation_id = f"fl_simulation_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
+        # Create storage directories
+        if storage_dir:
+            self.storage_dir = storage_dir
+        else:
+            self.storage_dir = os.path.join("storage", self.simulation_id)
+
+        os.makedirs(self.storage_dir, exist_ok=True)
+
+        # Create output directory for this simulation
+        self.output_dir = os.path.join(self.storage_dir, "output")
+        os.makedirs(self.output_dir, exist_ok=True)
 
         # Set default directories based on experiment type
         if train_dir is None:
@@ -79,24 +101,34 @@ class FederatedOrchestrator:
 
         self.test_units = test_units
 
-        # Prepare output directories
-        os.makedirs("output/orchestrator_results", exist_ok=True)
-
-        # Setup MNIST data if needed
-        if self.experiment_type == "mnist" and self.setup_data:
-            print("Setting up MNIST federated data...")
-            data_module.setup_mnist_federated_data(
-                num_clients=len(self.client_ids),
-                samples_per_client=client_sample_size,
-                iid=self.iid
+        # Check if MNIST data needs to be setup
+        if self.experiment_type == "mnist":
+            # Check if data already exists for all clients
+            train_client_data_exists = all(
+                os.path.exists(os.path.join("data/mnist", 'train', f'client_{i}', 'mnist_data.npz'))
+                for i in range(max(self.client_ids) + 1)
             )
-            print("MNIST data setup complete.")
+            test_data_exists = os.path.exists(os.path.join("data/mnist", 'test', 'mnist_test.npz'))
+
+            # Setup data if needed
+            if self.setup_data and (not (train_client_data_exists and test_data_exists) or self.force_setup_data):
+                print("Setting up MNIST federated data...")
+                data_module.setup_mnist_federated_data(
+                    num_clients=max(self.client_ids) + 1,  # Ensure enough clients are created
+                    samples_per_client=client_sample_size,
+                    iid=self.iid
+                )
+                print("MNIST data setup complete.")
+            elif self.setup_data:
+                print("MNIST data already exists. Skipping setup.")
+                print("Use --force_setup_data to force recreation.")
 
         # Initialize server
         self.server = FederatedServer(
             experiment_type=experiment_type,
             test_dir=self.test_dir,
-            test_units=self.test_units
+            test_units=self.test_units,
+            storage_dir=self.storage_dir
         )
 
         # Load test data for evaluation
@@ -114,7 +146,8 @@ class FederatedOrchestrator:
                 data_dir=self.train_dir,
                 batch_size=batch_size,
                 epochs=local_epochs,
-                learning_rate=learning_rate
+                learning_rate=learning_rate,
+                storage_dir=self.storage_dir
             )
             # Load client data
             self.clients[client_id].load_data(sample_size=client_sample_size)
@@ -129,6 +162,7 @@ class FederatedOrchestrator:
         }
 
         print(f"Initialized federated learning orchestrator with {len(clients)} clients for {experiment_type} experiment")
+        print(f"Storage directory: {self.storage_dir}")
 
     def run_federated_learning(self):
         """Execute federated learning process for specified number of rounds.
@@ -137,6 +171,13 @@ class FederatedOrchestrator:
             dict: Results of the federated learning process
         """
         print(f"Starting federated learning with {self.fl_rounds} rounds...")
+
+        # Create initial global model directory
+        initial_model_dir = os.path.join(self.storage_dir, "global_model_initial")
+        os.makedirs(initial_model_dir, exist_ok=True)
+
+        # Save initial global model
+        self.server.save_model(initial_model_dir)
 
         # Initial evaluation of the global model
         initial_test_loss, initial_accuracy = self.server.evaluate_model()
@@ -148,10 +189,31 @@ class FederatedOrchestrator:
         for fl_round in range(1, self.fl_rounds + 1):
             print(f"\n--- Federated Learning Round {fl_round}/{self.fl_rounds} ---")
 
+            # Create round directory
+            round_dir = os.path.join(self.storage_dir, f"round_{fl_round}")
+            os.makedirs(round_dir, exist_ok=True)
+
+            # Create directories for global and client models
+            global_model_dir = os.path.join(round_dir, "global_model")
+            os.makedirs(global_model_dir, exist_ok=True)
+
+            clients_dir = os.path.join(round_dir, "clients")
+            os.makedirs(clients_dir, exist_ok=True)
+
             # 1. Distribute global model to all clients
-            global_parameters = self.server.get_model_parameters()
-            for client_id, client in self.clients.items():
-                client.set_model_parameters(global_parameters)
+            # First, copy the global model to the current round directory
+            if fl_round == 1:
+                # Use initial model for first round
+                global_model_path = initial_model_dir
+            else:
+                # Use previous round's aggregated model
+                prev_round_dir = os.path.join(self.storage_dir, f"round_{fl_round-1}")
+                prev_global_model_dir = os.path.join(prev_round_dir, "global_model_aggregated")
+                global_model_path = prev_global_model_dir
+
+            # Save current global model to this round's directory
+            self.server.load_model(global_model_path)
+            self.server.save_model(global_model_dir)
 
             # 2. Train local models on each client
             print("Training local models...")
@@ -160,25 +222,37 @@ class FederatedOrchestrator:
 
             for client_id, client in self.clients.items():
                 print(f"Training client {client_id}...")
+                client_dir = os.path.join(clients_dir, f"client_{client_id}")
+                os.makedirs(client_dir, exist_ok=True)
+
+                # Load global model
+                client.load_model(global_model_dir)
+
+                # Train model
                 train_losses, valid_losses = client.train(epochs=self.local_epochs)
+
+                # Save trained model
+                client.save_model(client_dir)
+
                 client_train_losses[client_id] = train_losses
                 client_valid_losses[client_id] = valid_losses
 
-            # 3. Collect updated models from clients
-            print("Collecting client models...")
-            client_parameters = {}
-            for client_id, client in self.clients.items():
-                client_parameters[client_id] = client.get_model_parameters()
-
-            # 4. Aggregate models (using equal weighting)
+            # 3. Aggregate models
             print("Aggregating models...")
-            self.server.aggregate_models(client_parameters)
+            aggregated_model_dir = os.path.join(round_dir, "global_model_aggregated")
+            os.makedirs(aggregated_model_dir, exist_ok=True)
 
-            # 5. Evaluate global model
+            # Server loads and aggregates client models
+            self.server.aggregate_models_from_files(clients_dir)
+
+            # Save aggregated model
+            self.server.save_model(aggregated_model_dir)
+
+            # 4. Evaluate global model
             print("Evaluating global model...")
             test_loss, accuracy = self.server.evaluate_model()
 
-            # 6. Save round results
+            # 5. Save round results
             round_results = {
                 "round": fl_round,
                 "test_loss": test_loss,
@@ -200,8 +274,7 @@ class FederatedOrchestrator:
 
     def _save_results(self):
         """Save orchestrator results to a JSON file."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        results_path = f"output/orchestrator_results/fl_results_{self.experiment_type}_{timestamp}.json"
+        results_path = os.path.join(self.output_dir, "fl_results.json")
 
         with open(results_path, "w") as f:
             json.dump(self.results, f, indent=2)
@@ -224,7 +297,9 @@ def main():
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
     parser.add_argument("--fl_rounds", type=int, default=3, help="Number of federated learning rounds")
     parser.add_argument("--setup_data", action="store_true", help="Set up experiment data (for MNIST)")
+    parser.add_argument("--force_setup_data", action="store_true", help="Force data setup even if it exists")
     parser.add_argument("--iid", action="store_true", help="Use IID data distribution (for MNIST)")
+    parser.add_argument("--storage_dir", type=str, help="Storage directory for models and results")
 
     args = parser.parse_args()
 
@@ -242,7 +317,9 @@ def main():
         learning_rate=args.lr,
         fl_rounds=args.fl_rounds,
         setup_data=args.setup_data,
-        iid=args.iid
+        force_setup_data=args.force_setup_data,
+        iid=args.iid,
+        storage_dir=args.storage_dir
     )
 
     # Run federated learning

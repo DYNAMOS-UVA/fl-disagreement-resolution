@@ -168,6 +168,28 @@ def setup_federated_data(num_clients=6, samples_per_client=1000, iid=False, data
         iid: Whether to use IID data distribution
         data_dir: Directory to store the dataset
     """
+    # Check if data is already distributed to clients
+    train_client_data_exists = all(os.path.exists(os.path.join(data_dir, 'train', f'client_{i}', 'mnist_data.npz'))
+                                 for i in range(num_clients))
+    test_data_exists = os.path.exists(os.path.join(data_dir, 'test', 'mnist_test.npz'))
+
+    if train_client_data_exists and test_data_exists:
+        print(f"MNIST data already exists for {num_clients} clients.")
+        client_samples = []
+        for i in range(num_clients):
+            data_path = os.path.join(data_dir, 'train', f'client_{i}', 'mnist_data.npz')
+            data = np.load(data_path)
+            labels = data['labels']
+            unique, counts = np.unique(labels, return_counts=True)
+            class_dist = dict(zip(unique, counts))
+            print(f"Client {i} has {len(labels)} samples. Class distribution: {class_dist}")
+            client_samples.append(len(labels))
+
+        print(f"Test data exists at {os.path.join(data_dir, 'test', 'mnist_test.npz')}")
+        print(f"Using existing MNIST data with distribution type: {'IID' if iid else 'Non-IID'}")
+        print(f"Clients have an average of {sum(client_samples) / len(client_samples):.0f} samples each")
+        return
+
     # Download MNIST dataset
     train_dataset, test_dataset = download_mnist_dataset(data_dir)
 

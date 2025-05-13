@@ -22,7 +22,8 @@ class FederatedClient:
         batch_size=64,
         epochs=5,
         learning_rate=0.001,
-        device=None
+        device=None,
+        storage_dir=None
     ):
         """Initialize the federated learning client.
 
@@ -34,6 +35,7 @@ class FederatedClient:
             epochs: Number of local training epochs
             learning_rate: Learning rate for optimization
             device: Device to run the model on ('cuda' or 'cpu')
+            storage_dir: Directory for storing models and results
         """
         self.client_id = client_id
         self.experiment_type = experiment_type
@@ -42,6 +44,7 @@ class FederatedClient:
         self.epochs = epochs
         self.learning_rate = learning_rate
         self.device = device if device else torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.storage_dir = storage_dir
 
         # Initialize model and training parameters based on experiment type
         if experiment_type == "n_cmapss":
@@ -61,8 +64,12 @@ class FederatedClient:
         else:
             raise ValueError(f"Unsupported experiment type: {experiment_type}")
 
-        # Prepare results directory
-        os.makedirs("output/client_results", exist_ok=True)
+        # Create results directory
+        if storage_dir:
+            self.output_dir = os.path.join(storage_dir, "output", "clients", f"client_{client_id}")
+            os.makedirs(self.output_dir, exist_ok=True)
+        else:
+            os.makedirs("output/client_results", exist_ok=True)
 
     def load_data(self, sample_size=1000):
         """Load and preprocess client data.
@@ -108,6 +115,43 @@ class FederatedClient:
         else:
             # For other experiments
             raise NotImplementedError(f"{self.experiment_type} data loading not implemented yet")
+
+    def save_model(self, model_dir):
+        """Save model to a directory.
+
+        Args:
+            model_dir: Directory to save the model to
+        """
+        os.makedirs(model_dir, exist_ok=True)
+
+        # Save model state dict
+        model_path = os.path.join(model_dir, "model.pt")
+        torch.save(self.model.state_dict(), model_path)
+
+        # Save model metadata
+        metadata = {
+            "client_id": self.client_id,
+            "experiment_type": self.experiment_type,
+            "timestamp": datetime.now().isoformat()
+        }
+
+        metadata_path = os.path.join(model_dir, "metadata.json")
+        with open(metadata_path, "w") as f:
+            json.dump(metadata, f, indent=2)
+
+        print(f"Client {self.client_id} saved model to {model_dir}")
+
+    def load_model(self, model_dir):
+        """Load model from a directory.
+
+        Args:
+            model_dir: Directory containing the model
+        """
+        model_path = os.path.join(model_dir, "model.pt")
+
+        # Load model state dict
+        self.model.load_state_dict(torch.load(model_path, map_location=self.device))
+        print(f"Client {self.client_id} loaded model from {model_dir}")
 
     def train(self, epochs=None):
         """Train the model on client data.
@@ -211,7 +255,13 @@ class FederatedClient:
             "timestamp": timestamp
         }
 
-        with open(f"output/client_results/client_{self.client_id}_{timestamp}.json", "w") as f:
+        # Save results to output directory
+        if self.storage_dir:
+            results_path = os.path.join(self.output_dir, "training_results.json")
+        else:
+            results_path = f"output/client_results/client_{self.client_id}_{timestamp}.json"
+
+        with open(results_path, "w") as f:
             json.dump(results, f)
 
         print(f"Client {self.client_id} finished training")
@@ -247,6 +297,7 @@ def main():
     parser.add_argument("--batch_size", type=int, default=64, help="Batch size")
     parser.add_argument("--epochs", type=int, default=5, help="Number of epochs")
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
+    parser.add_argument("--storage_dir", type=str, help="Storage directory for models and results")
 
     args = parser.parse_args()
 
@@ -264,7 +315,8 @@ def main():
         data_dir=args.data_dir,
         batch_size=args.batch_size,
         epochs=args.epochs,
-        learning_rate=args.lr
+        learning_rate=args.lr,
+        storage_dir=args.storage_dir
     )
 
     client.load_data(sample_size=args.sample_size)
