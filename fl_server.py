@@ -271,42 +271,6 @@ class FederatedServer:
 
         print(f"Loaded global model from {model_dir}")
 
-    def aggregate_models(self, client_parameters, aggregation_weights=None):
-        """Aggregate model parameters from clients using weighted average.
-
-        Args:
-            client_parameters: Dictionary mapping client IDs to model parameters
-            aggregation_weights: Optional dictionary mapping client IDs to weights
-
-        Returns:
-            list: List of aggregated model parameter tensors
-        """
-        self.round += 1
-        print(f"Starting aggregation round {self.round}")
-
-        # If no weights provided, use equal weighting
-        if aggregation_weights is None:
-            n_clients = len(client_parameters)
-            aggregation_weights = {client_id: 1.0 / n_clients for client_id in client_parameters.keys()}
-
-        # Store client models and weights for this round
-        self.client_models = client_parameters
-        self.aggregation_weights = aggregation_weights
-
-        # Initialize new global parameters with zeros
-        global_parameters = [torch.zeros_like(param) for param in self.global_model.parameters()]
-
-        # Weighted average of client parameters
-        for client_id, parameters in client_parameters.items():
-            weight = aggregation_weights[client_id]
-            for i, param in enumerate(parameters):
-                global_parameters[i] += param * weight
-
-        # Update global model
-        self.global_model.set_parameters(global_parameters)
-        print(f"Updated global model with parameters from {len(client_parameters)} clients")
-
-        return global_parameters
 
     def aggregate_models_from_files(self, clients_dir, aggregation_weights=None):
         """Aggregate models from client files.
