@@ -49,18 +49,102 @@ class FederatedServer:
             "global_test_accuracy": []  # For classification tasks like MNIST
         }
 
+        # Experiment metadata (to be initialized later)
+        self.fl_rounds = None
+        self.client_ids = None
+        self.iid = None
+
+        # Results tracking
+        self.results = {
+            "experiment_type": experiment_type,
+            "rounds": []
+        }
+
         # Create output directories
         if storage_dir:
             self.output_dir = os.path.join(storage_dir, "output", "server")
             os.makedirs(self.output_dir, exist_ok=True)
             os.makedirs(os.path.join(self.output_dir, "plots"), exist_ok=True)
+            # Create global_models directory
+            os.makedirs(os.path.join(storage_dir, "output", "global_models"), exist_ok=True)
         else:
             os.makedirs("output/server_results", exist_ok=True)
             os.makedirs("output/plots", exist_ok=True)
-            os.makedirs("output/models", exist_ok=True)
+            os.makedirs("output/global_models", exist_ok=True)
 
         # Initialize model based on experiment type
         self._init_model()
+
+    def create_model_dirs(self, round_num=None, structure=None):
+        """Create necessary directories for models.
+
+        Args:
+            round_num: Round number (None for initial model directory)
+            structure: Dictionary with directory structure information
+        """
+        if not self.storage_dir or not structure:
+            return None
+
+        # Create initial model directory
+        if round_num is None:
+            initial_model_dir = os.path.join(self.storage_dir, structure["global_model_initial"])
+            os.makedirs(initial_model_dir, exist_ok=True)
+            return initial_model_dir
+
+        # Create round directory
+        round_dir = os.path.join(
+            self.storage_dir,
+            structure["round_template"].format(round=round_num)
+        )
+        os.makedirs(round_dir, exist_ok=True)
+
+        # Create directory for the global model for training
+        training_model_dir = os.path.join(round_dir, structure["global_model"])
+        os.makedirs(training_model_dir, exist_ok=True)
+
+        # Create directory for the aggregated model
+        aggregated_model_dir = os.path.join(round_dir, structure["global_model_aggregated"])
+        os.makedirs(aggregated_model_dir, exist_ok=True)
+
+        return {
+            "round_dir": round_dir,
+            "training_model_dir": training_model_dir,
+            "aggregated_model_dir": aggregated_model_dir
+        }
+
+    def get_model_dir_paths(self, round_num=None, aggregated=False, structure=None):
+        """Get paths for model directories.
+
+        Args:
+            round_num: Round number (None for initial model)
+            aggregated: Whether to get the aggregated model directory
+            structure: Dictionary with directory structure information
+
+        Returns:
+            str: Path to the model directory
+        """
+        if not self.storage_dir or not structure:
+            return None
+
+        # Initial global model
+        if round_num is None:
+            dir_path = os.path.join(self.storage_dir, structure["global_model_initial"])
+            os.makedirs(dir_path, exist_ok=True)
+            return dir_path
+
+        # Round-specific global model
+        round_dir = os.path.join(
+            self.storage_dir,
+            structure["round_template"].format(round=round_num)
+        )
+
+        if aggregated:
+            dir_path = os.path.join(round_dir, structure["global_model_aggregated"])
+        else:
+            dir_path = os.path.join(round_dir, structure["global_model"])
+
+        os.makedirs(dir_path, exist_ok=True)
+        return dir_path
 
     def _init_model(self):
         """Initialize global model based on experiment type."""
@@ -281,13 +365,48 @@ class FederatedServer:
 
         return global_parameters
 
-    def evaluate_model(self):
+    def init_experiment(self, fl_rounds, client_ids, iid=False):
+        """Initialize experiment metadata.
+
+        Args:
+            fl_rounds: Number of federated learning rounds
+            client_ids: List of client IDs
+            iid: Whether the data distribution is IID (for MNIST)
+        """
+        self.fl_rounds = fl_rounds
+        self.client_ids = client_ids
+        self.iid = iid
+
+        # Update results with experiment metadata
+        self.results["fl_rounds"] = fl_rounds
+        self.results["client_ids"] = client_ids
+        self.results["iid"] = iid if self.experiment_type == "mnist" else None
+
+        # Save initial results
+        self._save_experiment_results()
+
+    def evaluate_model(self, fl_round=None, client_results=None):
         """Evaluate global model on test data.
+
+        Args:
+            fl_round: Current federated learning round (if None, considered as initial round 0)
+            client_results: DEPRECATED - Dictionary of client training results (not used anymore)
 
         Returns:
             tuple: (test_loss, accuracy) where accuracy is None for regression tasks
         """
         self.global_model.eval()
+
+        # If round is not provided, use the current round counter
+        if fl_round is None:
+            fl_round = self.round
+        else:
+            # Update the internal round counter if a specific round is provided
+            self.round = fl_round
+
+        # Read client results from filesystem if not round 0
+        if fl_round > 0 and not client_results:
+            client_results = self._read_client_results_from_files(fl_round)
 
         # Set criterion based on experiment type
         if self.experiment_type == "n_cmapss":
@@ -370,9 +489,26 @@ class FederatedServer:
             self.training_history["rul_within_10"].append(within_10_cycles)
             self.training_history["rul_within_20"].append(within_20_cycles)
 
+            # Update results dictionary
+            round_results = {
+                "round": fl_round,
+                "test_loss": test_loss,
+                "mae": mae,
+                "r_squared": r_squared,
+                "within_10_cycles": within_10_cycles,
+                "within_20_cycles": within_20_cycles
+            }
+
+            # Add client results if provided
+            if client_results:
+                round_results["client_results"] = client_results
+
+            # Add to results history
+            self.results["rounds"].append(round_results)
+
             accuracy = None
 
-        # For classification, calculate accuracy
+        # For classification, calculate accuracy and other metrics
         elif self.experiment_type == "mnist":
             accuracy = correct / total
 
@@ -420,6 +556,23 @@ class FederatedServer:
 
             print(f"Round {self.round} - Global model test accuracy: {accuracy:.4f}")
 
+            # Update results dictionary
+            round_results = {
+                "round": fl_round,
+                "test_loss": test_loss,
+                "test_accuracy": accuracy,
+                "mean_precision": mean_precision if 'mean_precision' in locals() else None,
+                "mean_recall": mean_recall if 'mean_recall' in locals() else None,
+                "mean_f1": mean_f1 if 'mean_f1' in locals() else None
+            }
+
+            # Add client results if provided
+            if client_results:
+                round_results["client_results"] = client_results
+
+            # Add to results history
+            self.results["rounds"].append(round_results)
+
         # Store history
         self.training_history["rounds"].append(self.round)
         self.training_history["global_test_loss"].append(test_loss)
@@ -431,7 +584,50 @@ class FederatedServer:
         # Plot and save results
         self._save_results(predictions, actual)
 
+        # Save experiment results
+        self._save_experiment_results()
+
         return test_loss, accuracy
+
+    def _read_client_results_from_files(self, round_num):
+        """Read client training results from filesystem.
+
+        Args:
+            round_num: Round number to read client results from
+
+        Returns:
+            dict: Dictionary mapping client IDs to training results
+        """
+        if not self.storage_dir or not self.client_ids:
+            return {}
+
+        client_results = {}
+
+        for client_id in self.client_ids:
+            # Get client directory path
+            round_dir = f"round_{round_num}"
+            clients_dir = "clients"
+            client_prefix = "client_"
+
+            # Read results file
+            client_output_dir = os.path.join(
+                self.storage_dir,
+                "output",
+                "clients",
+                f"{client_prefix}{client_id}"
+            )
+            results_path = os.path.join(client_output_dir, "training_results.json")
+
+            # Read results if file exists
+            if os.path.exists(results_path):
+                try:
+                    with open(results_path, 'r') as f:
+                        results = json.load(f)
+                    client_results[client_id] = results
+                except Exception as e:
+                    print(f"Error reading client {client_id} results: {e}")
+
+        return client_results
 
     def _save_results(self, predictions, actual):
         """Save evaluation results and plots.
@@ -465,14 +661,7 @@ class FederatedServer:
                 acc_plot_path = f"output/plots/global_model_accuracy_round_{self.round}_{timestamp}.png"
 
         # Convert numpy values to Python native types for JSON serialization
-        history_for_json = {}
-        for key, value in self.training_history.items():
-            if isinstance(value, list):
-                # Convert each item in the list if it's a numpy type
-                history_for_json[key] = [float(item) if hasattr(item, 'dtype') else item for item in value]
-            else:
-                # Convert the value if it's a numpy type
-                history_for_json[key] = float(value) if hasattr(value, 'dtype') else value
+        history_for_json = self._make_json_serializable(self.training_history)
 
         # Save training history
         with open(history_path, "w") as f:
@@ -706,14 +895,198 @@ class FederatedServer:
 
         # Save model
         if self.storage_dir:
-            model_path = os.path.join(self.storage_dir, f"output/models/round_{self.round}_model.pt")
+            models_dir = os.path.join(self.storage_dir, "output", "global_models")
+            os.makedirs(models_dir, exist_ok=True)
+            model_path = os.path.join(models_dir, f"global_model_round_{self.round}.pt")
         else:
-            model_path = f'output/models/{self.experiment_type}_global_model_round_{self.round}_{timestamp}.pth'
+            os.makedirs("output/global_models", exist_ok=True)
+            model_path = f'output/global_models/{self.experiment_type}_global_model_round_{self.round}_{timestamp}.pt'
 
-        os.makedirs(os.path.dirname(model_path), exist_ok=True)
         torch.save(self.global_model.state_dict(), model_path)
 
         print(f"Saved results for round {self.round}")
+
+    def _save_experiment_results(self):
+        """Save experiment results to a JSON file."""
+        # Check if we have a storage directory
+        if not self.storage_dir:
+            return
+
+        # Create the output directory if it doesn't exist
+        output_dir = os.path.join(self.storage_dir, "output")
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Convert NumPy types to Python native types
+        serializable_results = self._make_json_serializable(self.results)
+
+        # Save the results
+        results_path = os.path.join(output_dir, "fl_results.json")
+        with open(results_path, "w") as f:
+            json.dump(serializable_results, f, indent=2)
+
+        print(f"Saved experiment results to {results_path}")
+
+    def _make_json_serializable(self, obj):
+        """Convert an object with potential NumPy types to JSON serializable format.
+
+        Args:
+            obj: The object to convert
+
+        Returns:
+            Object with all NumPy types converted to Python native types
+        """
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, dict):
+            return {key: self._make_json_serializable(value) for key, value in obj.items()}
+        elif isinstance(obj, list):
+            return [self._make_json_serializable(item) for item in obj]
+        elif isinstance(obj, tuple):
+            return tuple(self._make_json_serializable(item) for item in obj)
+        elif hasattr(obj, 'dtype') and np.isscalar(obj):  # Catch any other NumPy scalar types
+            return obj.item()
+        else:
+            return obj
+
+    def initialize_model(self, round_num=0):
+        """Initialize and save the initial model.
+
+        Args:
+            round_num: Usually 0 for the initial model
+        """
+        if not self.storage_dir:
+            return
+
+        # Get directory structure from configuration
+        structure = self._get_structure_config()
+
+        # Create the initial model directory
+        initial_model_dir = os.path.join(self.storage_dir, structure["global_model_initial"])
+        os.makedirs(initial_model_dir, exist_ok=True)
+
+        # Save the initial model
+        self.save_model(initial_model_dir)
+        print(f"Initialized and saved the initial global model")
+
+    def prepare_training_model(self, round_num, use_initial=False):
+        """Prepare the global model for a specific round.
+
+        Args:
+            round_num: The current round number
+            use_initial: Whether to use the initial model (for round 1)
+
+        Returns:
+            str: Path to the prepared model directory
+        """
+        if not self.storage_dir:
+            return
+
+        # Get directory structure from configuration
+        structure = self._get_structure_config()
+
+        # Create round directory
+        round_dir = os.path.join(
+            self.storage_dir,
+            structure["round_template"].format(round=round_num)
+        )
+        os.makedirs(round_dir, exist_ok=True)
+
+        # Create directory for the global model for training
+        training_model_dir = os.path.join(round_dir, structure["global_model"])
+        os.makedirs(training_model_dir, exist_ok=True)
+
+        # Create directory for the aggregated model
+        aggregated_model_dir = os.path.join(round_dir, structure["global_model_aggregated"])
+        os.makedirs(aggregated_model_dir, exist_ok=True)
+
+        # Load the appropriate source model
+        if use_initial:
+            # Use the initial model for round 1
+            source_model_dir = os.path.join(self.storage_dir, structure["global_model_initial"])
+        else:
+            # Use the previous round's aggregated model
+            prev_round_dir = os.path.join(
+                self.storage_dir,
+                structure["round_template"].format(round=round_num-1)
+            )
+            source_model_dir = os.path.join(prev_round_dir, structure["global_model_aggregated"])
+
+        # Load the source model
+        self.load_model(source_model_dir)
+
+        # Save it as the training model for this round
+        self.save_model(training_model_dir)
+
+        return training_model_dir
+
+    def aggregate_client_models(self, round_num):
+        """Aggregate client models for a specific round.
+
+        Args:
+            round_num: The current round number
+
+        Returns:
+            bool: Whether the aggregation was successful
+        """
+        if not self.storage_dir:
+            return False
+
+        # Get directory structure from configuration
+        structure = self._get_structure_config()
+
+        # Get the round directory
+        round_dir = os.path.join(
+            self.storage_dir,
+            structure["round_template"].format(round=round_num)
+        )
+
+        # Get the clients directory
+        clients_dir = os.path.join(round_dir, structure["clients_dir"])
+
+        # Get the aggregated model directory
+        aggregated_model_dir = os.path.join(round_dir, structure["global_model_aggregated"])
+        os.makedirs(aggregated_model_dir, exist_ok=True)
+
+        # Aggregate client models
+        self.aggregate_models_from_files(clients_dir)
+
+        # Save the aggregated model
+        self.save_model(aggregated_model_dir)
+
+        return True
+
+    def _get_structure_config(self):
+        """Get the directory structure configuration.
+
+        Returns:
+            dict: Directory structure configuration
+        """
+        # Default structure configuration
+        default_structure = {
+            "global_model_initial": "global_model_initial",
+            "round_template": "round_{round}",
+            "clients_dir": "clients",
+            "global_model": "global_model_for_training",
+            "global_model_aggregated": "global_model_aggregated",
+            "client_prefix": "client_"
+        }
+
+        # Try to load from configuration file
+        config_path = os.path.join(os.path.dirname(self.storage_dir), "mock_etcd/configuration.json")
+        try:
+            if os.path.exists(config_path):
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+                    if "storage" in config and "structure" in config["storage"]:
+                        return config["storage"]["structure"]
+        except Exception as e:
+            print(f"Error loading configuration: {e}")
+
+        return default_structure
 
 
 def main():

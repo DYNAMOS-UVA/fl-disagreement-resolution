@@ -1,6 +1,5 @@
 """Model definitions for federated learning experiments."""
 
-import torch
 import torch.nn as nn
 
 # Base model class
@@ -71,7 +70,7 @@ class RULPredictor(BaseModel):
         x = self.fc2(x)
         return x
 
-# Simple CNN model for MNIST (for future use)
+# Simple CNN model for MNIST
 class MNISTClassifier(BaseModel):
     """Simple CNN model for MNIST image classification."""
 

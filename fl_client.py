@@ -71,6 +71,33 @@ class FederatedClient:
         else:
             os.makedirs("output/client_results", exist_ok=True)
 
+    def create_model_dir(self, round_num, structure=None):
+        """Create client model directory for a specific round.
+
+        Args:
+            round_num: The round number
+            structure: Dictionary with directory structure information
+
+        Returns:
+            str: Path to the client model directory
+        """
+        if not self.storage_dir or not structure:
+            return None
+
+        # Create the client directory for this round
+        round_dir = os.path.join(
+            self.storage_dir,
+            structure["round_template"].format(round=round_num)
+        )
+
+        clients_dir = os.path.join(round_dir, structure["clients_dir"])
+        os.makedirs(clients_dir, exist_ok=True)
+
+        client_dir = os.path.join(clients_dir, f"{structure['client_prefix']}{self.client_id}")
+        os.makedirs(client_dir, exist_ok=True)
+
+        return client_dir
+
     def load_data(self, sample_size=1000):
         """Load and preprocess client data.
 
@@ -160,7 +187,7 @@ class FederatedClient:
             epochs: Number of epochs to train (defaults to self.epochs)
 
         Returns:
-            tuple: (train_losses, valid_losses) lists of losses for each epoch
+            dict: Dictionary containing training results
         """
         epochs = epochs or self.epochs
 
@@ -176,6 +203,8 @@ class FederatedClient:
 
         train_losses = []
         valid_losses = []
+        train_accuracies = []
+        valid_accuracies = []
 
         self.model.train()
         print(f"Client {self.client_id} starting training for {epochs} epochs")
@@ -208,6 +237,8 @@ class FederatedClient:
 
             # Calculate training accuracy for MNIST
             train_acc = correct / total if self.experiment_type == "mnist" else None
+            if train_acc is not None:
+                train_accuracies.append(train_acc)
 
             # Validation
             valid_loss = 0
@@ -234,6 +265,8 @@ class FederatedClient:
 
             # Calculate validation accuracy for MNIST
             valid_acc = val_correct / val_total if self.experiment_type == "mnist" else None
+            if valid_acc is not None:
+                valid_accuracies.append(valid_acc)
 
             # Print progress
             if self.experiment_type == "mnist":
@@ -244,28 +277,54 @@ class FederatedClient:
                 print(f"Client {self.client_id} - Epoch {epoch+1}/{epochs} - "
                       f"Train Loss: {train_loss:.6f}, Valid Loss: {valid_loss:.6f}")
 
-        # Save training results
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        results = {
+        # Create results dictionary
+        training_results = {
             "client_id": self.client_id,
             "experiment_type": self.experiment_type,
             "epochs": epochs,
             "train_losses": train_losses,
             "valid_losses": valid_losses,
-            "timestamp": timestamp
+            "final_train_loss": train_losses[-1],
+            "final_valid_loss": valid_losses[-1],
         }
+
+        # Add accuracy metrics for classification tasks
+        if self.experiment_type == "mnist":
+            training_results.update({
+                "train_accuracies": train_accuracies,
+                "valid_accuracies": valid_accuracies,
+                "final_train_accuracy": train_accuracies[-1],
+                "final_valid_accuracy": valid_accuracies[-1]
+            })
+
+        # Save results to output directory
+        self._save_training_results(training_results)
+
+        print(f"Client {self.client_id} finished training")
+        return training_results
+
+    def _save_training_results(self, results):
+        """Save training results to a JSON file.
+
+        Args:
+            results: Dictionary containing training results
+        """
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # Save results to output directory
         if self.storage_dir:
-            results_path = os.path.join(self.output_dir, "training_results.json")
+            # Make sure the output directory exists
+            output_dir = os.path.join(self.storage_dir, "output", "clients", f"client_{self.client_id}")
+            os.makedirs(output_dir, exist_ok=True)
+            results_path = os.path.join(output_dir, "training_results.json")
         else:
+            os.makedirs("output/client_results", exist_ok=True)
             results_path = f"output/client_results/client_{self.client_id}_{timestamp}.json"
 
         with open(results_path, "w") as f:
-            json.dump(results, f)
+            json.dump(results, f, indent=2)
 
-        print(f"Client {self.client_id} finished training")
-        return train_losses, valid_losses
+        print(f"Client {self.client_id} saved training results to {results_path}")
 
     def get_model_parameters(self):
         """Get model parameters to send to the server.
@@ -283,6 +342,92 @@ class FederatedClient:
         """
         self.model.set_parameters(parameters)
         print(f"Client {self.client_id} updated model with parameters from server")
+
+    def load_round_model(self, round_num):
+        """Load the global model for a specific round.
+
+        Args:
+            round_num: The current round number
+
+        Returns:
+            bool: Whether the model was successfully loaded
+        """
+        if not self.storage_dir:
+            return False
+
+        # Get directory structure from configuration
+        structure = self._get_structure_config()
+
+        # Get the round directory
+        round_dir = os.path.join(
+            self.storage_dir,
+            structure["round_template"].format(round=round_num)
+        )
+
+        # Get the global model directory
+        global_model_dir = os.path.join(round_dir, structure["global_model"])
+
+        # Load the model
+        self.load_model(global_model_dir)
+        return True
+
+    def save_round_model(self, round_num):
+        """Save the trained model for a specific round.
+
+        Args:
+            round_num: The current round number
+
+        Returns:
+            str: Path to the saved model directory
+        """
+        if not self.storage_dir:
+            return None
+
+        # Get directory structure from configuration
+        structure = self._get_structure_config()
+
+        # Create the client directory for this round
+        round_dir = os.path.join(
+            self.storage_dir,
+            structure["round_template"].format(round=round_num)
+        )
+
+        clients_dir = os.path.join(round_dir, structure["clients_dir"])
+        os.makedirs(clients_dir, exist_ok=True)
+
+        client_dir = os.path.join(clients_dir, f"{structure['client_prefix']}{self.client_id}")
+        os.makedirs(client_dir, exist_ok=True)
+
+        # Save the model
+        self.save_model(client_dir)
+        return client_dir
+
+    def _get_structure_config(self):
+        """Get the directory structure configuration.
+
+        Returns:
+            dict: Directory structure configuration
+        """
+        # Default structure configuration
+        default_structure = {
+            "round_template": "round_{round}",
+            "clients_dir": "clients",
+            "global_model": "global_model_for_training",
+            "client_prefix": "client_"
+        }
+
+        # Try to load from configuration file
+        config_path = os.path.join(os.path.dirname(self.storage_dir), "mock_etcd/configuration.json")
+        try:
+            if os.path.exists(config_path):
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+                    if "storage" in config and "structure" in config["storage"]:
+                        return config["storage"]["structure"]
+        except Exception as e:
+            print(f"Error loading configuration: {e}")
+
+        return default_structure
 
 
 def main():

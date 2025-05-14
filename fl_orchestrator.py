@@ -3,106 +3,52 @@
 import os
 import argparse
 import json
-import time
-import shutil
-from datetime import datetime
+import data_module
 
 from fl_client import FederatedClient
 from fl_server import FederatedServer
-import data_module
+from config_loader import ConfigLoader
 
 class FederatedOrchestrator:
     """Orchestrator for coordinating clients and server in federated learning."""
 
-    def __init__(
-        self,
-        experiment_type,
-        clients,
-        train_dir=None,
-        test_dir=None,
-        test_units=None,
-        client_sample_size=1000,
-        test_sample_size=500,
-        batch_size=64,
-        local_epochs=5,
-        learning_rate=0.001,
-        fl_rounds=3,
-        setup_data=False,
-        force_setup_data=False,
-        iid=True,
-        storage_dir=None
-    ):
+    def __init__(self, config_path="mock_etcd/configuration.json"):
         """Initialize the federated learning orchestrator.
 
         Args:
-            experiment_type: Type of experiment ('n_cmapss' or 'mnist')
-            clients: List of client IDs to include in the experiment
-            train_dir: Directory containing training data
-            test_dir: Directory containing test data
-            test_units: List of unit IDs to use for testing (for N-CMAPSS)
-            client_sample_size: Maximum number of samples to load per client
-            test_sample_size: Maximum number of samples to load per test unit
-            batch_size: Batch size for training and testing
-            local_epochs: Number of local training epochs per round
-            learning_rate: Learning rate for optimization
-            fl_rounds: Number of federated learning rounds
-            setup_data: Whether to set up experiment data
-            force_setup_data: Whether to force data setup even if it exists
-            iid: Whether to use IID data distribution (for MNIST)
-            storage_dir: Custom storage directory path
+            config_path: Path to the configuration file
         """
-        self.experiment_type = experiment_type
-        self.client_ids = clients
-        self.client_sample_size = client_sample_size
-        self.test_sample_size = test_sample_size
-        self.batch_size = batch_size
-        self.local_epochs = local_epochs
-        self.learning_rate = learning_rate
-        self.fl_rounds = fl_rounds
-        self.setup_data = setup_data
-        self.force_setup_data = force_setup_data
-        self.iid = iid
+        # Load configuration
+        self.config = ConfigLoader(config_path)
 
-        # Create simulation ID based on timestamp
-        self.simulation_id = f"fl_simulation_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        # Get configuration sections
+        self.exp_config = self.config.get_experiment_config()
+        self.data_config = self.config.get_data_config()
+        self.train_config = self.config.get_training_config()
+        self.storage_config = self.config.get_storage_config()
 
-        # Create storage directories
-        if storage_dir:
-            self.storage_dir = storage_dir
-        else:
-            self.storage_dir = os.path.join("storage", self.simulation_id)
+        # Extract common parameters
+        self.experiment_type = self.exp_config.get("type")
+        self.client_ids = self.exp_config.get("client_ids")
+        self.fl_rounds = self.exp_config.get("fl_rounds")
+        self.storage_dir = self.storage_config.get("storage_dir")
 
-        os.makedirs(self.storage_dir, exist_ok=True)
+        # Setup MNIST data if needed
+        self._setup_data_if_needed()
 
-        # Create output directory for this simulation
-        self.output_dir = os.path.join(self.storage_dir, "output")
-        os.makedirs(self.output_dir, exist_ok=True)
+        # Initialize server
+        self.server = self._init_server()
 
-        # Set default directories based on experiment type
-        if train_dir is None:
-            if experiment_type == "n_cmapss":
-                self.train_dir = "data/n-cmapss/train"
-            elif experiment_type == "mnist":
-                self.train_dir = "data/mnist/train"
-            else:
-                raise ValueError(f"Unknown experiment type: {experiment_type}")
-        else:
-            self.train_dir = train_dir
+        # Initialize clients
+        self.clients = self._init_clients()
 
-        if test_dir is None:
-            if experiment_type == "n_cmapss":
-                self.test_dir = "data/n-cmapss/test"
-            elif experiment_type == "mnist":
-                self.test_dir = "data/mnist/test"
-            else:
-                raise ValueError(f"Unknown experiment type: {experiment_type}")
-        else:
-            self.test_dir = test_dir
+        print(f"Initialized federated learning orchestrator with {len(self.client_ids)} clients for {self.experiment_type} experiment")
+        print(f"Storage directory: {self.storage_dir}")
 
-        self.test_units = test_units
-
+    def _setup_data_if_needed(self):
+        """Setup data if needed based on configuration."""
         # Check if MNIST data needs to be setup
-        if self.experiment_type == "mnist":
+        if self.experiment_type == "mnist" and self.data_config.get("setup_data", False):
             # Check if data already exists for all clients
             train_client_data_exists = all(
                 os.path.exists(os.path.join("data/mnist", 'train', f'client_{i}', 'mnist_data.npz'))
@@ -111,216 +57,201 @@ class FederatedOrchestrator:
             test_data_exists = os.path.exists(os.path.join("data/mnist", 'test', 'mnist_test.npz'))
 
             # Setup data if needed
-            if self.setup_data and (not (train_client_data_exists and test_data_exists) or self.force_setup_data):
+            if not (train_client_data_exists and test_data_exists) or self.data_config.get("force_setup_data", False):
                 print("Setting up MNIST federated data...")
                 data_module.setup_mnist_federated_data(
                     num_clients=max(self.client_ids) + 1,  # Ensure enough clients are created
-                    samples_per_client=client_sample_size,
-                    iid=self.iid
+                    samples_per_client=self.data_config.get("client_sample_size", 1000),
+                    iid=self.exp_config.get("iid", True)
                 )
                 print("MNIST data setup complete.")
-            elif self.setup_data:
+            else:
                 print("MNIST data already exists. Skipping setup.")
                 print("Use --force_setup_data to force recreation.")
 
-        # Initialize server
-        self.server = FederatedServer(
-            experiment_type=experiment_type,
-            test_dir=self.test_dir,
-            test_units=self.test_units,
+    def _init_server(self):
+        """Initialize the federated learning server.
+
+        Returns:
+            FederatedServer: Initialized server
+        """
+        server = FederatedServer(
+            experiment_type=self.experiment_type,
+            test_dir=self.config.get_test_dir(),
+            test_units=self.data_config.get("test_units"),
             storage_dir=self.storage_dir
         )
 
         # Load test data for evaluation
         if self.experiment_type == "n_cmapss":
-            self.server.load_test_data(sample_size=test_sample_size)
+            server.load_test_data(sample_size=self.data_config.get("test_sample_size", 500))
         else:
-            self.server.load_test_data()
+            server.load_test_data()
 
-        # Initialize clients
-        self.clients = {}
+        # Initialize the server with experiment metadata
+        server.init_experiment(
+            fl_rounds=self.fl_rounds,
+            client_ids=self.client_ids,
+            iid=self.exp_config.get("iid", False) if self.experiment_type == "mnist" else None
+        )
+
+        return server
+
+    def _init_clients(self):
+        """Initialize federated learning clients.
+
+        Returns:
+            dict: Dictionary mapping client IDs to client instances
+        """
+        clients = {}
         for client_id in self.client_ids:
-            self.clients[client_id] = FederatedClient(
+            clients[client_id] = FederatedClient(
                 client_id=client_id,
-                experiment_type=experiment_type,
-                data_dir=self.train_dir,
-                batch_size=batch_size,
-                epochs=local_epochs,
-                learning_rate=learning_rate,
+                experiment_type=self.experiment_type,
+                data_dir=self.config.get_train_dir(),
+                batch_size=self.train_config.get("batch_size", 64),
+                epochs=self.train_config.get("local_epochs", 5),
+                learning_rate=self.train_config.get("learning_rate", 0.001),
                 storage_dir=self.storage_dir
             )
             # Load client data
-            self.clients[client_id].load_data(sample_size=client_sample_size)
+            clients[client_id].load_data(sample_size=self.data_config.get("client_sample_size", 1000))
 
-        # Results tracking
-        self.results = {
-            "experiment_type": experiment_type,
-            "fl_rounds": fl_rounds,
-            "client_ids": clients,
-            "iid": self.iid if self.experiment_type == "mnist" else None,
-            "rounds": []
-        }
-
-        print(f"Initialized federated learning orchestrator with {len(clients)} clients for {experiment_type} experiment")
-        print(f"Storage directory: {self.storage_dir}")
+        return clients
 
     def run_federated_learning(self):
         """Execute federated learning process for specified number of rounds.
 
-        Returns:
-            dict: Results of the federated learning process
+        The federated learning process follows these steps:
+        1. Initialize the model (global_model_initial)
+        2. For each round:
+           a. Copy the latest aggregated model (or initial model for round 1) to global_model_for_training
+           b. Distribute global_model_for_training to clients for local training
+           c. Clients train on local data and save their models to their directories
+           d. Server aggregates client models into global_model_aggregated
+           e. Server evaluates the aggregated model
         """
         print(f"Starting federated learning with {self.fl_rounds} rounds...")
 
-        # Create initial global model directory
-        initial_model_dir = os.path.join(self.storage_dir, "global_model_initial")
-        os.makedirs(initial_model_dir, exist_ok=True)
+        # Initialize and save the initial global model
+        self.server.initialize_model(round_num=0)
 
-        # Save initial global model
-        self.server.save_model(initial_model_dir)
-
-        # Initial evaluation of the global model
-        initial_test_loss, initial_accuracy = self.server.evaluate_model()
-        print(f"Initial global model test loss: {initial_test_loss:.6f}")
-        if initial_accuracy is not None:
-            print(f"Initial global model test accuracy: {initial_accuracy:.4f}")
+        # Initial evaluation of the global model (round 0)
+        self.server.evaluate_model(fl_round=0)
+        print("Initial model evaluation completed")
 
         # Main federated learning loop
         for fl_round in range(1, self.fl_rounds + 1):
             print(f"\n--- Federated Learning Round {fl_round}/{self.fl_rounds} ---")
 
-            # Create round directory
-            round_dir = os.path.join(self.storage_dir, f"round_{fl_round}")
-            os.makedirs(round_dir, exist_ok=True)
+            # 1. Server prepares the global model for this round
+            print("Preparing global model for training...")
 
-            # Create directories for global and client models
-            global_model_dir = os.path.join(round_dir, "global_model")
-            os.makedirs(global_model_dir, exist_ok=True)
-
-            clients_dir = os.path.join(round_dir, "clients")
-            os.makedirs(clients_dir, exist_ok=True)
-
-            # 1. Distribute global model to all clients
-            # First, copy the global model to the current round directory
+            # Server creates directories and prepares model for this round
             if fl_round == 1:
-                # Use initial model for first round
-                global_model_path = initial_model_dir
+                # For the first round, use the initial model
+                self.server.prepare_training_model(fl_round, use_initial=True)
+                print("Using global_model_initial for round 1")
             else:
-                # Use previous round's aggregated model
-                prev_round_dir = os.path.join(self.storage_dir, f"round_{fl_round-1}")
-                prev_global_model_dir = os.path.join(prev_round_dir, "global_model_aggregated")
-                global_model_path = prev_global_model_dir
-
-            # Save current global model to this round's directory
-            self.server.load_model(global_model_path)
-            self.server.save_model(global_model_dir)
+                # For subsequent rounds, use the previous round's aggregated model
+                self.server.prepare_training_model(fl_round, use_initial=False)
+                print(f"Using global_model_aggregated from round {fl_round-1}")
 
             # 2. Train local models on each client
             print("Training local models...")
-            client_train_losses = {}
-            client_valid_losses = {}
 
             for client_id, client in self.clients.items():
                 print(f"Training client {client_id}...")
-                client_dir = os.path.join(clients_dir, f"client_{client_id}")
-                os.makedirs(client_dir, exist_ok=True)
 
-                # Load global model
-                client.load_model(global_model_dir)
+                # Client loads the global model for this round
+                client.load_round_model(fl_round)
 
-                # Train model
-                train_losses, valid_losses = client.train(epochs=self.local_epochs)
+                # Client trains model and saves results to filesystem
+                client.train(epochs=self.train_config.get("local_epochs", 5))
 
-                # Save trained model
-                client.save_model(client_dir)
+                # Client saves trained model to filesystem
+                client.save_round_model(fl_round)
 
-                client_train_losses[client_id] = train_losses
-                client_valid_losses[client_id] = valid_losses
+            # 3. Server aggregates models from all clients
+            print("Aggregating client models...")
 
-            # 3. Aggregate models
-            print("Aggregating models...")
-            aggregated_model_dir = os.path.join(round_dir, "global_model_aggregated")
-            os.makedirs(aggregated_model_dir, exist_ok=True)
+            # Server loads client models and aggregates them
+            self.server.aggregate_client_models(fl_round)
 
-            # Server loads and aggregates client models
-            self.server.aggregate_models_from_files(clients_dir)
+            # 4. Server evaluates the aggregated model
+            print("Evaluating aggregated model...")
 
-            # Save aggregated model
-            self.server.save_model(aggregated_model_dir)
+            # Server evaluates the model and stores metrics
+            self.server.evaluate_model(fl_round=fl_round)
 
-            # 4. Evaluate global model
-            print("Evaluating global model...")
-            test_loss, accuracy = self.server.evaluate_model()
-
-            # 5. Save round results
-            round_results = {
-                "round": fl_round,
-                "test_loss": test_loss,
-                "test_accuracy": accuracy,
-                "client_train_losses": client_train_losses,
-                "client_valid_losses": client_valid_losses
-            }
-            self.results["rounds"].append(round_results)
-
-            # Save results after each round
-            self._save_results()
-
-            print(f"Round {fl_round} completed. Global model test loss: {test_loss:.6f}")
-            if accuracy is not None:
-                print(f"Global model test accuracy: {accuracy:.4f}")
+            print(f"Round {fl_round} completed.")
 
         print("\nFederated learning completed!")
-        return self.results
-
-    def _save_results(self):
-        """Save orchestrator results to a JSON file."""
-        results_path = os.path.join(self.output_dir, "fl_results.json")
-
-        with open(results_path, "w") as f:
-            json.dump(self.results, f, indent=2)
-
-        print(f"Saved orchestrator results to {results_path}")
 
 
 def main():
     """Run the orchestrator as a standalone application."""
     parser = argparse.ArgumentParser(description="Federated Learning Orchestrator")
-    parser.add_argument("--experiment", type=str, default="n_cmapss", choices=["n_cmapss", "mnist"], help="Experiment type")
-    parser.add_argument("--clients", type=int, nargs="+", default=[0, 1, 2, 3, 4, 5], help="Client IDs")
-    parser.add_argument("--train_dir", type=str, help="Training data directory (defaults to experiment-specific location)")
-    parser.add_argument("--test_dir", type=str, help="Test data directory (defaults to experiment-specific location)")
-    parser.add_argument("--test_units", type=int, nargs="+", default=[11, 14, 15], help="Test units (for N-CMAPSS)")
-    parser.add_argument("--client_sample_size", type=int, default=1000, help="Sample size per client")
-    parser.add_argument("--test_sample_size", type=int, default=500, help="Sample size per test unit (for N-CMAPSS)")
-    parser.add_argument("--batch_size", type=int, default=64, help="Batch size")
-    parser.add_argument("--local_epochs", type=int, default=5, help="Number of local training epochs")
-    parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
-    parser.add_argument("--fl_rounds", type=int, default=3, help="Number of federated learning rounds")
-    parser.add_argument("--setup_data", action="store_true", help="Set up experiment data (for MNIST)")
-    parser.add_argument("--force_setup_data", action="store_true", help="Force data setup even if it exists")
-    parser.add_argument("--iid", action="store_true", help="Use IID data distribution (for MNIST)")
-    parser.add_argument("--storage_dir", type=str, help="Storage directory for models and results")
+    parser.add_argument("--config", type=str, default="mock_etcd/configuration.json",
+                        help="Path to configuration file")
+    parser.add_argument("--override", action="store_true",
+                        help="Override configuration with command line arguments")
+
+    # Optional override arguments (only used if --override is specified)
+    parser.add_argument("--experiment", type=str, choices=["n_cmapss", "mnist"],
+                        help="Experiment type")
+    parser.add_argument("--clients", type=int, nargs="+",
+                        help="Client IDs")
+    parser.add_argument("--fl_rounds", type=int,
+                        help="Number of federated learning rounds")
+    parser.add_argument("--local_epochs", type=int,
+                        help="Number of local training epochs")
+    parser.add_argument("--setup_data", action="store_true",
+                        help="Set up experiment data (for MNIST)")
+    parser.add_argument("--force_setup_data", action="store_true",
+                        help="Force data setup even if it exists")
+    parser.add_argument("--iid", action="store_true",
+                        help="Use IID data distribution (for MNIST)")
+    parser.add_argument("--storage_dir", type=str,
+                        help="Storage directory for models and results")
 
     args = parser.parse_args()
 
+    # If override is specified, update the configuration file with command line arguments
+    if args.override:
+        try:
+            with open(args.config, 'r') as f:
+                config = json.load(f)
+
+            # Update configuration with command line arguments
+            if args.experiment:
+                config["experiment"]["type"] = args.experiment
+            if args.clients:
+                config["experiment"]["client_ids"] = args.clients
+            if args.fl_rounds:
+                config["experiment"]["fl_rounds"] = args.fl_rounds
+            if args.local_epochs:
+                config["training"]["local_epochs"] = args.local_epochs
+            if args.setup_data:
+                config["data"]["setup_data"] = True
+            if args.force_setup_data:
+                config["data"]["force_setup_data"] = True
+            if args.iid:
+                config["experiment"]["iid"] = True
+            if args.storage_dir:
+                config["storage"]["custom_dir"] = args.storage_dir
+
+            # Write updated configuration back to file
+            with open(args.config, 'w') as f:
+                json.dump(config, f, indent=2)
+
+            print(f"Updated configuration in {args.config}")
+        except Exception as e:
+            print(f"Error updating configuration: {e}")
+            print("Using original configuration")
+
     # Create and run orchestrator
-    orchestrator = FederatedOrchestrator(
-        experiment_type=args.experiment,
-        clients=args.clients,
-        train_dir=args.train_dir,
-        test_dir=args.test_dir,
-        test_units=args.test_units if args.experiment == "n_cmapss" else None,
-        client_sample_size=args.client_sample_size,
-        test_sample_size=args.test_sample_size,
-        batch_size=args.batch_size,
-        local_epochs=args.local_epochs,
-        learning_rate=args.lr,
-        fl_rounds=args.fl_rounds,
-        setup_data=args.setup_data,
-        force_setup_data=args.force_setup_data,
-        iid=args.iid,
-        storage_dir=args.storage_dir
-    )
+    orchestrator = FederatedOrchestrator(config_path=args.config)
 
     # Run federated learning
     orchestrator.run_federated_learning()

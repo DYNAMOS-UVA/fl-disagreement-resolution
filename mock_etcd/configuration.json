@@ -1,0 +1,54 @@
+{
+  "experiment": {
+    "type": "n_cmapss",
+    "fl_rounds": 10,
+    "client_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "iid": true
+  },
+  "data": {
+    "train_dir": {
+      "n_cmapss": "data/n-cmapss/train",
+      "mnist": "data/mnist/train"
+    },
+    "test_dir": {
+      "n_cmapss": "data/n-cmapss/test",
+      "mnist": "data/mnist/test"
+    },
+    "test_units": [
+      11,
+      14,
+      15
+    ],
+    "client_sample_size": 1000,
+    "test_sample_size": 500,
+    "setup_data": true,
+    "force_setup_data": false
+  },
+  "training": {
+    "batch_size": 64,
+    "local_epochs": 5,
+    "learning_rate": 0.001
+  },
+  "storage": {
+    "use_timestamped_dir": true,
+    "base_dir": "storage",
+    "custom_dir": null,
+    "structure": {
+      "global_model_initial": "global_model_initial",
+      "round_template": "round_{round}",
+      "clients_dir": "clients",
+      "global_model": "global_model_for_training",
+      "global_model_aggregated": "global_model_aggregated",
+      "output_dir": "output",
+      "client_prefix": "client_",
+      "models_dir": "global_models"
+    }
+  }
+}
