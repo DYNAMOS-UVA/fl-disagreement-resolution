@@ -1,0 +1,94 @@
+{
+  "name": "Comprehensive Mixed Disagreements",
+  "description": "A comprehensive test with all types of disagreements (inbound, outbound, bidirectional) and time-limited disagreements. Tests the system's ability to handle complex real-world scenarios.",
+  "expected_tracks": {
+    "track_0_no1_no5": "For client 0, excluding clients 1 and 5",
+    "track_c1_c3_no0_no2": "For clients 1 and 3, excluding clients 0 and 2",
+    "track_2_no3_no4": "For client 2, excluding clients 3 and 4",
+    "global": "Global track (used by clients 4 and 5)"
+  },
+  "expected_tracks_round_3": {
+    "track_0_no1_no5": "For client 0, excluding clients 1 and 5 (track name remains despite expiry of client 5 exclusion)",
+    "track_c1_c3_no0_no2": "For clients 1 and 3, excluding clients 0 and 2",
+    "track_2_no3_no4": "For client 2, excluding clients 3 and 4 (track name remains despite expiry of client 4 exclusion)",
+    "global": "Global track (used by clients 4 and 5)"
+  },
+  "disagreements": {
+    "client_0": [
+      {
+        "type": "bidirectional",
+        "target": "client_1",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      },
+      {
+        "type": "inbound",
+        "target": "client_5",
+        "active_rounds": {
+          "start": 1,
+          "end": 2
+        }
+      }
+    ],
+    "client_1": [
+      {
+        "type": "inbound",
+        "target": "client_2",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_2": [
+      {
+        "type": "bidirectional",
+        "target": "client_3",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      },
+      {
+        "type": "inbound",
+        "target": "client_4",
+        "active_rounds": {
+          "start": 1,
+          "end": 2
+        }
+      }
+    ],
+    "client_3": [
+      {
+        "type": "inbound",
+        "target": "client_0",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_4": [
+      {
+        "type": "outbound",
+        "target": "client_2",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_5": [
+      {
+        "type": "outbound",
+        "target": "client_0",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ]
+  }
+}

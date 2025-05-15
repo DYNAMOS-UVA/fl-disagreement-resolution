@@ -1,7 +1,7 @@
 {
   "experiment": {
-    "type": "mnist",
-    "fl_rounds": 10,
+    "type": "n_cmapss",
+    "fl_rounds": 5,
     "client_ids": [
       0,
       1,

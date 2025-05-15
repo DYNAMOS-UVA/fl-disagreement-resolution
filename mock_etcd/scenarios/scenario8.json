@@ -1,0 +1,94 @@
+{
+  "name": "Time-Limited Full Exclusion",
+  "description": "A test scenario where client 2 opts for full exclusion but only for rounds 1-3, after which it returns to normal participation.",
+  "expected_tracks": {
+    "track_0_no1": "For client 0, excluding client 1",
+    "track_1_no3": "For client 1, excluding client 3",
+    "global": "Global track (for clients 3, 4, 5 without specific disagreements)"
+  },
+  "validation_rules": {
+    "round_1_rules": [
+      {
+        "type": "client_excludes",
+        "client": 0,
+        "excludes": [1, 2],
+        "description": "Client 0's track should exclude clients 1 and 2 (2 is fully excluded)"
+      },
+      {
+        "type": "client_excludes",
+        "client": 1,
+        "excludes": [2, 3],
+        "description": "Client 1's track should exclude clients 2 and 3 (2 is fully excluded)"
+      },
+      {
+        "type": "client_excludes",
+        "client": 3,
+        "excludes": [2],
+        "description": "Client 3's track should exclude client 2 (fully excluded)"
+      },
+      {
+        "type": "client_excludes",
+        "client": 4,
+        "excludes": [2],
+        "description": "Client 4's track should exclude client 2 (fully excluded)"
+      },
+      {
+        "type": "client_excludes",
+        "client": 5,
+        "excludes": [2],
+        "description": "Client 5's track should exclude client 2 (fully excluded)"
+      }
+    ],
+    "round_4_rules": [
+      {
+        "type": "client_excludes",
+        "client": 0,
+        "excludes": [1],
+        "description": "Client 0's track should exclude client 1 only (client 2's full exclusion expired)"
+      },
+      {
+        "type": "client_excludes",
+        "client": 1,
+        "excludes": [3],
+        "description": "Client 1's track should exclude client 3 only (client 2's full exclusion expired)"
+      },
+      {
+        "type": "clients_on_track",
+        "track_name": "global",
+        "clients": [2, 3, 4, 5],
+        "description": "Client 2 should be on the global track after its full exclusion expired"
+      }
+    ]
+  },
+  "disagreements": {
+    "client_0": [
+      {
+        "type": "inbound",
+        "target": "client_1",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_1": [
+      {
+        "type": "inbound",
+        "target": "client_3",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_2": [
+      {
+        "type": "full",
+        "active_rounds": {
+          "start": 1,
+          "end": 3
+        }
+      }
+    ]
+  }
+}

@@ -9,6 +9,7 @@ import json
 from datetime import datetime
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 import seaborn as sns
+import copy
 
 from fl_server.utils import make_json_serializable, read_client_results_from_files
 
@@ -212,6 +213,41 @@ def evaluate_model(server, fl_round=None, client_results=None):
     # Plot and save results
     save_evaluation_results(server, predictions, actual)
 
+    # Evaluate each track model if this isn't round 0
+    if fl_round > 0 and server.results_dir:
+        print(f"\n=== EVALUATING TRACK MODELS FOR ROUND {fl_round} ===")
+        track_results = evaluate_track_models(server, fl_round)
+
+        # Store track results in the main results dictionary
+        if track_results:
+            # Add track results to the round results
+            for round_result in server.results["rounds"]:
+                if round_result["round"] == fl_round:
+                    round_result["track_results"] = track_results
+                    break
+
+            # If no track results storage found in training history, create it
+            if "track_results" not in server.training_history:
+                server.training_history["track_results"] = {}
+
+            # Store track results in training history
+            server.training_history["track_results"][str(fl_round)] = track_results
+
+            # Print summary of track results
+            print(f"\n=== TRACK EVALUATION SUMMARY FOR ROUND {fl_round} ===")
+            if accuracy is not None:
+                print(f"Global model - Accuracy: {accuracy:.6f}")
+            else:
+                print(f"Global model - RMSE: {test_loss:.6f}")
+
+            for track_name, track_data in track_results.items():
+                if server.experiment_type == "mnist":
+                    print(f"{track_name} - Accuracy: {track_data['accuracy']:.6f}")
+                else:
+                    print(f"{track_name} - RMSE: {track_data['rmse']:.6f}")
+
+            print(f"=== END TRACK EVALUATION ===\n")
+
     # Save experiment results
     server._save_experiment_results()
 
@@ -272,6 +308,10 @@ def save_evaluation_results(server, predictions, actual):
     # For MNIST, plot confusion matrix and accuracy
     elif server.experiment_type == "mnist":
         plot_mnist_results(server, predictions, actual, cm_plot_path, acc_plot_path, timestamp)
+
+    # Plot track progress if we have more than one round
+    if server.round > 1 and "track_results" in server.training_history:
+        plot_track_progress(server, server.round)
 
     # We don't need to save the model here as it's already saved in the round-specific directories
     # When the server calls save_model() during aggregation
@@ -510,3 +550,428 @@ def plot_mnist_results(server, predictions, actual, cm_plot_path, acc_plot_path,
         plt.tight_layout()
         plt.savefig(per_class_path)
         plt.close()
+
+def evaluate_track_models(server, round_num):
+    """Evaluate models for each track in a specific round.
+
+    Args:
+        server: FederatedServer instance
+        round_num: Current federated learning round
+
+    Returns:
+        dict: Dictionary with track evaluation results
+    """
+    # Get structure configuration
+    structure = server._get_structure_config()
+
+    # Path to tracks directory
+    tracks_dir = os.path.join(
+        server.results_dir,
+        structure["round_template"].format(round=round_num),
+        "tracks"
+    )
+
+    # Check if tracks directory exists
+    if not os.path.exists(tracks_dir):
+        print(f"No tracks directory found for round {round_num}")
+        return {}
+
+    # Get track metadata
+    metadata_path = os.path.join(tracks_dir, "track_metadata.json")
+    if not os.path.exists(metadata_path):
+        print(f"No track metadata found for round {round_num}")
+        return {}
+
+    try:
+        with open(metadata_path, 'r') as f:
+            track_metadata = json.load(f)
+
+        track_names = list(track_metadata.get("tracks", {}).keys())
+        print(f"Found {len(track_names)} tracks to evaluate: {track_names}")
+
+        # Initialize results
+        track_results = {}
+
+        # Set criterion based on experiment type
+        if server.experiment_type == "n_cmapss":
+            criterion = nn.MSELoss()
+        elif server.experiment_type == "mnist":
+            criterion = nn.CrossEntropyLoss()
+        else:
+            raise ValueError(f"Unknown experiment type: {server.experiment_type}")
+
+        # Save the current global model state
+        original_state = copy.deepcopy(server.global_model.state_dict())
+
+        # Evaluate each track model
+        for track_name in track_names:
+            track_dir = os.path.join(tracks_dir, track_name)
+            model_path = os.path.join(track_dir, "model.pt")
+
+            if not os.path.exists(model_path):
+                print(f"Model file not found for track {track_name}")
+                continue
+
+            print(f"Evaluating track: {track_name}")
+
+            # Load this track's model
+            server.global_model.load_state_dict(torch.load(model_path, map_location=server.device))
+            server.global_model.eval()
+
+            # Initialize metrics
+            test_loss = 0
+            predictions = []
+            actual = []
+            correct = 0
+            total = 0
+
+            # Evaluate the model
+            with torch.no_grad():
+                for data, target in server.test_loader:
+                    data, target = data.to(server.device), target.to(server.device)
+                    output = server.global_model(data)
+                    loss = criterion(output, target)
+                    test_loss += loss.item()
+
+                    # For regression (N-CMAPSS)
+                    if server.experiment_type == "n_cmapss":
+                        predictions.extend(output.cpu().numpy())
+                        actual.extend(target.cpu().numpy())
+                    # For classification (MNIST)
+                    elif server.experiment_type == "mnist":
+                        _, predicted = torch.max(output.data, 1)
+                        predictions.extend(predicted.cpu().numpy())
+                        actual.extend(target.cpu().numpy())
+                        total += target.size(0)
+                        correct += (predicted == target).sum().item()
+
+            # Calculate average test loss
+            test_loss /= len(server.test_loader)
+
+            # Get detailed metrics based on experiment type
+            if server.experiment_type == "n_cmapss":
+                rmse = np.sqrt(test_loss)
+
+                # Convert to numpy arrays for calculation
+                predictions = np.array(predictions)
+                actual = np.array(actual)
+
+                # Calculate Mean Absolute Error (MAE)
+                mae = np.mean(np.abs(predictions - actual))
+
+                # Calculate R² (coefficient of determination)
+                mean_actual = np.mean(actual)
+                ss_total = np.sum((actual - mean_actual) ** 2)
+                ss_residual = np.sum((actual - predictions) ** 2)
+                r_squared = 1 - (ss_residual / ss_total)
+
+                # Calculate % of predictions within ±10 cycles (a more intuitive metric)
+                within_10_cycles = np.mean(np.abs(predictions - actual) <= 10.0) * 100
+                within_20_cycles = np.mean(np.abs(predictions - actual) <= 20.0) * 100
+
+                track_results[track_name] = {
+                    "rmse": rmse,
+                    "mae": mae,
+                    "r_squared": r_squared,
+                    "within_10_cycles": within_10_cycles,
+                    "within_20_cycles": within_20_cycles
+                }
+
+                print(f"Track '{track_name}' - RMSE: {rmse:.4f}, MAE: {mae:.4f}, R²: {r_squared:.4f}")
+
+            elif server.experiment_type == "mnist":
+                accuracy = correct / total if total > 0 else 0
+
+                # Calculate precision, recall, and F1 score
+                precision, recall, f1, _ = precision_recall_fscore_support(
+                    actual, predictions, average='weighted', zero_division=0
+                )
+
+                track_results[track_name] = {
+                    "accuracy": accuracy,
+                    "precision": precision,
+                    "recall": recall,
+                    "f1": f1,
+                    "test_loss": test_loss
+                }
+
+                print(f"Track '{track_name}' - Accuracy: {accuracy:.4f}, F1: {f1:.4f}")
+
+        # Restore the original global model state
+        server.global_model.load_state_dict(original_state)
+
+        # Save track results to a file
+        if track_results and server.results_dir:
+            results_path = os.path.join(
+                server.output_dir,
+                f"track_evaluation_round_{round_num}.json"
+            )
+
+            with open(results_path, 'w') as f:
+                json.dump(make_json_serializable(track_results), f, indent=2)
+
+            # Plot track comparisons
+            plot_track_comparison(server, track_results, round_num)
+
+        return track_results
+
+    except Exception as e:
+        print(f"Error evaluating track models: {e}")
+        import traceback
+        traceback.print_exc()
+        return {}
+
+def plot_track_comparison(server, track_results, round_num):
+    """Plot comparison of track performance metrics.
+
+    Args:
+        server: FederatedServer instance
+        track_results: Dictionary with track evaluation results
+        round_num: Current round number
+    """
+    if not track_results:
+        return
+
+    # Create plots directory if it doesn't exist
+    plots_dir = os.path.join(server.output_dir, "plots")
+    os.makedirs(plots_dir, exist_ok=True)
+
+    # Plot based on experiment type
+    if server.experiment_type == "n_cmapss":
+        # RUL prediction metrics comparison
+        metrics = ['rmse', 'mae', 'r_squared', 'within_10_cycles', 'within_20_cycles']
+        titles = ['RMSE (lower is better)', 'MAE (lower is better)',
+                 'R² (higher is better)', 'Within ±10 cycles %', 'Within ±20 cycles %']
+
+        plt.figure(figsize=(15, 12))
+
+        for i, (metric, title) in enumerate(zip(metrics, titles)):
+            plt.subplot(3, 2, i+1)
+
+            # Extract metric values for each track
+            track_names = list(track_results.keys())
+            metric_values = [track_results[track]['rmse'] if metric == 'rmse' else track_results[track][metric]
+                             for track in track_names]
+
+            # Create bar chart
+            bars = plt.bar(track_names, metric_values)
+
+            # Add value labels on top of bars
+            for bar in bars:
+                height = bar.get_height()
+                plt.annotate(f'{height:.2f}',
+                             xy=(bar.get_x() + bar.get_width() / 2, height),
+                             xytext=(0, 3),  # 3 points vertical offset
+                             textcoords="offset points",
+                             ha='center', va='bottom')
+
+            plt.title(title)
+            plt.xticks(rotation=45, ha='right')
+            plt.tight_layout()
+
+        plt.suptitle(f'Track Performance Comparison - Round {round_num}', y=1.02, fontsize=16)
+        plt.tight_layout()
+        plt.savefig(os.path.join(plots_dir, f'track_comparison_rul_round_{round_num}.png'),
+                    bbox_inches='tight')
+        plt.close()
+
+    elif server.experiment_type == "mnist":
+        # Classification metrics comparison
+        metrics = ['accuracy', 'precision', 'recall', 'f1']
+        titles = ['Accuracy', 'Precision', 'Recall', 'F1 Score']
+
+        plt.figure(figsize=(12, 10))
+
+        for i, (metric, title) in enumerate(zip(metrics, titles)):
+            plt.subplot(2, 2, i+1)
+
+            # Extract metric values for each track
+            track_names = list(track_results.keys())
+            metric_values = [track_results[track][metric] for track in track_names]
+
+            # Create bar chart
+            bars = plt.bar(track_names, metric_values)
+
+            # Add value labels on top of bars
+            for bar in bars:
+                height = bar.get_height()
+                plt.annotate(f'{height:.4f}',
+                             xy=(bar.get_x() + bar.get_width() / 2, height),
+                             xytext=(0, 3),  # 3 points vertical offset
+                             textcoords="offset points",
+                             ha='center', va='bottom')
+
+            plt.title(title)
+            plt.xticks(rotation=45, ha='right')
+            plt.ylim(0, 1.1)  # Scale for classification metrics
+            plt.grid(axis='y')
+            plt.tight_layout()
+
+        plt.suptitle(f'Track Performance Comparison - Round {round_num}', y=1.02, fontsize=16)
+        plt.tight_layout()
+        plt.savefig(os.path.join(plots_dir, f'track_comparison_mnist_round_{round_num}.png'),
+                    bbox_inches='tight')
+        plt.close()
+
+def plot_track_progress(server, round_num):
+    """Plot track performance across rounds.
+
+    Args:
+        server: FederatedServer instance
+        round_num: Current round number
+    """
+    # Check if we have track results
+    if "track_results" not in server.training_history or not server.training_history["track_results"]:
+        print("No track results found in training history - cannot create progress plots")
+        return
+
+    # Get track results from all rounds
+    track_history = server.training_history["track_results"]
+
+    # Only proceed if we have at least 2 rounds of track data
+    if len(track_history) < 2:
+        print(f"Only {len(track_history)} rounds of track data found - need at least 2 to create progress plots")
+        return
+
+    print(f"Creating track progress plots with data from {len(track_history)} rounds")
+
+    # Plot directory
+    plots_dir = os.path.join(server.output_dir, "plots")
+    os.makedirs(plots_dir, exist_ok=True)
+
+    # Get all rounds with track data
+    rounds = sorted([int(r) for r in track_history.keys()])
+
+    # Find all track names across all rounds
+    all_tracks = set()
+    for r in rounds:
+        if str(r) in track_history:
+            all_tracks.update(track_history[str(r)].keys())
+
+    all_tracks = sorted(list(all_tracks))
+
+    # Different metrics based on experiment type
+    if server.experiment_type == "n_cmapss":
+        metrics = [
+            {"name": "rmse", "title": "RMSE (lower is better)", "lower_is_better": True},
+            {"name": "mae", "title": "MAE (lower is better)", "lower_is_better": True},
+            {"name": "r_squared", "title": "R² (higher is better)", "lower_is_better": False},
+            {"name": "within_10_cycles", "title": "Within ±10 cycles (%)", "lower_is_better": False},
+            {"name": "within_20_cycles", "title": "Within ±20 cycles (%)", "lower_is_better": False}
+        ]
+    elif server.experiment_type == "mnist":
+        metrics = [
+            {"name": "accuracy", "title": "Accuracy", "lower_is_better": False},
+            {"name": "precision", "title": "Precision", "lower_is_better": False},
+            {"name": "recall", "title": "Recall", "lower_is_better": False},
+            {"name": "f1", "title": "F1 Score", "lower_is_better": False}
+        ]
+
+    # Create a figure for each metric
+    for metric_info in metrics:
+        plt.figure(figsize=(12, 6))
+
+        metric = metric_info["name"]
+        title = metric_info["title"]
+
+        # For each track, plot its metric over time
+        for track in all_tracks:
+            track_values = []
+            valid_rounds = []
+
+            # Collect metric values across rounds for this track
+            for r in rounds:
+                r_str = str(r)
+                if r_str in track_history and track in track_history[r_str]:
+                    try:
+                        # Some tracks might be missing in certain rounds
+                        track_values.append(track_history[r_str][track][metric])
+                        valid_rounds.append(r)
+                    except KeyError:
+                        continue
+
+            # Only plot if we have data
+            if valid_rounds and track_values:
+                plt.plot(valid_rounds, track_values, marker='o', label=track)
+
+        # Add global model metric if available
+        if server.experiment_type == "mnist" and metric == "accuracy" and len(server.training_history.get("global_test_accuracy", [])) > 0:
+            # Filter only rounds that match track rounds
+            global_values = []
+            for i, r in enumerate(server.training_history["rounds"]):
+                if r in rounds:
+                    global_values.append(server.training_history["global_test_accuracy"][i])
+
+            if global_values:
+                plt.plot(rounds[:len(global_values)], global_values, marker='s', linestyle='--',
+                         color='black', linewidth=2, label='Global Model')
+
+        elif server.experiment_type == "n_cmapss" and metric == "rmse" and len(server.training_history.get("global_test_loss", [])) > 0:
+            # Filter only rounds that match track rounds
+            global_values = []
+            for i, r in enumerate(server.training_history["rounds"]):
+                if r in rounds:
+                    global_values.append(server.training_history["global_test_loss"][i])
+
+            if global_values:
+                plt.plot(rounds[:len(global_values)], global_values, marker='s', linestyle='--',
+                         color='black', linewidth=2, label='Global Model')
+
+        plt.title(f'Track {title} Over Rounds')
+        plt.xlabel('Round')
+        plt.ylabel(title)
+        plt.grid(True)
+        plt.legend(loc='best')
+
+        # Save figure
+        plt.savefig(os.path.join(plots_dir, f'track_progress_{metric}_round_{round_num}.png'),
+                   bbox_inches='tight')
+        plt.close()
+
+    # Create a comprehensive multi-metric plot for comparison
+    plt.figure(figsize=(15, 10))
+
+    # Different subplot layout based on number of metrics
+    rows = 2 if len(metrics) <= 4 else 3
+    cols = 2 if len(metrics) <= 4 else (3 if len(metrics) <= 9 else 4)
+
+    for i, metric_info in enumerate(metrics[:rows*cols]):  # Limit to fit subplot grid
+        plt.subplot(rows, cols, i+1)
+
+        metric = metric_info["name"]
+        title = metric_info["title"]
+
+        # For each track, plot its metric over time
+        for track in all_tracks:
+            track_values = []
+            valid_rounds = []
+
+            # Collect metric values across rounds for this track
+            for r in rounds:
+                r_str = str(r)
+                if r_str in track_history and track in track_history[r_str]:
+                    try:
+                        track_values.append(track_history[r_str][track][metric])
+                        valid_rounds.append(r)
+                    except KeyError:
+                        continue
+
+            # Only plot if we have data
+            if valid_rounds and track_values:
+                plt.plot(valid_rounds, track_values, marker='o', label=track)
+
+        plt.title(title)
+        plt.xlabel('Round')
+        plt.ylabel(title)
+        plt.grid(True)
+
+        # Only add legend to the first subplot to save space
+        if i == 0:
+            plt.legend(loc='best')
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(plots_dir, f'track_metrics_comparison_round_{round_num}.png'),
+               bbox_inches='tight')
+    plt.close()
+
+    print(f"Saved track progress plots for round {round_num}")

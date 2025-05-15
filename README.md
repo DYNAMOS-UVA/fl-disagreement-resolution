@@ -1,3 +1,17 @@
+# Federated Learning with Disagreement Resolution
+
+## Track-Specific Evaluation and Visualization
+
+The federated learning system supports track-specific evaluation, where each separate model track created due to client disagreements is evaluated individually. This provides insights into how the different tracks perform compared to the global model.
+
+Key features:
+- Each track's performance metrics (accuracy, precision, recall, F1 score) are evaluated and displayed at the end of each round
+- Track comparison plots show the relative performance of each track within a round
+- Track progress plots visualize how each track's performance evolves over time
+- Detailed track evaluation results are saved as JSON files for further analysis
+
+The evaluation system automatically detects when multiple tracks are created due to client disagreements and evaluates each track's model independently against the test dataset.
+
 # Federated Learning Framework
 
 A modular, flexible framework for federated learning experiments that supports both N-CMAPSS RUL prediction and MNIST classification (with extension support for other datasets).
@@ -172,61 +186,4 @@ The framework supports two types of data distribution for MNIST:
 
 ## Results Structure
 
-By default, each experiment creates a timestamped directory under `results/` with the following structure:
-
-```
-results/fl_simulation_YYYYMMDD_HHMMSS/
-├── model_storage/                       # All models are organized here
-│   ├── global_model_initial/            # Initial global model
-│   │   ├── metadata.json                # Model metadata
-│   │   └── model.pt                     # Model weights
-│   └── round_1/                         # Data for round 1
-│       ├── clients/                     # Client models
-│       │   ├── client_0/                # Model from client 0
-│       │   │   ├── metadata.json        # Model metadata
-│       │   │   └── model.pt             # Trained model weights
-│       │   ├── client_1/
-│       │   └── ...
-│       ├── global_model_for_training/   # Global model distributed to clients
-│       └── global_model_aggregated/     # Aggregated model after client training
-└── output/                              # Experiment output
-    ├── clients/                         # Client-specific results
-    │   └── ...
-    ├── fl_results.json                  # Overall experiment results
-    ├── plots/                           # Performance visualizations
-    │   └── ...
-    └── server/                          # Server results
-        ├── plots/                       # Performance visualizations
-        │   └── ...
-        └── training_history_round_*.json # Server training history
-```
-
-You can specify a custom results directory with the `--results-dir` option.
-
-## Output Structure
-
-The framework creates the following structure in the results directory:
-
-- `model_storage/`: All model files (initial, training, aggregated, and client models)
-- `output/clients/`: Individual client training results
-- `output/server/`: Server aggregation and evaluation results
-- `output/plots/`: Performance plots and visualizations
-- `output/fl_results.json`: Overall federated learning results
-
-## Extending the Framework
-
-To add a new dataset or experiment type:
-
-1. Create a new module in `fl_module/` for your dataset
-2. Implement the dataset class, and data loading/preprocessing utilities
-3. Add a new model class in `fl_module/models.py`
-4. Update the orchestrator, client, and server to support the new experiment type
-
-## Requirements
-
-- PyTorch
-- torchvision (for MNIST)
-- NumPy
-- Matplotlib
-- scikit-learn
-- seaborn (for visualization)
+By default, each experiment creates a timestamped directory under `

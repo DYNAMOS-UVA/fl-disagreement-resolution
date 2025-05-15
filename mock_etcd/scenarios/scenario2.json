@@ -1,0 +1,78 @@
+{
+  "name": "Complex Overlapping Disagreements",
+  "description": "Scenario with complex overlapping disagreements involving all clients. Tests the system's ability to create optimal tracks and handle bidirectional disagreements.",
+  "expected_tracks": {
+    "track_c0_c2_no1_no3": "For clients 0 and 2, excluding clients 1 and 3",
+    "track_1_no0_no2_no4": "For client 1, excluding clients 0, 2, and 4",
+    "track_3_no0": "For client 3, excluding client 0",
+    "track_4_no1": "For client 4, excluding client 1",
+    "track_5_no0_no4": "For client 5, excluding clients 0 and 4",
+    "global": "Empty global track (reference only)"
+  },
+  "disagreements": {
+    "client_0": [
+      {
+        "type": "bidirectional",
+        "target": "client_1",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      },
+      {
+        "type": "bidirectional",
+        "target": "client_3",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      },
+      {
+        "type": "outbound",
+        "target": "client_5",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_1": [
+      {
+        "type": "bidirectional",
+        "target": "client_2",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      },
+      {
+        "type": "bidirectional",
+        "target": "client_4",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_2": [
+      {
+        "type": "inbound",
+        "target": "client_3",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_4": [
+      {
+        "type": "outbound",
+        "target": "client_5",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ]
+  }
+}
