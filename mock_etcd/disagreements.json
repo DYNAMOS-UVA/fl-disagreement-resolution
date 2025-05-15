@@ -1,77 +1,11 @@
 {
-  "client_0": [
+  "3": [
     {
-      "type": "inbound",
-      "target": "client_1",
-      "active_rounds": {
-        "start": 1,
-        "end": null
-      }
-    },
-    {
-      "type": "inbound",
-      "target": "client_2",
+      "type": "full",
+      "description": "Client 3 opts for full exclusion in rounds 1-2",
       "active_rounds": {
         "start": 1,
         "end": 2
-      }
-    }
-  ],
-  "client_1": [
-    {
-      "type": "inbound",
-      "target": "client_3",
-      "active_rounds": {
-        "start": 1,
-        "end": 2
-      }
-    },
-    {
-      "type": "inbound",
-      "target": "client_4",
-      "active_rounds": {
-        "start": 1,
-        "end": 4
-      }
-    }
-  ],
-  "client_2": [
-    {
-      "type": "inbound",
-      "target": "client_5",
-      "active_rounds": {
-        "start": 1,
-        "end": 4
-      }
-    }
-  ],
-  "client_3": [
-    {
-      "type": "inbound",
-      "target": "client_0",
-      "active_rounds": {
-        "start": 1,
-        "end": null
-      }
-    }
-  ],
-  "client_4": [
-    {
-      "type": "inbound",
-      "target": "client_2",
-      "active_rounds": {
-        "start": 1,
-        "end": 4
-      }
-    }
-  ],
-  "client_5": [
-    {
-      "type": "inbound",
-      "target": "client_1",
-      "active_rounds": {
-        "start": 1,
-        "end": null
       }
     }
   ]
