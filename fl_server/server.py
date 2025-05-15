@@ -7,8 +7,8 @@ import json
 from datetime import datetime
 import glob
 
-from models import create_model
-import data_module
+from fl_module import create_model
+import fl_module
 from fl_server.evaluation import evaluate_model
 from fl_server.aggregation import aggregate_models_from_files
 from fl_server.utils import make_json_serializable
@@ -106,17 +106,17 @@ class FederatedServer:
                 raise ValueError("Test directory and test units must be provided for N-CMAPSS")
 
             # Load test data
-            test_samples, test_labels = data_module.load_ncmapss_test_data(
+            test_samples, test_labels = fl_module.load_ncmapss_test_data(
                 self.test_dir,
                 self.test_units,
                 sample_size=sample_size
             )
 
             # Preprocess test data
-            _, test_normalized, _ = data_module.preprocess_ncmapss_data(test_samples, test_samples)
+            _, test_normalized, _ = fl_module.preprocess_ncmapss_data(test_samples, test_samples)
 
             # Create test dataloader
-            self.test_loader = data_module.create_ncmapss_test_dataloader(
+            self.test_loader = fl_module.create_ncmapss_test_dataloader(
                 test_normalized,
                 test_labels,
                 batch_size=64
@@ -128,12 +128,12 @@ class FederatedServer:
                 raise ValueError("Test directory must be provided for MNIST")
 
             # Load MNIST test data
-            test_images, test_labels = data_module.load_mnist_test_data(
+            test_images, test_labels = fl_module.load_mnist_test_data(
                 test_dir=self.test_dir
             )
 
             # Create test dataloader - no preprocessing needed as it's done during download
-            self.test_loader = data_module.create_mnist_test_dataloader(
+            self.test_loader = fl_module.create_mnist_test_dataloader(
                 test_images,
                 test_labels,
                 batch_size=64

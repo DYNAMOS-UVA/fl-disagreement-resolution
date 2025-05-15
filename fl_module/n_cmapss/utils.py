@@ -5,7 +5,7 @@ import numpy as np
 from torch.utils.data import DataLoader
 from sklearn.preprocessing import StandardScaler
 
-from data_module.n_cmapss.dataset import NCMAPSSDataset
+from fl_module.n_cmapss.dataset import NCMAPSSDataset
 
 # Unit to client mapping
 UNIT_TO_CLIENT = {

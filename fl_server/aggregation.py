@@ -4,7 +4,7 @@ import os
 import torch
 import glob
 
-from models import create_model
+from fl_module import create_model
 
 def aggregate_models_from_files(server, clients_dir, aggregation_weights=None):
     """Aggregate models from client files.

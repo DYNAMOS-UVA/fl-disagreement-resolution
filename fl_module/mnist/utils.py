@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 import torchvision
 from torchvision import datasets, transforms
 
-from data_module.mnist.dataset import MNISTDataset
+from fl_module.mnist.dataset import MNISTDataset
 
 def download_mnist_dataset(data_dir='data/mnist'):
     """Download MNIST dataset if not already available.

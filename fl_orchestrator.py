@@ -3,11 +3,11 @@
 import os
 import argparse
 import json
-import data_module
+import fl_module
 
 from fl_client import FederatedClient
 from fl_server import FederatedServer
-from config_loader import ConfigLoader
+from mock_etcd.etcd_loader import MockEtcdLoader
 
 class FederatedOrchestrator:
     """Orchestrator for coordinating clients and server in federated learning."""
@@ -19,7 +19,7 @@ class FederatedOrchestrator:
             config_path: Path to the configuration file
         """
         # Load configuration
-        self.config = ConfigLoader(config_path)
+        self.config = MockEtcdLoader(config_path)
 
         # Get configuration sections
         self.exp_config = self.config.get_experiment_config()
@@ -59,7 +59,7 @@ class FederatedOrchestrator:
             # Setup data if needed
             if not (train_client_data_exists and test_data_exists) or self.data_config.get("force_setup_data", False):
                 print("Setting up MNIST federated data...")
-                data_module.setup_mnist_federated_data(
+                fl_module.setup_mnist_federated_data(
                     num_clients=max(self.client_ids) + 1,  # Ensure enough clients are created
                     samples_per_client=self.data_config.get("client_sample_size", 1000),
                     iid=self.exp_config.get("iid", True)

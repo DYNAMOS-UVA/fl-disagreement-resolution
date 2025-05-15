@@ -7,8 +7,8 @@ import torch.optim as optim
 import json
 from datetime import datetime
 
-from models import create_model
-import data_module
+from fl_module import create_model
+import fl_module
 from fl_client.utils import save_training_results
 from fl_client.training import train_model
 
@@ -107,17 +107,17 @@ class FederatedClient:
         """
         if self.experiment_type == "n_cmapss":
             # Load data for this client
-            samples, labels = data_module.load_ncmapss_client_data(
+            samples, labels = fl_module.load_ncmapss_client_data(
                 self.client_id,
                 self.data_dir,
                 sample_size=sample_size
             )
 
             # Preprocess data
-            samples_normalized, _ = data_module.preprocess_ncmapss_data(samples)
+            samples_normalized, _ = fl_module.preprocess_ncmapss_data(samples)
 
             # Create dataloaders
-            self.train_loader, self.valid_loader = data_module.create_ncmapss_client_dataloaders(
+            self.train_loader, self.valid_loader = fl_module.create_ncmapss_client_dataloaders(
                 samples_normalized,
                 labels,
                 batch_size=self.batch_size
@@ -126,14 +126,14 @@ class FederatedClient:
             print(f"Client {self.client_id} loaded {len(samples)} samples")
         elif self.experiment_type == "mnist":
             # Load MNIST data for this client
-            images, labels = data_module.load_mnist_client_data(
+            images, labels = fl_module.load_mnist_client_data(
                 self.client_id,
                 train_dir=self.data_dir,
                 sample_size=sample_size
             )
 
             # Create dataloaders
-            self.train_loader, self.valid_loader = data_module.create_mnist_client_dataloaders(
+            self.train_loader, self.valid_loader = fl_module.create_mnist_client_dataloaders(
                 images,
                 labels,
                 batch_size=self.batch_size

@@ -1,7 +1,7 @@
 """MNIST dataset class for image classification."""
 
 import torch
-from data_module.base import BaseDataset
+from fl_module.base import BaseDataset
 
 class MNISTDataset(BaseDataset):
     """Dataset class for MNIST image classification."""

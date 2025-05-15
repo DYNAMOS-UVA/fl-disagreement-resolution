@@ -4,7 +4,7 @@ import os
 import json
 from datetime import datetime
 
-class ConfigLoader:
+class MockEtcdLoader:
     """Loads and manages configuration for federated learning."""
 
     def __init__(self, config_path="mock_etcd/configuration.json"):

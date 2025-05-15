@@ -1,7 +1,7 @@
 """N-CMAPSS dataset class for remaining useful life (RUL) prediction."""
 
 import torch
-from data_module.base import BaseDataset
+from fl_module.base import BaseDataset
 
 class NCMAPSSDataset(BaseDataset):
     """Dataset class for N-CMAPSS RUL prediction."""
