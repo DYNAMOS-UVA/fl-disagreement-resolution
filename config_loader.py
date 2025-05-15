@@ -147,21 +147,3 @@ class ConfigLoader:
 
         test_dirs = self.config.get("data", {}).get("test_dir", {})
         return test_dirs.get(experiment_type)
-
-    def save_results(self, results, filename="fl_results.json"):
-        """Save results to a JSON file.
-
-        Args:
-            results: Results dictionary to save
-            filename: Name of the file to save to
-        """
-        output_dir = os.path.join(
-            self.storage_dir,
-            self.config.get("storage", {}).get("structure", {}).get("output_dir", "output")
-        )
-        results_path = os.path.join(output_dir, filename)
-
-        with open(results_path, "w") as f:
-            json.dump(results, f, indent=2)
-
-        print(f"Saved results to {results_path}")

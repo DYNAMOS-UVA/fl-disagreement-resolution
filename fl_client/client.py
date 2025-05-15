@@ -1,7 +1,6 @@
-"""Federated learning client implementation."""
+"""Main federated learning client implementation."""
 
 import os
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -10,6 +9,8 @@ from datetime import datetime
 
 from models import create_model
 import data_module
+from fl_client.utils import save_training_results
+from fl_client.training import train_model
 
 class FederatedClient:
     """Client-side implementation for federated learning."""
@@ -190,141 +191,9 @@ class FederatedClient:
             dict: Dictionary containing training results
         """
         epochs = epochs or self.epochs
-
-        # Set criterion based on experiment type
-        if self.experiment_type == "n_cmapss":
-            criterion = nn.MSELoss()
-        elif self.experiment_type == "mnist":
-            criterion = nn.CrossEntropyLoss()
-        else:
-            raise ValueError(f"Unknown experiment type: {self.experiment_type}")
-
-        optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
-
-        train_losses = []
-        valid_losses = []
-        train_accuracies = []
-        valid_accuracies = []
-
-        self.model.train()
-        print(f"Client {self.client_id} starting training for {epochs} epochs")
-
-        for epoch in range(epochs):
-            # Training
-            train_loss = 0
-            self.model.train()
-            correct = 0
-            total = 0
-
-            for batch_idx, (data, target) in enumerate(self.train_loader):
-                data, target = data.to(self.device), target.to(self.device)
-                optimizer.zero_grad()
-                output = self.model(data)
-                loss = criterion(output, target)
-                loss.backward()
-                optimizer.step()
-                train_loss += loss.item()
-
-                # Calculate accuracy for MNIST
-                if self.experiment_type == "mnist":
-                    _, predicted = torch.max(output.data, 1)
-                    total += target.size(0)
-                    correct += (predicted == target).sum().item()
-
-            # Calculate average training loss
-            train_loss /= len(self.train_loader)
-            train_losses.append(train_loss)
-
-            # Calculate training accuracy for MNIST
-            train_acc = correct / total if self.experiment_type == "mnist" else None
-            if train_acc is not None:
-                train_accuracies.append(train_acc)
-
-            # Validation
-            valid_loss = 0
-            self.model.eval()
-            val_correct = 0
-            val_total = 0
-
-            with torch.no_grad():
-                for data, target in self.valid_loader:
-                    data, target = data.to(self.device), target.to(self.device)
-                    output = self.model(data)
-                    loss = criterion(output, target)
-                    valid_loss += loss.item()
-
-                    # Calculate accuracy for MNIST
-                    if self.experiment_type == "mnist":
-                        _, predicted = torch.max(output.data, 1)
-                        val_total += target.size(0)
-                        val_correct += (predicted == target).sum().item()
-
-            # Calculate average validation loss
-            valid_loss /= len(self.valid_loader)
-            valid_losses.append(valid_loss)
-
-            # Calculate validation accuracy for MNIST
-            valid_acc = val_correct / val_total if self.experiment_type == "mnist" else None
-            if valid_acc is not None:
-                valid_accuracies.append(valid_acc)
-
-            # Print progress
-            if self.experiment_type == "mnist":
-                print(f"Client {self.client_id} - Epoch {epoch+1}/{epochs} - "
-                      f"Train Loss: {train_loss:.6f}, Train Acc: {train_acc:.4f}, "
-                      f"Valid Loss: {valid_loss:.6f}, Valid Acc: {valid_acc:.4f}")
-            else:
-                print(f"Client {self.client_id} - Epoch {epoch+1}/{epochs} - "
-                      f"Train Loss: {train_loss:.6f}, Valid Loss: {valid_loss:.6f}")
-
-        # Create results dictionary
-        training_results = {
-            "client_id": self.client_id,
-            "experiment_type": self.experiment_type,
-            "epochs": epochs,
-            "train_losses": train_losses,
-            "valid_losses": valid_losses,
-            "final_train_loss": train_losses[-1],
-            "final_valid_loss": valid_losses[-1],
-        }
-
-        # Add accuracy metrics for classification tasks
-        if self.experiment_type == "mnist":
-            training_results.update({
-                "train_accuracies": train_accuracies,
-                "valid_accuracies": valid_accuracies,
-                "final_train_accuracy": train_accuracies[-1],
-                "final_valid_accuracy": valid_accuracies[-1]
-            })
-
-        # Save results to output directory
-        self._save_training_results(training_results)
-
-        print(f"Client {self.client_id} finished training")
+        training_results = train_model(self, epochs)
+        save_training_results(self, training_results)
         return training_results
-
-    def _save_training_results(self, results):
-        """Save training results to a JSON file.
-
-        Args:
-            results: Dictionary containing training results
-        """
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-        # Save results to output directory
-        if self.storage_dir:
-            # Make sure the output directory exists
-            output_dir = os.path.join(self.storage_dir, "output", "clients", f"client_{self.client_id}")
-            os.makedirs(output_dir, exist_ok=True)
-            results_path = os.path.join(output_dir, "training_results.json")
-        else:
-            os.makedirs("output/client_results", exist_ok=True)
-            results_path = f"output/client_results/client_{self.client_id}_{timestamp}.json"
-
-        with open(results_path, "w") as f:
-            json.dump(results, f, indent=2)
-
-        print(f"Client {self.client_id} saved training results to {results_path}")
 
     def get_model_parameters(self):
         """Get model parameters to send to the server.
@@ -428,45 +297,3 @@ class FederatedClient:
             print(f"Error loading configuration: {e}")
 
         return default_structure
-
-
-def main():
-    """Run the client as a standalone application."""
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Federated Learning Client")
-    parser.add_argument("--client_id", type=int, required=True, help="Client ID")
-    parser.add_argument("--experiment", type=str, default="n_cmapss", choices=["n_cmapss", "mnist"], help="Experiment type")
-    parser.add_argument("--data_dir", type=str, help="Data directory (defaults to experiment-specific location)")
-    parser.add_argument("--sample_size", type=int, default=1000, help="Sample size per client")
-    parser.add_argument("--batch_size", type=int, default=64, help="Batch size")
-    parser.add_argument("--epochs", type=int, default=5, help="Number of epochs")
-    parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
-    parser.add_argument("--storage_dir", type=str, help="Storage directory for models and results")
-
-    args = parser.parse_args()
-
-    # Set default data directory based on experiment type if not provided
-    if args.data_dir is None:
-        if args.experiment == "n_cmapss":
-            args.data_dir = "data/n-cmapss/train"
-        elif args.experiment == "mnist":
-            args.data_dir = "data/mnist/train"
-
-    # Create and run client
-    client = FederatedClient(
-        client_id=args.client_id,
-        experiment_type=args.experiment,
-        data_dir=args.data_dir,
-        batch_size=args.batch_size,
-        epochs=args.epochs,
-        learning_rate=args.lr,
-        storage_dir=args.storage_dir
-    )
-
-    client.load_data(sample_size=args.sample_size)
-    client.train()
-
-
-if __name__ == "__main__":
-    main()
