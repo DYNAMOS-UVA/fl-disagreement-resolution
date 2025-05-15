@@ -36,6 +36,12 @@ class FederatedOrchestrator:
         # Setup MNIST data if needed
         self._setup_data_if_needed()
 
+        # Create model_storage directory
+        if self.results_dir:
+            structure = self.results_config.get("structure", {})
+            model_storage_dir = structure.get("model_storage_dir", "model_storage")
+            os.makedirs(os.path.join(self.results_dir, model_storage_dir), exist_ok=True)
+
         # Initialize server
         self.server = self._init_server()
 
@@ -167,7 +173,7 @@ class FederatedOrchestrator:
                 client.load_round_model(fl_round)
 
                 # Client trains model and saves results to filesystem
-                client.train(epochs=self.train_config.get("local_epochs", 5))
+                client.train(epochs=self.train_config.get("local_epochs", 5), round_num=fl_round)
 
                 # Client saves trained model to filesystem
                 client.save_round_model(fl_round)

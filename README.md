@@ -176,23 +176,24 @@ By default, each experiment creates a timestamped directory under `results/` wit
 
 ```
 results/fl_simulation_YYYYMMDD_HHMMSS/
-├── global_model_initial/                # Initial global model
-├── round_1/                             # Data for round 1
-│   ├── clients/                         # Client models
-│   │   ├── client_0/                    # Model from client 0
-│   │   │   ├── metadata.json            # Model metadata
-│   │   │   └── model.pt                 # Trained model weights
-│   │   ├── client_1/
-│   │   └── ...
-│   ├── global_model_for_training/       # Global model distributed to clients
-│   └── global_model_aggregated/         # Aggregated model after client training
-├── round_2/
-│   └── ...
+├── model_storage/                       # All models are organized here
+│   ├── global_model_initial/            # Initial global model
+│   │   ├── metadata.json                # Model metadata
+│   │   └── model.pt                     # Model weights
+│   └── round_1/                         # Data for round 1
+│       ├── clients/                     # Client models
+│       │   ├── client_0/                # Model from client 0
+│       │   │   ├── metadata.json        # Model metadata
+│       │   │   └── model.pt             # Trained model weights
+│       │   ├── client_1/
+│       │   └── ...
+│       ├── global_model_for_training/   # Global model distributed to clients
+│       └── global_model_aggregated/     # Aggregated model after client training
 └── output/                              # Experiment output
     ├── clients/                         # Client-specific results
     │   └── ...
     ├── fl_results.json                  # Overall experiment results
-    ├── global_models/                   # Saved models for each round
+    ├── plots/                           # Performance visualizations
     │   └── ...
     └── server/                          # Server results
         ├── plots/                       # Performance visualizations
@@ -204,12 +205,13 @@ You can specify a custom results directory with the `--results-dir` option.
 
 ## Output Structure
 
-If you don't use a specific results directory, the framework will create the following structure:
+The framework creates the following structure in the results directory:
 
-- `output/client_results/`: Individual client training results
-- `output/server_results/`: Server aggregation and evaluation results
-- `output/global_models/`: Saved models for each round
+- `model_storage/`: All model files (initial, training, aggregated, and client models)
+- `output/clients/`: Individual client training results
+- `output/server/`: Server aggregation and evaluation results
 - `output/plots/`: Performance plots and visualizations
+- `output/fl_results.json`: Overall federated learning results
 
 ## Extending the Framework
 

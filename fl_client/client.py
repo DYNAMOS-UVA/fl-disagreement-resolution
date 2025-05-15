@@ -179,18 +179,24 @@ class FederatedClient:
         self.model.load_state_dict(torch.load(model_path, map_location=self.device))
         print(f"Client {self.client_id} loaded model from {model_dir}")
 
-    def train(self, epochs=None):
+    def train(self, epochs=None, round_num=None):
         """Train the model on client data.
 
         Args:
             epochs: Number of epochs to train (defaults to self.epochs)
+            round_num: The current round number
 
         Returns:
             dict: Dictionary containing training results
         """
         epochs = epochs or self.epochs
         training_results = train_model(self, epochs)
-        save_training_results(self, training_results)
+
+        # Add round number to the training results
+        if round_num is not None:
+            training_results["round"] = round_num
+
+        save_training_results(self, training_results, round_num)
         return training_results
 
     def get_model_parameters(self):
@@ -277,7 +283,8 @@ class FederatedClient:
         """
         # Default structure configuration
         default_structure = {
-            "round_template": "round_{round}",
+            "model_storage_dir": "model_storage",
+            "round_template": "model_storage/round_{round}",
             "clients_dir": "clients",
             "global_model": "global_model_for_training",
             "client_prefix": "client_"

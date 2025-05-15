@@ -48,32 +48,33 @@ def read_client_results_from_files(results_dir, client_ids, round_num):
 
     client_results = {}
 
-    # Construct round directory path
-    structure = get_structure_config(results_dir)
-    round_dir = os.path.join(
-        results_dir,
-        structure["round_template"].format(round=round_num)
-    )
-
     for client_id in client_ids:
         try:
-            # Get client directory name pattern from structure config
-            client_prefix = structure.get("client_prefix", "client_")
-
-            # Read results file
+            # The training results are in the output/clients/client_X directory
             client_output_dir = os.path.join(
-                round_dir,
+                results_dir,
+                "output",
                 "clients",
-                f"{client_prefix}{client_id}"
+                f"client_{client_id}"
             )
 
-            results_file = os.path.join(client_output_dir, "training_results.json")
+            # Look for the most recent training results file
+            if os.path.exists(client_output_dir):
+                # Get all training results files in the client's output directory
+                result_files = [f for f in os.listdir(client_output_dir) if f.startswith("training_results_")]
 
-            if os.path.exists(results_file):
-                with open(results_file, 'r') as f:
-                    client_results[client_id] = json.load(f)
+                if result_files:
+                    # Sort by timestamp (newest first)
+                    result_files.sort(reverse=True)
+                    # Read the most recent file
+                    latest_result_file = os.path.join(client_output_dir, result_files[0])
+
+                    with open(latest_result_file, 'r') as f:
+                        client_results[client_id] = json.load(f)
+                else:
+                    print(f"No training results found for client {client_id}")
             else:
-                print(f"Warning: Training results for client {client_id} in round {round_num} not found")
+                print(f"Output directory for client {client_id} not found")
         except Exception as e:
             print(f"Error reading results for client {client_id}: {e}")
 

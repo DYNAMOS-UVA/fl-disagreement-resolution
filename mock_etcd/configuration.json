@@ -2,7 +2,14 @@
   "experiment": {
     "type": "mnist",
     "fl_rounds": 10,
-    "client_ids": [0, 1, 2, 3, 4, 5],
+    "client_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
     "iid": true
   },
   "data": {
@@ -14,7 +21,11 @@
       "n_cmapss": "data/n-cmapss/test",
       "mnist": "data/mnist/test"
     },
-    "test_units": [11, 14, 15],
+    "test_units": [
+      11,
+      14,
+      15
+    ],
     "client_sample_size": 1000,
     "test_sample_size": 500,
     "setup_data": true,
@@ -28,10 +39,10 @@
   "results": {
     "use_timestamped_dir": true,
     "base_dir": "results",
-    "custom_dir": null,
     "structure": {
-      "global_model_initial": "global_model_initial",
-      "round_template": "round_{round}",
+      "model_storage_dir": "model_storage",
+      "global_model_initial": "model_storage/global_model_initial",
+      "round_template": "model_storage/round_{round}",
       "clients_dir": "clients",
       "global_model": "global_model_for_training",
       "global_model_aggregated": "global_model_aggregated",

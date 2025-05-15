@@ -273,16 +273,8 @@ def save_evaluation_results(server, predictions, actual):
     elif server.experiment_type == "mnist":
         plot_mnist_results(server, predictions, actual, cm_plot_path, acc_plot_path, timestamp)
 
-    # Save model
-    if server.results_dir:
-        models_dir = os.path.join(server.results_dir, "output", "global_models")
-        os.makedirs(models_dir, exist_ok=True)
-        model_path = os.path.join(models_dir, f"global_model_round_{server.round}.pt")
-    else:
-        os.makedirs("output/global_models", exist_ok=True)
-        model_path = f'output/global_models/{server.experiment_type}_global_model_round_{server.round}_{timestamp}.pt'
-
-    torch.save(server.global_model.state_dict(), model_path)
+    # We don't need to save the model here as it's already saved in the round-specific directories
+    # When the server calls save_model() during aggregation
 
     print(f"Saved results for round {server.round}")
 

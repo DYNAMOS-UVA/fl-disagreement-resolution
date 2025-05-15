@@ -61,15 +61,20 @@ class FederatedServer:
 
         # Create output directories
         if results_dir:
+            # Get structure config
+            structure = self._get_structure_config()
+
+            # Create output directory
             self.output_dir = os.path.join(results_dir, "output", "server")
             os.makedirs(self.output_dir, exist_ok=True)
             os.makedirs(os.path.join(self.output_dir, "plots"), exist_ok=True)
-            # Create global_models directory
-            os.makedirs(os.path.join(results_dir, "output", "global_models"), exist_ok=True)
+
+            # Create model_storage directory
+            model_storage_path = os.path.join(results_dir, structure["model_storage_dir"])
+            os.makedirs(model_storage_path, exist_ok=True)
         else:
             os.makedirs("output/server_results", exist_ok=True)
             os.makedirs("output/plots", exist_ok=True)
-            os.makedirs("output/global_models", exist_ok=True)
 
         # Initialize model based on experiment type
         self._init_model()
@@ -425,8 +430,9 @@ class FederatedServer:
         """
         # Default structure configuration
         default_structure = {
-            "global_model_initial": "global_model_initial",
-            "round_template": "round_{round}",
+            "model_storage_dir": "model_storage",
+            "global_model_initial": "model_storage/global_model_initial",
+            "round_template": "model_storage/round_{round}",
             "clients_dir": "clients",
             "global_model": "global_model_for_training",
             "global_model_aggregated": "global_model_aggregated",
