@@ -896,26 +896,30 @@ def plot_track_progress(server, round_num):
 
         # Add global model metric if available
         if server.experiment_type == "mnist" and metric == "accuracy" and len(server.training_history.get("global_test_accuracy", [])) > 0:
-            # Filter only rounds that match track rounds
-            global_values = []
-            for i, r in enumerate(server.training_history["rounds"]):
-                if r in rounds:
-                    global_values.append(server.training_history["global_test_accuracy"][i])
+            # Only add Global Model line if 'global' track doesn't already exist in all_tracks
+            if 'global' not in all_tracks:
+                # Filter only rounds that match track rounds
+                global_values = []
+                for i, r in enumerate(server.training_history["rounds"]):
+                    if r in rounds:
+                        global_values.append(server.training_history["global_test_accuracy"][i])
 
-            if global_values:
-                plt.plot(rounds[:len(global_values)], global_values, marker='s', linestyle='--',
-                         color='black', linewidth=2, label='Global Model')
+                if global_values:
+                    plt.plot(rounds[:len(global_values)], global_values, marker='s', linestyle='--',
+                             color='black', linewidth=2, label='Global Model')
 
         elif server.experiment_type == "n_cmapss" and metric == "rmse" and len(server.training_history.get("global_test_loss", [])) > 0:
-            # Filter only rounds that match track rounds
-            global_values = []
-            for i, r in enumerate(server.training_history["rounds"]):
-                if r in rounds:
-                    global_values.append(server.training_history["global_test_loss"][i])
+            # Only add Global Model line if 'global' track doesn't already exist in all_tracks
+            if 'global' not in all_tracks:
+                # Filter only rounds that match track rounds
+                global_values = []
+                for i, r in enumerate(server.training_history["rounds"]):
+                    if r in rounds:
+                        global_values.append(server.training_history["global_test_loss"][i])
 
-            if global_values:
-                plt.plot(rounds[:len(global_values)], global_values, marker='s', linestyle='--',
-                         color='black', linewidth=2, label='Global Model')
+                if global_values:
+                    plt.plot(rounds[:len(global_values)], global_values, marker='s', linestyle='--',
+                             color='black', linewidth=2, label='Global Model')
 
         plt.title(f'Track {title} Over Rounds')
         plt.xlabel('Round')
