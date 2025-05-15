@@ -15,7 +15,7 @@ class MockEtcdLoader:
         """
         self.config_path = config_path
         self.config = self._load_config()
-        self.storage_dir = self._setup_storage_dir()
+        self.results_dir = self._setup_results_dir()
 
     def _load_config(self):
         """Load configuration from JSON file.
@@ -32,36 +32,36 @@ class MockEtcdLoader:
         except json.JSONDecodeError:
             raise ValueError(f"Invalid JSON in configuration file {self.config_path}")
 
-    def _setup_storage_dir(self):
-        """Setup and return the storage directory path.
+    def _setup_results_dir(self):
+        """Setup and return the results directory path.
 
         Returns:
-            str: Path to the storage directory
+            str: Path to the results directory
         """
-        storage_config = self.config.get("storage", {})
+        results_config = self.config.get("results", {})
         experiment_type = self.config.get("experiment", {}).get("type", "unknown")
 
         # If a custom directory is specified, use it
-        if storage_config.get("custom_dir"):
-            storage_dir = storage_config["custom_dir"]
+        if results_config.get("custom_dir"):
+            results_dir = results_config["custom_dir"]
         # Otherwise, use a timestamped directory in the base directory if specified
-        elif storage_config.get("use_timestamped_dir", True):
+        elif results_config.get("use_timestamped_dir", True):
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            storage_dir = os.path.join(
-                storage_config.get("base_dir", "storage"),
+            results_dir = os.path.join(
+                results_config.get("base_dir", "results"),
                 f"fl_simulation_{timestamp}_{experiment_type}"
             )
         # Otherwise, just use the base directory
         else:
-            storage_dir = storage_config.get("base_dir", "storage")
+            results_dir = results_config.get("base_dir", "results")
 
         # Create the directory if it doesn't exist
-        os.makedirs(storage_dir, exist_ok=True)
+        os.makedirs(results_dir, exist_ok=True)
 
         # Create the output directory
         output_dir = os.path.join(
-            storage_dir,
-            storage_config.get("structure", {}).get("output_dir", "output")
+            results_dir,
+            results_config.get("structure", {}).get("output_dir", "output")
         )
         os.makedirs(output_dir, exist_ok=True)
 
@@ -70,7 +70,7 @@ class MockEtcdLoader:
         os.makedirs(server_output_dir, exist_ok=True)
         os.makedirs(os.path.join(server_output_dir, "plots"), exist_ok=True)
 
-        return storage_dir
+        return results_dir
 
     def get_experiment_config(self):
         """Get experiment configuration.
@@ -96,19 +96,19 @@ class MockEtcdLoader:
         """
         return self.config.get("training", {})
 
-    def get_storage_config(self):
-        """Get storage configuration.
+    def get_results_config(self):
+        """Get results configuration.
 
         Returns:
-            dict: Storage configuration
+            dict: Results configuration
         """
-        config = self.config.get("storage", {})
-        # Add the computed storage directory
-        config["storage_dir"] = self.storage_dir
+        config = self.config.get("results", {})
+        # Add the computed results directory
+        config["results_dir"] = self.results_dir
         return config
 
     def get_path(self, *path_components):
-        """Get a path within the storage directory.
+        """Get a path within the results directory.
 
         Args:
             *path_components: Components of the path to join
@@ -116,7 +116,7 @@ class MockEtcdLoader:
         Returns:
             str: Full path
         """
-        return os.path.join(self.storage_dir, *path_components)
+        return os.path.join(self.results_dir, *path_components)
 
     def get_train_dir(self, experiment_type=None):
         """Get the training data directory for the specified experiment type.

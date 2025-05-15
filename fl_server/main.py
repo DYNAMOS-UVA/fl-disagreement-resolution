@@ -10,7 +10,7 @@ def main():
     parser.add_argument("--test_dir", type=str, help="Test data directory (defaults to experiment-specific location)")
     parser.add_argument("--test_units", type=int, nargs="+", default=[11, 14, 15], help="Test units (for N-CMAPSS)")
     parser.add_argument("--sample_size", type=int, default=500, help="Sample size per test unit (for N-CMAPSS)")
-    parser.add_argument("--storage_dir", type=str, help="Storage directory for models and results")
+    parser.add_argument("--results_dir", type=str, help="Results directory for models and outputs")
 
     args = parser.parse_args()
 
@@ -26,7 +26,7 @@ def main():
         experiment_type=args.experiment,
         test_dir=args.test_dir,
         test_units=args.test_units if args.experiment == "n_cmapss" else None,
-        storage_dir=args.storage_dir
+        results_dir=args.results_dir
     )
 
     # Load test data

@@ -5,34 +5,33 @@ import json
 from datetime import datetime
 
 def save_training_results(client, results):
-    """Save training results to a JSON file.
+    """Save training results to the output directory.
 
     Args:
-        client: FederatedClient instance
-        results: Dictionary containing training results
+        client: The client object
+        results: The training results to save
     """
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-    # Save results to output directory
-    if client.storage_dir:
-        # Make sure the output directory exists
-        output_dir = os.path.join(client.storage_dir, "output", "clients", f"client_{client.client_id}")
+    # If we have a proper output directory
+    if client.results_dir:
+        # Create the client output directory
+        output_dir = os.path.join(client.results_dir, "output", "clients", f"client_{client.client_id}")
         os.makedirs(output_dir, exist_ok=True)
-        results_path = os.path.join(output_dir, "training_results.json")
     else:
-        os.makedirs("output/client_results", exist_ok=True)
-        results_path = f"output/client_results/client_{client.client_id}_{timestamp}.json"
+        # Fallback to legacy directory
+        output_dir = "output/client_results"
+        os.makedirs(output_dir, exist_ok=True)
 
+    # Save results as JSON
+    results_path = os.path.join(output_dir, f"training_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
     with open(results_path, "w") as f:
         json.dump(results, f, indent=2)
-
     print(f"Client {client.client_id} saved training results to {results_path}")
 
-def get_structure_config(storage_dir):
+def get_structure_config(results_dir):
     """Get the directory structure configuration.
 
     Args:
-        storage_dir: Storage directory for models and results
+        results_dir: Results directory for models and results
 
     Returns:
         dict: Directory structure configuration
@@ -46,13 +45,13 @@ def get_structure_config(storage_dir):
     }
 
     # Try to load from configuration file
-    config_path = os.path.join(os.path.dirname(storage_dir), "mock_etcd/configuration.json")
+    config_path = os.path.join(os.path.dirname(results_dir), "mock_etcd/configuration.json")
     try:
         if os.path.exists(config_path):
             with open(config_path, 'r') as f:
                 config = json.load(f)
-                if "storage" in config and "structure" in config["storage"]:
-                    return config["storage"]["structure"]
+                if "results" in config and "structure" in config["results"]:
+                    return config["results"]["structure"]
     except Exception as e:
         print(f"Error loading configuration: {e}")
 

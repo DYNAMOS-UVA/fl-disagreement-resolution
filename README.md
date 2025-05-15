@@ -5,15 +5,14 @@ A modular, flexible framework for federated learning experiments that supports b
 ## Project Structure
 
 - `fl_orchestrator.py`: Central orchestrator that coordinates clients and server
-- `fl_client.py`: Client-side code for local model training
-- `fl_server.py`: Server-side code for model aggregation and evaluation
-- `models.py`: Model definitions for different experiments
-- `data_module/`: Modular data loading and preprocessing utilities
-  - `data_module/n_cmapss/`: N-CMAPSS dataset utilities
-  - `data_module/mnist/`: MNIST dataset utilities
-- `setup_mnist_data.py`: Utility script to set up MNIST data for federated learning
+- `fl_client/`: Client-side implementation for local model training
+- `fl_server/`: Server-side implementation for model aggregation and evaluation
+- `fl_module/`: Models, data loading and preprocessing utilities
+  - `fl_module/n_cmapss/`: N-CMAPSS dataset utilities
+  - `fl_module/mnist/`: MNIST dataset utilities
+- `mock_etcd/`: Configuration management
 - `run_federated_experiment.sh`: Convenient shell script to run experiments
-- `storage/`: Directory for storing models and results during federated learning simulation
+- `results/`: Directory for storing models and outputs during federated learning simulation
 
 ## Features
 
@@ -74,8 +73,8 @@ The easiest way to run experiments is with the provided shell script:
 # Run MNIST experiment with data setup and IID distribution
 ./run_federated_experiment.sh -e mnist -c "0 1 2 3 4 5" -r 3 -s -i
 
-# Run with a custom storage directory
-./run_federated_experiment.sh -e mnist -c "0 1 2" -r 2 -d "storage/my_experiment"
+# Run with a custom results directory
+./run_federated_experiment.sh -e mnist -c "0 1 2" -r 2 -d "results/my_experiment"
 
 # Force recreate MNIST data with IID distribution
 ./run_federated_experiment.sh -e mnist -c "0 1 2 3" -s -f -i
@@ -95,14 +94,8 @@ python fl_orchestrator.py --experiment n_cmapss --clients 0 1 2 3 4 5 --fl_round
 First, you need to set up the MNIST dataset (if you haven't already):
 
 ```bash
-# Download and distribute MNIST data to clients (IID distribution)
-python setup_mnist_data.py --iid
-
-# Download and distribute MNIST data to clients (Non-IID distribution)
-python setup_mnist_data.py
-
-# Force recreation of MNIST data
-python setup_mnist_data.py --force
+# This will be handled automatically when you run the orchestrator
+# with --setup_data flag
 ```
 
 Then run the federated learning process:
@@ -128,27 +121,17 @@ python fl_orchestrator.py --experiment mnist --clients 0 1 2 3 4 5 --fl_rounds 3
 python fl_orchestrator.py \
   --experiment n_cmapss \
   --clients 0 1 2 \
-  --train_dir data/n-cmapss/train \
-  --test_dir data/n-cmapss/test \
-  --test_units 11 14 15 \
-  --client_sample_size 1000 \
-  --test_sample_size 500 \
-  --batch_size 64 \
-  --local_epochs 5 \
-  --lr 0.001 \
-  --fl_rounds 5
+  --fl_rounds 5 \
+  --local_epochs 5
 
-# MNIST example with custom storage directory
+# MNIST example with custom results directory
 python fl_orchestrator.py \
   --experiment mnist \
   --clients 0 1 2 3 4 5 \
-  --client_sample_size 1000 \
-  --batch_size 64 \
-  --local_epochs 5 \
-  --lr 0.001 \
   --fl_rounds 5 \
+  --local_epochs 5 \
   --iid \
-  --storage_dir storage/my_experiment
+  --results_dir results/my_experiment
 ```
 
 ## Component Usage
@@ -159,10 +142,10 @@ You can run individual clients separately:
 
 ```bash
 # N-CMAPSS client
-python fl_client.py --client_id 0 --experiment n_cmapss
+python -m fl_client.main --client_id 0 --experiment n_cmapss
 
 # MNIST client
-python fl_client.py --client_id 0 --experiment mnist
+python -m fl_client.main --client_id 0 --experiment mnist
 ```
 
 ### Running the Server
@@ -171,10 +154,10 @@ You can run the server alone for testing:
 
 ```bash
 # N-CMAPSS server
-python fl_server.py --experiment n_cmapss --test_units 11 14 15
+python -m fl_server.main --experiment n_cmapss --test_units 11 14 15
 
 # MNIST server
-python fl_server.py --experiment mnist
+python -m fl_server.main --experiment mnist
 ```
 
 ## Data Distribution in MNIST
@@ -187,12 +170,12 @@ The framework supports two types of data distribution for MNIST:
   - Each client has 3 secondary classes (30% of data)
   - This simulates real-world scenarios where clients have different data distributions
 
-## Storage Structure
+## Results Structure
 
-By default, each experiment creates a timestamped directory under `storage/` with the following structure:
+By default, each experiment creates a timestamped directory under `results/` with the following structure:
 
 ```
-storage/fl_simulation_YYYYMMDD_HHMMSS/
+results/fl_simulation_YYYYMMDD_HHMMSS/
 ├── global_model_initial/                # Initial global model
 ├── round_1/                             # Data for round 1
 │   ├── clients/                         # Client models
@@ -201,7 +184,7 @@ storage/fl_simulation_YYYYMMDD_HHMMSS/
 │   │   │   └── model.pt                 # Trained model weights
 │   │   ├── client_1/
 │   │   └── ...
-│   ├── global_model/                    # Global model distributed to clients
+│   ├── global_model_for_training/       # Global model distributed to clients
 │   └── global_model_aggregated/         # Aggregated model after client training
 ├── round_2/
 │   └── ...
@@ -209,7 +192,7 @@ storage/fl_simulation_YYYYMMDD_HHMMSS/
     ├── clients/                         # Client-specific results
     │   └── ...
     ├── fl_results.json                  # Overall experiment results
-    ├── models/                          # Saved models for each round
+    ├── global_models/                   # Saved models for each round
     │   └── ...
     └── server/                          # Server results
         ├── plots/                       # Performance visualizations
@@ -217,23 +200,24 @@ storage/fl_simulation_YYYYMMDD_HHMMSS/
         └── training_history_round_*.json # Server training history
 ```
 
-You can specify a custom storage directory with the `--storage-dir` option.
+You can specify a custom results directory with the `--results-dir` option.
 
 ## Output Structure
 
-- `output/client_results/`: Individual client training results (when not using storage dir)
-- `output/server_results/`: Server aggregation and evaluation results (when not using storage dir)
-- `output/orchestrator_results/`: Overall federated learning results (when not using storage dir)
-- `output/models/`: Saved models for each round (when not using storage dir)
-- `output/plots/`: Performance plots and visualizations (when not using storage dir)
+If you don't use a specific results directory, the framework will create the following structure:
+
+- `output/client_results/`: Individual client training results
+- `output/server_results/`: Server aggregation and evaluation results
+- `output/global_models/`: Saved models for each round
+- `output/plots/`: Performance plots and visualizations
 
 ## Extending the Framework
 
 To add a new dataset or experiment type:
 
-1. Create a new module in `data_module/` for your dataset
+1. Create a new module in `fl_module/` for your dataset
 2. Implement the dataset class, and data loading/preprocessing utilities
-3. Add a new model class in `models.py`
+3. Add a new model class in `fl_module/models.py`
 4. Update the orchestrator, client, and server to support the new experiment type
 
 ## Requirements

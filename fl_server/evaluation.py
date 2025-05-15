@@ -33,8 +33,8 @@ def evaluate_model(server, fl_round=None, client_results=None):
         server.round = fl_round
 
     # Read client results from filesystem if not round 0
-    if fl_round > 0 and not client_results and server.storage_dir and server.client_ids:
-        client_results = read_client_results_from_files(server.storage_dir, server.client_ids, fl_round)
+    if fl_round > 0 and not client_results and server.results_dir and server.client_ids:
+        client_results = read_client_results_from_files(server.results_dir, server.client_ids, fl_round)
 
     # Set criterion based on experiment type
     if server.experiment_type == "n_cmapss":
@@ -227,8 +227,8 @@ def save_evaluation_results(server, predictions, actual):
     """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    # Determine output paths based on storage_dir
-    if server.storage_dir:
+    # Determine output paths based on results_dir
+    if server.results_dir:
         history_path = os.path.join(server.output_dir, f"training_history_round_{server.round}.json")
         loss_plot_path = os.path.join(server.output_dir, "plots", f"global_model_loss_round_{server.round}.png")
 
@@ -274,8 +274,8 @@ def save_evaluation_results(server, predictions, actual):
         plot_mnist_results(server, predictions, actual, cm_plot_path, acc_plot_path, timestamp)
 
     # Save model
-    if server.storage_dir:
-        models_dir = os.path.join(server.storage_dir, "output", "global_models")
+    if server.results_dir:
+        models_dir = os.path.join(server.results_dir, "output", "global_models")
         os.makedirs(models_dir, exist_ok=True)
         model_path = os.path.join(models_dir, f"global_model_round_{server.round}.pt")
     else:
@@ -510,7 +510,7 @@ def plot_mnist_results(server, predictions, actual, cm_plot_path, acc_plot_path,
                    f"Overall: Acc={current_accuracy:.4f}, Prec={current_precision:.4f}, Rec={current_recall:.4f}, F1={current_f1:.4f}",
                    ha="center", fontsize=11, bbox={"facecolor":"orange", "alpha":0.1, "pad":5})
 
-        if server.storage_dir:
+        if server.results_dir:
             per_class_path = os.path.join(server.output_dir, "plots", f"mnist_per_class_metrics_round_{server.round}.png")
         else:
             per_class_path = f"output/plots/mnist_per_class_metrics_round_{server.round}_{timestamp}.png"

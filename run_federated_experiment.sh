@@ -15,14 +15,14 @@ usage() {
   echo "  -s, --setup-data         Setup data (for MNIST only)"
   echo "  -f, --force-setup        Force data setup even if it exists (for MNIST only)"
   echo "  -i, --iid                Use IID data distribution (for MNIST only)"
-  echo "  -d, --storage-dir <dir>  Custom storage directory (default: auto-generated)"
+  echo "  -d, --results-dir <dir>  Custom results directory (default: auto-generated)"
   echo "  -C, --config <file>      Path to configuration file (default: mock_etcd/configuration.json)"
   echo "  -h, --help               Display this help and exit"
   echo
   echo "Examples:"
   echo "  $0 -e n_cmapss -c '0 1 2' -r 5"
   echo "  $0 -e mnist -c '0 1 2 3 4 5' -s -i"
-  echo "  $0 -e mnist -c '0 1 2 3' -d 'storage/my_experiment'"
+  echo "  $0 -e mnist -c '0 1 2 3' -d 'results/my_experiment'"
   echo "  $0 -e mnist -c '0 1 2 3' -s -f -i  # Force new data setup with IID distribution"
   echo "  $0 -C custom_config.json           # Use a custom configuration file"
   exit 1
@@ -37,7 +37,7 @@ BATCH_SIZE=""
 SETUP_DATA=""
 FORCE_SETUP=""
 IID=""
-STORAGE_DIR=""
+RESULTS_DIR=""
 CONFIG_FILE="mock_etcd/configuration.json"
 OVERRIDE_FLAG=""
 
@@ -81,9 +81,9 @@ while [ "$1" != "" ]; do
       IID="--iid"
       OVERRIDE_FLAG="--override"
       ;;
-    -d | --storage-dir )
+    -d | --results-dir )
       shift
-      STORAGE_DIR="--storage_dir $1"
+      RESULTS_DIR="--results_dir $1"
       OVERRIDE_FLAG="--override"
       ;;
     -C | --config )
@@ -137,8 +137,8 @@ if [ "$IID" != "" ]; then
   CMD="$CMD $IID"
 fi
 
-if [ "$STORAGE_DIR" != "" ]; then
-  CMD="$CMD $STORAGE_DIR"
+if [ "$RESULTS_DIR" != "" ]; then
+  CMD="$CMD $RESULTS_DIR"
 fi
 
 # Print experiment details

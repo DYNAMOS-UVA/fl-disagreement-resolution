@@ -25,13 +25,13 @@ class FederatedOrchestrator:
         self.exp_config = self.config.get_experiment_config()
         self.data_config = self.config.get_data_config()
         self.train_config = self.config.get_training_config()
-        self.storage_config = self.config.get_storage_config()
+        self.results_config = self.config.get_results_config()
 
         # Extract common parameters
         self.experiment_type = self.exp_config.get("type")
         self.client_ids = self.exp_config.get("client_ids")
         self.fl_rounds = self.exp_config.get("fl_rounds")
-        self.storage_dir = self.storage_config.get("storage_dir")
+        self.results_dir = self.results_config.get("results_dir")
 
         # Setup MNIST data if needed
         self._setup_data_if_needed()
@@ -43,7 +43,7 @@ class FederatedOrchestrator:
         self.clients = self._init_clients()
 
         print(f"Initialized federated learning orchestrator with {len(self.client_ids)} clients for {self.experiment_type} experiment")
-        print(f"Storage directory: {self.storage_dir}")
+        print(f"Results directory: {self.results_dir}")
 
     def _setup_data_if_needed(self):
         """Setup data if needed based on configuration."""
@@ -79,7 +79,7 @@ class FederatedOrchestrator:
             experiment_type=self.experiment_type,
             test_dir=self.config.get_test_dir(),
             test_units=self.data_config.get("test_units"),
-            storage_dir=self.storage_dir
+            results_dir=self.results_dir
         )
 
         # Load test data for evaluation
@@ -112,7 +112,7 @@ class FederatedOrchestrator:
                 batch_size=self.train_config.get("batch_size", 64),
                 epochs=self.train_config.get("local_epochs", 5),
                 learning_rate=self.train_config.get("learning_rate", 0.001),
-                storage_dir=self.storage_dir
+                results_dir=self.results_dir
             )
             # Load client data
             clients[client_id].load_data(sample_size=self.data_config.get("client_sample_size", 1000))
@@ -212,8 +212,8 @@ def main():
                         help="Force data setup even if it exists")
     parser.add_argument("--iid", action="store_true",
                         help="Use IID data distribution (for MNIST)")
-    parser.add_argument("--storage_dir", type=str,
-                        help="Storage directory for models and results")
+    parser.add_argument("--results_dir", type=str,
+                        help="Results directory for models and outputs")
 
     args = parser.parse_args()
 
@@ -238,8 +238,8 @@ def main():
                 config["data"]["force_setup_data"] = True
             if args.iid:
                 config["experiment"]["iid"] = True
-            if args.storage_dir:
-                config["storage"]["custom_dir"] = args.storage_dir
+            if args.results_dir:
+                config["results"]["custom_dir"] = args.results_dir
 
             # Write updated configuration back to file
             with open(args.config, 'w') as f:

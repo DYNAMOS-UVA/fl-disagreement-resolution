@@ -22,7 +22,7 @@ class FederatedServer:
         test_dir=None,
         test_units=None,
         device=None,
-        storage_dir=None
+        results_dir=None
     ):
         """Initialize the federated learning server.
 
@@ -31,13 +31,13 @@ class FederatedServer:
             test_dir: Directory containing test data
             test_units: List of unit IDs to use for testing (for N-CMAPSS)
             device: Device to run the model on ('cuda' or 'cpu')
-            storage_dir: Directory for storing models and results
+            results_dir: Directory for storing models and results
         """
         self.experiment_type = experiment_type
         self.test_dir = test_dir
         self.test_units = test_units
         self.device = device if device else torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.storage_dir = storage_dir
+        self.results_dir = results_dir
         self.round = 0
         self.global_model = None
         self.client_models = {}
@@ -60,12 +60,12 @@ class FederatedServer:
         }
 
         # Create output directories
-        if storage_dir:
-            self.output_dir = os.path.join(storage_dir, "output", "server")
+        if results_dir:
+            self.output_dir = os.path.join(results_dir, "output", "server")
             os.makedirs(self.output_dir, exist_ok=True)
             os.makedirs(os.path.join(self.output_dir, "plots"), exist_ok=True)
             # Create global_models directory
-            os.makedirs(os.path.join(storage_dir, "output", "global_models"), exist_ok=True)
+            os.makedirs(os.path.join(results_dir, "output", "global_models"), exist_ok=True)
         else:
             os.makedirs("output/server_results", exist_ok=True)
             os.makedirs("output/plots", exist_ok=True)
@@ -206,18 +206,18 @@ class FederatedServer:
             round_num: Round number (None for initial model directory)
             structure: Dictionary with directory structure information
         """
-        if not self.storage_dir or not structure:
+        if not self.results_dir or not structure:
             return None
 
         # Create initial model directory
         if round_num is None:
-            initial_model_dir = os.path.join(self.storage_dir, structure["global_model_initial"])
+            initial_model_dir = os.path.join(self.results_dir, structure["global_model_initial"])
             os.makedirs(initial_model_dir, exist_ok=True)
             return initial_model_dir
 
         # Create round directory
         round_dir = os.path.join(
-            self.storage_dir,
+            self.results_dir,
             structure["round_template"].format(round=round_num)
         )
         os.makedirs(round_dir, exist_ok=True)
@@ -247,18 +247,18 @@ class FederatedServer:
         Returns:
             str: Path to the model directory
         """
-        if not self.storage_dir or not structure:
+        if not self.results_dir or not structure:
             return None
 
         # Initial global model
         if round_num is None:
-            dir_path = os.path.join(self.storage_dir, structure["global_model_initial"])
+            dir_path = os.path.join(self.results_dir, structure["global_model_initial"])
             os.makedirs(dir_path, exist_ok=True)
             return dir_path
 
         # Round-specific global model
         round_dir = os.path.join(
-            self.storage_dir,
+            self.results_dir,
             structure["round_template"].format(round=round_num)
         )
 
@@ -292,12 +292,12 @@ class FederatedServer:
 
     def _save_experiment_results(self):
         """Save experiment results to a JSON file."""
-        # Check if we have a storage directory
-        if not self.storage_dir:
+        # Check if we have a results directory
+        if not self.results_dir:
             return
 
         # Create the output directory if it doesn't exist
-        output_dir = os.path.join(self.storage_dir, "output")
+        output_dir = os.path.join(self.results_dir, "output")
         os.makedirs(output_dir, exist_ok=True)
 
         # Convert NumPy types to Python native types
@@ -316,14 +316,14 @@ class FederatedServer:
         Args:
             round_num: Usually 0 for the initial model
         """
-        if not self.storage_dir:
+        if not self.results_dir:
             return
 
         # Get directory structure from configuration
         structure = self._get_structure_config()
 
         # Create the initial model directory
-        initial_model_dir = os.path.join(self.storage_dir, structure["global_model_initial"])
+        initial_model_dir = os.path.join(self.results_dir, structure["global_model_initial"])
         os.makedirs(initial_model_dir, exist_ok=True)
 
         # Save the initial model
@@ -340,7 +340,7 @@ class FederatedServer:
         Returns:
             str: Path to the prepared model directory
         """
-        if not self.storage_dir:
+        if not self.results_dir:
             return
 
         # Get directory structure from configuration
@@ -348,7 +348,7 @@ class FederatedServer:
 
         # Create round directory
         round_dir = os.path.join(
-            self.storage_dir,
+            self.results_dir,
             structure["round_template"].format(round=round_num)
         )
         os.makedirs(round_dir, exist_ok=True)
@@ -364,11 +364,11 @@ class FederatedServer:
         # Load the appropriate source model
         if use_initial:
             # Use the initial model for round 1
-            source_model_dir = os.path.join(self.storage_dir, structure["global_model_initial"])
+            source_model_dir = os.path.join(self.results_dir, structure["global_model_initial"])
         else:
             # Use the previous round's aggregated model
             prev_round_dir = os.path.join(
-                self.storage_dir,
+                self.results_dir,
                 structure["round_template"].format(round=round_num-1)
             )
             source_model_dir = os.path.join(prev_round_dir, structure["global_model_aggregated"])
@@ -390,7 +390,7 @@ class FederatedServer:
         Returns:
             bool: Whether the aggregation was successful
         """
-        if not self.storage_dir:
+        if not self.results_dir:
             return False
 
         # Get directory structure from configuration
@@ -398,7 +398,7 @@ class FederatedServer:
 
         # Get the round directory
         round_dir = os.path.join(
-            self.storage_dir,
+            self.results_dir,
             structure["round_template"].format(round=round_num)
         )
 
@@ -434,13 +434,13 @@ class FederatedServer:
         }
 
         # Try to load from configuration file
-        config_path = os.path.join(os.path.dirname(self.storage_dir), "mock_etcd/configuration.json")
+        config_path = os.path.join(os.path.dirname(self.results_dir), "mock_etcd/configuration.json")
         try:
             if os.path.exists(config_path):
                 with open(config_path, 'r') as f:
                     config = json.load(f)
-                    if "storage" in config and "structure" in config["storage"]:
-                        return config["storage"]["structure"]
+                    if "results" in config and "structure" in config["results"]:
+                        return config["results"]["structure"]
         except Exception as e:
             print(f"Error loading configuration: {e}")
 

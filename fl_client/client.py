@@ -2,8 +2,6 @@
 
 import os
 import torch
-import torch.nn as nn
-import torch.optim as optim
 import json
 from datetime import datetime
 
@@ -24,7 +22,7 @@ class FederatedClient:
         epochs=5,
         learning_rate=0.001,
         device=None,
-        storage_dir=None
+        results_dir=None
     ):
         """Initialize the federated learning client.
 
@@ -36,7 +34,7 @@ class FederatedClient:
             epochs: Number of local training epochs
             learning_rate: Learning rate for optimization
             device: Device to run the model on ('cuda' or 'cpu')
-            storage_dir: Directory for storing models and results
+            results_dir: Directory for storing models and results
         """
         self.client_id = client_id
         self.experiment_type = experiment_type
@@ -45,7 +43,7 @@ class FederatedClient:
         self.epochs = epochs
         self.learning_rate = learning_rate
         self.device = device if device else torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.storage_dir = storage_dir
+        self.results_dir = results_dir
 
         # Initialize model and training parameters based on experiment type
         if experiment_type == "n_cmapss":
@@ -66,8 +64,8 @@ class FederatedClient:
             raise ValueError(f"Unsupported experiment type: {experiment_type}")
 
         # Create results directory
-        if storage_dir:
-            self.output_dir = os.path.join(storage_dir, "output", "clients", f"client_{client_id}")
+        if results_dir:
+            self.output_dir = os.path.join(results_dir, "output", "clients", f"client_{client_id}")
             os.makedirs(self.output_dir, exist_ok=True)
         else:
             os.makedirs("output/client_results", exist_ok=True)
@@ -82,12 +80,12 @@ class FederatedClient:
         Returns:
             str: Path to the client model directory
         """
-        if not self.storage_dir or not structure:
+        if not self.results_dir or not structure:
             return None
 
         # Create the client directory for this round
         round_dir = os.path.join(
-            self.storage_dir,
+            self.results_dir,
             structure["round_template"].format(round=round_num)
         )
 
@@ -221,7 +219,7 @@ class FederatedClient:
         Returns:
             bool: Whether the model was successfully loaded
         """
-        if not self.storage_dir:
+        if not self.results_dir:
             return False
 
         # Get directory structure from configuration
@@ -229,7 +227,7 @@ class FederatedClient:
 
         # Get the round directory
         round_dir = os.path.join(
-            self.storage_dir,
+            self.results_dir,
             structure["round_template"].format(round=round_num)
         )
 
@@ -249,7 +247,7 @@ class FederatedClient:
         Returns:
             str: Path to the saved model directory
         """
-        if not self.storage_dir:
+        if not self.results_dir:
             return None
 
         # Get directory structure from configuration
@@ -257,7 +255,7 @@ class FederatedClient:
 
         # Create the client directory for this round
         round_dir = os.path.join(
-            self.storage_dir,
+            self.results_dir,
             structure["round_template"].format(round=round_num)
         )
 
@@ -286,13 +284,13 @@ class FederatedClient:
         }
 
         # Try to load from configuration file
-        config_path = os.path.join(os.path.dirname(self.storage_dir), "mock_etcd/configuration.json")
+        config_path = os.path.join(os.path.dirname(self.results_dir), "mock_etcd/configuration.json")
         try:
             if os.path.exists(config_path):
                 with open(config_path, 'r') as f:
                     config = json.load(f)
-                    if "storage" in config and "structure" in config["storage"]:
-                        return config["storage"]["structure"]
+                    if "results" in config and "structure" in config["results"]:
+                        return config["results"]["structure"]
         except Exception as e:
             print(f"Error loading configuration: {e}")
 

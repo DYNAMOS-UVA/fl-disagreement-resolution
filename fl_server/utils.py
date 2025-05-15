@@ -3,6 +3,8 @@
 import os
 import json
 import numpy as np
+from datetime import datetime
+from fl_client.utils import get_structure_config
 
 def make_json_serializable(obj):
     """Convert an object with potential NumPy types to JSON serializable format.
@@ -30,42 +32,49 @@ def make_json_serializable(obj):
     else:
         return obj
 
-def read_client_results_from_files(storage_dir, client_ids, round_num):
-    """Read client training results from filesystem.
+def read_client_results_from_files(results_dir, client_ids, round_num):
+    """Read client training results from filesystem for a specific round.
 
     Args:
-        storage_dir: Base storage directory
-        client_ids: List of client IDs to read results for
-        round_num: Round number to read client results from
+        results_dir: Base results directory
+        client_ids: List of client IDs
+        round_num: Round number
 
     Returns:
-        dict: Dictionary mapping client IDs to training results
+        dict: Dictionary mapping client IDs to their training results
     """
-    if not storage_dir or not client_ids:
+    if not results_dir or not client_ids:
         return {}
 
     client_results = {}
 
+    # Construct round directory path
+    structure = get_structure_config(results_dir)
+    round_dir = os.path.join(
+        results_dir,
+        structure["round_template"].format(round=round_num)
+    )
+
     for client_id in client_ids:
-        # Get client directory path
-        client_prefix = "client_"
+        try:
+            # Get client directory name pattern from structure config
+            client_prefix = structure.get("client_prefix", "client_")
 
-        # Read results file
-        client_output_dir = os.path.join(
-            storage_dir,
-            "output",
-            "clients",
-            f"{client_prefix}{client_id}"
-        )
-        results_path = os.path.join(client_output_dir, "training_results.json")
+            # Read results file
+            client_output_dir = os.path.join(
+                round_dir,
+                "clients",
+                f"{client_prefix}{client_id}"
+            )
 
-        # Read results if file exists
-        if os.path.exists(results_path):
-            try:
-                with open(results_path, 'r') as f:
-                    results = json.load(f)
-                client_results[client_id] = results
-            except Exception as e:
-                print(f"Error reading client {client_id} results: {e}")
+            results_file = os.path.join(client_output_dir, "training_results.json")
+
+            if os.path.exists(results_file):
+                with open(results_file, 'r') as f:
+                    client_results[client_id] = json.load(f)
+            else:
+                print(f"Warning: Training results for client {client_id} in round {round_num} not found")
+        except Exception as e:
+            print(f"Error reading results for client {client_id}: {e}")
 
     return client_results

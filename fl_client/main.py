@@ -13,7 +13,7 @@ def main():
     parser.add_argument("--batch_size", type=int, default=64, help="Batch size")
     parser.add_argument("--epochs", type=int, default=5, help="Number of epochs")
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
-    parser.add_argument("--storage_dir", type=str, help="Storage directory for models and results")
+    parser.add_argument("--results_dir", type=str, help="Results directory for models and outputs")
 
     args = parser.parse_args()
 
@@ -32,7 +32,7 @@ def main():
         batch_size=args.batch_size,
         epochs=args.epochs,
         learning_rate=args.lr,
-        storage_dir=args.storage_dir
+        results_dir=args.results_dir
     )
 
     client.load_data(sample_size=args.sample_size)
