@@ -574,6 +574,137 @@ def evaluate_track_models(server, round_num):
     # Check if tracks directory exists
     if not os.path.exists(tracks_dir):
         print(f"No tracks directory found for round {round_num}")
+
+        # Check if there were tracks in previous rounds
+        had_previous_tracks = False
+        for prev_round in range(1, round_num):
+            prev_tracks_dir = os.path.join(
+                server.results_dir,
+                structure["round_template"].format(round=prev_round),
+                "tracks"
+            )
+            if os.path.exists(prev_tracks_dir):
+                had_previous_tracks = True
+                break
+
+        # If there were tracks before but not now, it means disagreements have expired
+        # Evaluate just the global model for comparison
+        if had_previous_tracks:
+            print(f"Disagreements have expired in round {round_num}, evaluating only the global model")
+
+            # Set criterion based on experiment type
+            if server.experiment_type == "n_cmapss":
+                criterion = nn.MSELoss()
+            elif server.experiment_type == "mnist":
+                criterion = nn.CrossEntropyLoss()
+            else:
+                raise ValueError(f"Unknown experiment type: {server.experiment_type}")
+
+            # Path to global model for this round
+            global_model_dir = os.path.join(
+                server.results_dir,
+                structure["round_template"].format(round=round_num),
+                structure["global_model_aggregated"]
+            )
+            global_model_path = os.path.join(global_model_dir, "model.pt")
+
+            if not os.path.exists(global_model_path):
+                print(f"Global model file not found for round {round_num}")
+                return {}
+
+            # Save the current global model state
+            original_state = copy.deepcopy(server.global_model.state_dict())
+
+            # Load the global model
+            server.global_model.load_state_dict(torch.load(global_model_path, map_location=server.device))
+            server.global_model.eval()
+
+            # Initialize metrics
+            test_loss = 0
+            predictions = []
+            actual = []
+            correct = 0
+            total = 0
+
+            # Evaluate the model
+            with torch.no_grad():
+                for data, target in server.test_loader:
+                    data, target = data.to(server.device), target.to(server.device)
+                    output = server.global_model(data)
+                    loss = criterion(output, target)
+                    test_loss += loss.item()
+
+                    # For regression (N-CMAPSS)
+                    if server.experiment_type == "n_cmapss":
+                        predictions.extend(output.cpu().numpy())
+                        actual.extend(target.cpu().numpy())
+                    # For classification (MNIST)
+                    elif server.experiment_type == "mnist":
+                        _, predicted = torch.max(output.data, 1)
+                        predictions.extend(predicted.cpu().numpy())
+                        actual.extend(target.cpu().numpy())
+                        total += target.size(0)
+                        correct += (predicted == target).sum().item()
+
+            # Calculate average test loss
+            test_loss /= len(server.test_loader)
+
+            # Create results for global model
+            track_results = {}
+
+            if server.experiment_type == "n_cmapss":
+                rmse = np.sqrt(test_loss)
+                predictions = np.array(predictions)
+                actual = np.array(actual)
+                mae = np.mean(np.abs(predictions - actual))
+                mean_actual = np.mean(actual)
+                ss_total = np.sum((actual - mean_actual) ** 2)
+                ss_residual = np.sum((actual - predictions) ** 2)
+                r_squared = 1 - (ss_residual / ss_total)
+                within_10_cycles = np.mean(np.abs(predictions - actual) <= 10.0) * 100
+                within_20_cycles = np.mean(np.abs(predictions - actual) <= 20.0) * 100
+
+                track_results["global"] = {
+                    "rmse": rmse,
+                    "mae": mae,
+                    "r_squared": r_squared,
+                    "within_10_cycles": within_10_cycles,
+                    "within_20_cycles": within_20_cycles
+                }
+
+                print(f"Global model - RMSE: {rmse:.4f}, MAE: {mae:.4f}, R²: {r_squared:.4f}")
+
+            elif server.experiment_type == "mnist":
+                accuracy = correct / total if total > 0 else 0
+                precision, recall, f1, _ = precision_recall_fscore_support(
+                    actual, predictions, average='weighted', zero_division=0
+                )
+
+                track_results["global"] = {
+                    "accuracy": accuracy,
+                    "precision": precision,
+                    "recall": recall,
+                    "f1": f1,
+                    "test_loss": test_loss
+                }
+
+                print(f"Global model - Accuracy: {accuracy:.4f}, F1: {f1:.4f}")
+
+            # Restore the original global model state
+            server.global_model.load_state_dict(original_state)
+
+            # Save track results to a file
+            if track_results and server.results_dir:
+                results_path = os.path.join(
+                    server.output_dir,
+                    f"track_evaluation_round_{round_num}.json"
+                )
+
+                with open(results_path, 'w') as f:
+                    json.dump(make_json_serializable(track_results), f, indent=2)
+
+            return track_results
+
         return {}
 
     # Get track metadata
@@ -736,6 +867,24 @@ def plot_track_comparison(server, track_results, round_num):
     plots_dir = os.path.join(server.output_dir, "plots")
     os.makedirs(plots_dir, exist_ok=True)
 
+    # Check if this is a special case with only global track (expired disagreements)
+    is_global_only = len(track_results) == 1 and "global" in track_results
+
+    # Load previous round results to compare if disagreements have expired
+    prev_results = None
+    if is_global_only and round_num > 1:
+        # Try to load previous round results
+        prev_results_path = os.path.join(
+            server.output_dir,
+            f"track_evaluation_round_{round_num-1}.json"
+        )
+        if os.path.exists(prev_results_path):
+            try:
+                with open(prev_results_path, 'r') as f:
+                    prev_results = json.load(f)
+            except Exception as e:
+                print(f"Failed to load previous round results: {e}")
+
     # Plot based on experiment type
     if server.experiment_type == "n_cmapss":
         # RUL prediction metrics comparison
@@ -780,38 +929,90 @@ def plot_track_comparison(server, track_results, round_num):
         metrics = ['accuracy', 'precision', 'recall', 'f1']
         titles = ['Accuracy', 'Precision', 'Recall', 'F1 Score']
 
-        plt.figure(figsize=(12, 10))
+        # If disagreements have expired and we have previous results,
+        # Create a special plot showing the transition
+        if is_global_only and prev_results and len(prev_results) > 1:
+            plt.figure(figsize=(12, 10))
 
-        for i, (metric, title) in enumerate(zip(metrics, titles)):
-            plt.subplot(2, 2, i+1)
+            # Get last round's tracks and current global track
+            tracks_to_compare = list(prev_results.keys())
 
-            # Extract metric values for each track
-            track_names = list(track_results.keys())
-            metric_values = [track_results[track][metric] for track in track_names]
+            # Ensure global is first if it exists
+            if "global" in tracks_to_compare:
+                tracks_to_compare.remove("global")
+                tracks_to_compare = ["global"] + tracks_to_compare
 
-            # Create bar chart
-            bars = plt.bar(track_names, metric_values)
+            # Create a plot comparing previous round tracks with current global
+            for i, (metric, title) in enumerate(zip(metrics, titles)):
+                plt.subplot(2, 2, i+1)
 
-            # Add value labels on top of bars
-            for bar in bars:
-                height = bar.get_height()
-                plt.annotate(f'{height:.4f}',
-                             xy=(bar.get_x() + bar.get_width() / 2, height),
-                             xytext=(0, 3),  # 3 points vertical offset
-                             textcoords="offset points",
-                             ha='center', va='bottom')
+                # Extract values for comparison
+                previous_values = [prev_results[track][metric] for track in tracks_to_compare]
+                current_value = track_results["global"][metric]
 
-            plt.title(title)
-            plt.xticks(rotation=45, ha='right')
-            plt.ylim(0, 1.1)  # Scale for classification metrics
-            plt.grid(axis='y')
+                # Create a new list with previous tracks and current global
+                all_tracks = tracks_to_compare + ["global (current)"]
+                all_values = previous_values + [current_value]
+
+                # Create bar chart
+                bars = plt.bar(all_tracks, all_values)
+
+                # Add value labels on top of bars
+                for bar in bars:
+                    height = bar.get_height()
+                    plt.annotate(f'{height:.4f}',
+                                xy=(bar.get_x() + bar.get_width() / 2, height),
+                                xytext=(0, 3),  # 3 points vertical offset
+                                textcoords="offset points",
+                                ha='center', va='bottom')
+
+                plt.title(title)
+                plt.xticks(rotation=45, ha='right')
+                plt.ylim(0, 1.1)  # Scale for classification metrics
+                plt.grid(axis='y')
+                plt.tight_layout()
+
+            plt.suptitle(f'Track Performance Comparison - Round {round_num} (Disagreements Expired)', y=1.02, fontsize=16)
             plt.tight_layout()
+            plt.savefig(os.path.join(plots_dir, f'track_comparison_mnist_round_{round_num}.png'),
+                       bbox_inches='tight')
+            plt.close()
 
-        plt.suptitle(f'Track Performance Comparison - Round {round_num}', y=1.02, fontsize=16)
-        plt.tight_layout()
-        plt.savefig(os.path.join(plots_dir, f'track_comparison_mnist_round_{round_num}.png'),
-                    bbox_inches='tight')
-        plt.close()
+        # Standard comparison plot
+        else:
+            plt.figure(figsize=(12, 10))
+
+            for i, (metric, title) in enumerate(zip(metrics, titles)):
+                plt.subplot(2, 2, i+1)
+
+                # Extract metric values for each track
+                track_names = list(track_results.keys())
+                metric_values = [track_results[track][metric] for track in track_names]
+
+                # Create bar chart
+                bars = plt.bar(track_names, metric_values)
+
+                # Add value labels on top of bars
+                for bar in bars:
+                    height = bar.get_height()
+                    plt.annotate(f'{height:.4f}',
+                                 xy=(bar.get_x() + bar.get_width() / 2, height),
+                                 xytext=(0, 3),  # 3 points vertical offset
+                                 textcoords="offset points",
+                                 ha='center', va='bottom')
+
+                plt.title(title)
+                plt.xticks(rotation=45, ha='right')
+                plt.ylim(0, 1.1)  # Scale for classification metrics
+                plt.grid(axis='y')
+                plt.tight_layout()
+
+            subtitle = "Disagreements Expired - All Clients on Global Track" if is_global_only else ""
+            plt.suptitle(f'Track Performance Comparison - Round {round_num}\n{subtitle}', y=1.02, fontsize=16)
+            plt.tight_layout()
+            plt.savefig(os.path.join(plots_dir, f'track_comparison_mnist_round_{round_num}.png'),
+                       bbox_inches='tight')
+            plt.close()
 
 def plot_track_progress(server, round_num):
     """Plot track performance across rounds.
@@ -850,22 +1051,40 @@ def plot_track_progress(server, round_num):
 
     all_tracks = sorted(list(all_tracks))
 
-    # Different metrics based on experiment type
-    if server.experiment_type == "n_cmapss":
+    # Check if we have any track data for current round
+    # If not and we're past round 2, check if disagreements have expired
+    structure = server._get_structure_config()
+    current_tracks_dir = os.path.join(
+        server.results_dir,
+        structure["round_template"].format(round=round_num),
+        "tracks"
+    )
+
+    disagreements_expired = False
+    if round_num > 2 and not os.path.exists(current_tracks_dir):
+        # The disagreements likely expired, we should continue using global track
+        disagreements_expired = True
+        print(f"No tracks directory for round {round_num} - disagreements likely expired")
+
+    # Define metrics based on experiment type
+    if server.experiment_type == "mnist":
         metrics = [
-            {"name": "rmse", "title": "RMSE (lower is better)", "lower_is_better": True},
-            {"name": "mae", "title": "MAE (lower is better)", "lower_is_better": True},
-            {"name": "r_squared", "title": "R² (higher is better)", "lower_is_better": False},
-            {"name": "within_10_cycles", "title": "Within ±10 cycles (%)", "lower_is_better": False},
-            {"name": "within_20_cycles", "title": "Within ±20 cycles (%)", "lower_is_better": False}
+            {"name": "accuracy", "title": "Accuracy"},
+            {"name": "precision", "title": "Precision"},
+            {"name": "recall", "title": "Recall"},
+            {"name": "f1", "title": "F1 Score"}
         ]
-    elif server.experiment_type == "mnist":
+    elif server.experiment_type == "n_cmapss":
         metrics = [
-            {"name": "accuracy", "title": "Accuracy", "lower_is_better": False},
-            {"name": "precision", "title": "Precision", "lower_is_better": False},
-            {"name": "recall", "title": "Recall", "lower_is_better": False},
-            {"name": "f1", "title": "F1 Score", "lower_is_better": False}
+            {"name": "rmse", "title": "RMSE"},
+            {"name": "mae", "title": "MAE"},
+            {"name": "r_squared", "title": "R²"},
+            {"name": "within_10_cycles", "title": "Within ±10 cycles %"},
+            {"name": "within_20_cycles", "title": "Within ±20 cycles %"}
         ]
+    else:
+        print(f"Unknown experiment type: {server.experiment_type}")
+        return
 
     # Create a figure for each metric
     for metric_info in metrics:
@@ -892,6 +1111,13 @@ def plot_track_progress(server, round_num):
 
             # Only plot if we have data
             if valid_rounds and track_values:
+                # If disagreements expired, extend the last value to the current round
+                # But only for tracks that were active in the last round with tracks
+                if disagreements_expired and valid_rounds and valid_rounds[-1] < round_num and track == 'global':
+                    # Add a point for the current round with the same value as the last round
+                    valid_rounds.append(round_num)
+                    track_values.append(track_values[-1])
+
                 plt.plot(valid_rounds, track_values, marker='o', label=track)
 
         # Add global model metric if available
@@ -962,6 +1188,13 @@ def plot_track_progress(server, round_num):
 
             # Only plot if we have data
             if valid_rounds and track_values:
+                # If disagreements expired, extend the last value to the current round
+                # But only for tracks that were active in the last round with tracks
+                if disagreements_expired and valid_rounds and valid_rounds[-1] < round_num and track == 'global':
+                    # Add a point for the current round with the same value as the last round
+                    valid_rounds.append(round_num)
+                    track_values.append(track_values[-1])
+
                 plt.plot(valid_rounds, track_values, marker='o', label=track)
 
         plt.title(title)
