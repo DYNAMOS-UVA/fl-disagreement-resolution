@@ -1,0 +1,61 @@
+{
+  "name": "Simple Time-Limited Inbound Exclusion",
+  "description": "A basic scenario where client 0 disagrees with client 1, but only for rounds 1-2. After round 2, the disagreement expires and all clients use the global track.",
+  "expected_tracks": {
+    "track_0_no1": "For client 0, excluding client 1",
+    "global": "Global track (for clients 1, 2, 3, 4, 5 without specific disagreements)"
+  },
+  "expected_tracks_round_3": {
+    "global": "Global track (for all clients after disagreement expires)"
+  },
+  "validation_rules": {
+    "round_1_rules": [
+      {
+        "type": "client_excludes",
+        "client": 0,
+        "excludes": [1],
+        "description": "Client 0's track should exclude client 1"
+      },
+      {
+        "type": "clients_on_track",
+        "track_name": "global",
+        "clients": [1, 2, 3, 4, 5],
+        "description": "Clients 1, 2, 3, 4, 5 should be on the global track"
+      }
+    ],
+    "round_2_rules": [
+      {
+        "type": "client_excludes",
+        "client": 0,
+        "excludes": [1],
+        "description": "Client 0's track should exclude client 1"
+      },
+      {
+        "type": "clients_on_track",
+        "track_name": "global",
+        "clients": [1, 2, 3, 4, 5],
+        "description": "Clients 1, 2, 3, 4, 5 should be on the global track"
+      }
+    ],
+    "round_3_rules": [
+      {
+        "type": "clients_on_track",
+        "track_name": "global",
+        "clients": [0, 1, 2, 3, 4, 5],
+        "description": "All clients should be on the global track after disagreement expires"
+      }
+    ]
+  },
+  "disagreements": {
+    "client_0": [
+      {
+        "type": "inbound",
+        "target": "client_1",
+        "active_rounds": {
+          "start": 1,
+          "end": 2
+        }
+      }
+    ]
+  }
+}

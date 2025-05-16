@@ -68,228 +68,300 @@ def verify_tracks(results_dir, scenario):
     """Verify that the created tracks match the expected tracks."""
     # Check each round and report on the tracks
     success = True
-    is_time_limited_scenario = "name" in scenario and scenario["name"] == "Time-Limited Disagreements"
-    is_empty_scenario = ("expected_tracks" in scenario and
-                         len(scenario["expected_tracks"]) == 1 and
-                         "global" in scenario["expected_tracks"] and
-                         "disagreements" in scenario and
-                         len(scenario["disagreements"]) == 0)
-
-    # Check for expired disagreements in time-limited scenarios
-    has_expired_disagreements = False
-    has_round_specific_expectations = False
-    max_rounds_with_disagreements = 0
-
-    # Check if this is a time-limited disagreement scenario
-    if "disagreements" in scenario:
-        for client_id, client_disagreements in scenario["disagreements"].items():
-            for disagreement in client_disagreements:
-                if "active_rounds" in disagreement:
-                    active_rounds = disagreement.get("active_rounds", {})
-                    end_round = active_rounds.get("end")
-                    if end_round is not None:
-                        has_expired_disagreements = True
-                        max_rounds_with_disagreements = max(max_rounds_with_disagreements, end_round)
-
-    # Check if there are round-specific expectations
-    for key in scenario.keys():
-        if key.startswith("expected_tracks_round_"):
-            has_round_specific_expectations = True
-
-    # Extract validation rules if present
-    validation_rules = scenario.get("validation_rules", {})
+    is_scenario5 = "name" in scenario and scenario["name"] == "Time-Limited Disagreements"
+    is_empty_scenario = (
+        "expected_tracks" in scenario and
+        len(scenario["expected_tracks"]) == 1 and
+        "global" in scenario["expected_tracks"] and
+        "disagreements" in scenario and
+        len(scenario["disagreements"]) == 0
+    )
 
     # Special handling for empty scenario (no disagreements)
     if is_empty_scenario:
         print("\nTesting empty scenario with no disagreements")
-
-        # If this is an empty scenario, we should verify that all clients use the global track
-        # In the actual implementation, when there are no disagreements, track_metadata.json might
-        # not be created, so we'll validate this differently
-
-        # Get the client output directories to make sure clients ran
         client_dirs = glob.glob(os.path.join(results_dir, "output", "clients", "client_*"))
         if not client_dirs:
             print("❌ No client output directories found")
             return False
-
         print(f"✅ Found {len(client_dirs)} client output directories")
         print("✅ Empty scenario test passed - all clients use global track by default")
         return True
 
-    for round_num in range(1, 6):  # Check rounds 1-5
-        round_dir = os.path.join(results_dir, "model_storage", f"round_{round_num}")
-        if not os.path.exists(round_dir):
-            print(f"Round {round_num} directory does not exist. Stopping verification.")
-            break
+    # Add debugging to check for round directories
+    model_storage_dir = os.path.join(results_dir, "model_storage")
+    round_dirs = [d for d in os.listdir(model_storage_dir) if d.startswith("round_")]
+    max_round = max([int(d.split("_")[1]) for d in round_dirs])
+    print(f"Found {len(round_dirs)} round directories, max round: {max_round}")
 
-        # Check if this round should have tracks or not based on time-limited disagreements
-        tracks_dir = os.path.join(round_dir, "tracks")
+    # Extract validation rules if present
+    validation_rules = scenario.get("validation_rules", {})
 
-        print(f"\n=== Round {round_num} ===")
+    # Go through each round directory
+    for round_dir in sorted(round_dirs, key=lambda x: int(x.split("_")[1])):
+        round_num = int(round_dir.split("_")[1])
+        round_path = os.path.join(model_storage_dir, round_dir)
+        tracks_dir = os.path.join(round_path, "tracks")
 
-        # For rounds after disagreements expire, check that no tracks directory exists
-        if has_expired_disagreements and round_num > max_rounds_with_disagreements:
-            if not os.path.exists(tracks_dir):
-                print(f"✅ Round {round_num}: No tracks directory as expected (all disagreements expired)")
+        # Determine active disagreements for this round
+        active_disagreements = {}
+        if "disagreements" in scenario:
+            # Handle different disagreement formats
+            if isinstance(next(iter(scenario["disagreements"].values())), list):
+                # New format: list of disagreements per client
+                for client_id, disagreement_list in scenario["disagreements"].items():
+                    for disagreement in disagreement_list:
+                        target_id = disagreement.get("target")
+                        if not target_id:
+                            continue
 
-                # Check if there are validation rules for this round
-                round_rules_key = f"round_{round_num}_rules"
-                if validation_rules and round_rules_key in validation_rules:
-                    print(f"Applying validation rules for round {round_num} without tracks")
-                    # In this case, we expect all clients to participate in the global model
-                    # Check client results to make sure they did train
-                    client_dirs = glob.glob(os.path.join(results_dir, "output", "clients", "client_*"))
-                    client_ids_active = [os.path.basename(d).split("_")[1] for d in client_dirs]
-                    print(f"  Found active clients: {sorted(client_ids_active)}")
+                        # Check if this disagreement is active in this round
+                        active_rounds = disagreement.get("active_rounds", {})
+                        start_round = active_rounds.get("start", 1)
+                        end_round = active_rounds.get("end")
+                        is_active = (start_round <= round_num) and (end_round is None or round_num <= end_round)
 
-                    # Apply validation rules that make sense without track_metadata
-                    rules = validation_rules[round_rules_key]
-                    for rule in rules:
-                        rule_type = rule.get("type")
-
-                        # Some rules can still be checked without track_metadata
-                        if rule_type == "clients_share_track" or rule_type == "clients_on_track":
-                            print(f"  ✅ Assumed passed: {rule.get('description', rule_type)}")
+                        if is_active:
+                            if client_id not in active_disagreements:
+                                active_disagreements[client_id] = []
+                            active_disagreements[client_id].append(disagreement)
             else:
-                print(f"❌ Round {round_num}: Found tracks directory but all disagreements should have expired")
+                # Old format: dictionary of disagreements per client
+                for client_id, disagreements in scenario["disagreements"].items():
+                    for target_id, details in disagreements.items():
+                        if "rounds" in details:
+                            # If rounds specified, check if this round is included
+                            if round_num in details["rounds"]:
+                                if client_id not in active_disagreements:
+                                    active_disagreements[client_id] = {}
+                                active_disagreements[client_id][target_id] = details
+                        else:
+                            # If no rounds specified, include for all rounds
+                            if client_id not in active_disagreements:
+                                active_disagreements[client_id] = {}
+                            active_disagreements[client_id][target_id] = details
+
+        # Check if tracks directory exists
+        if not os.path.exists(tracks_dir):
+            print(f"\n=== Round {round_num} ===")
+            print(f"No tracks directory found for round {round_num}")
+
+            # Check if there should be active disagreements for this round
+            if active_disagreements:
+                print(f"❌ Round {round_num}: No tracks directory but should have active disagreements")
+                print(f"Active disagreements: {active_disagreements}")
                 success = False
+            else:
+                print(f"✅ Round {round_num}: No tracks directory as expected (no active disagreements)")
+
+            # Apply validation rules if possible without track metadata
+            round_rules_key = f"round_{round_num}_rules"
+            if validation_rules and round_rules_key in validation_rules:
+                print(f"Applying validation rules for round {round_num} without tracks")
+                client_dirs = glob.glob(os.path.join(results_dir, "output", "clients", "client_*"))
+                client_ids_active = [os.path.basename(d).split("_")[1] for d in client_dirs]
+                print(f"  Found active clients: {sorted(client_ids_active)}")
+
+                # Apply validation rules that make sense without track_metadata
+                rules = validation_rules[round_rules_key]
+                for rule in rules:
+                    rule_type = rule.get("type")
+                    if rule_type in ["clients_share_track", "clients_on_track"]:
+                        print(f"  ✅ Assumed passed: {rule.get('description', rule_type)}")
+
             continue
 
         track_metadata_path = os.path.join(tracks_dir, "track_metadata.json")
+
+        # Skip if no track metadata file
         if not os.path.exists(track_metadata_path):
+            print(f"\n=== Round {round_num} ===")
+            print(f"No track metadata file for round {round_num}")
+
             if round_num == 1:
-                print(f"No track metadata found for round {round_num}")
+                print(f"❌ No track metadata found for round 1, which should always have metadata")
+                success = False
+            elif active_disagreements:
+                print(f"❌ Round {round_num}: No track metadata but disagreements should be active")
                 success = False
             else:
-                # Check if we expect no tracks in this round (all disagreements expired)
-                if has_expired_disagreements and round_num > max_rounds_with_disagreements:
-                    print(f"✅ Round {round_num}: No track metadata as expected (all disagreements expired)")
-                else:
-                    print(f"❌ Round {round_num}: No track metadata found but disagreements should be active")
-                    success = False
+                print(f"✅ Round {round_num}: No track metadata as expected (all disagreements expired)")
+
             continue
 
         with open(track_metadata_path, 'r') as f:
             track_metadata = json.load(f)
 
+        # Print round explanation for all scenarios
+        print(f"\n=== Round {round_num} ===")
+
+        # Check if track_metadata should exist for this round
+        if not active_disagreements:
+            print(f"❌ Round {round_num}: Found tracks directory but all disagreements should have expired")
+            success = False
+            continue
+
         # Check if there's a round-specific expectation
         round_specific_key = f"expected_tracks_round_{round_num}"
 
-        # Handle different scenario file formats
+        # Get expected tracks for this round
         if round_specific_key in scenario:
             print(f"Using round-specific expectations for round {round_num}")
-            current_expected_tracks = scenario[round_specific_key]
-        elif "expected_tracks" in scenario:
-            current_expected_tracks = scenario["expected_tracks"]
+            expected_tracks = scenario[round_specific_key]
         else:
-            # Old format, directly using the dict
-            current_expected_tracks = scenario
+            # Otherwise use the general expected tracks
+            expected_tracks = scenario.get("expected_tracks", {})
 
-        # Print client assignments for all tracks
-        print(f"\nClient track assignments for round {round_num}:")
-        client_track_mapping = track_metadata["client_tracks"]
-        track_to_clients = {}
-        for client_id, track_name in client_track_mapping.items():
-            if track_name not in track_to_clients:
-                track_to_clients[track_name] = []
-            track_to_clients[track_name].append(client_id)
+        # Initialize mapping of client IDs to tracks
+        client_track_mapping = {}
 
-        for track_name, clients in track_to_clients.items():
-            print(f"  Track '{track_name}': Primary for clients {sorted(clients)}")
+        # First, get client primary tracks
+        if "client_tracks" in track_metadata:
+            for client_id, track_name in track_metadata["client_tracks"].items():
+                client_track_mapping[client_id] = track_name
+
+        # Then, add secondary track information
+        if "tracks" in track_metadata:
+            for track_name, clients in track_metadata["tracks"].items():
+                for client_id in clients:
+                    if str(client_id) not in client_track_mapping:
+                        client_track_mapping[str(client_id)] = track_name
+
+        # Print client track assignments for this round
+        print(f"Client track assignments for round {round_num}:")
+        for track_name, track_clients in track_metadata.get("tracks", {}).items():
+            primary_clients = [
+                client_id for client_id, track in track_metadata.get("client_tracks", {}).items()
+                if track == track_name
+            ]
+            print(f"  Track '{track_name}': Primary for clients {sorted(primary_clients)}")
 
         # Print track participants for debugging
         print(f"  Track participants in round {round_num}:")
-        for track_name, participants in track_metadata["tracks"].items():
+        for track_name, participants in track_metadata.get("tracks", {}).items():
             print(f"    Track '{track_name}': {sorted(participants)}")
 
-        # Apply round-specific validation rules if present
-        round_rules_key = f"round_{round_num}_rules"
-        if validation_rules and round_rules_key in validation_rules:
-            print(f"Applying validation rules for round {round_num}")
-            rules = validation_rules[round_rules_key]
+        # Check if track names match expected
+        tracks_match = True
+        # Convert both to sets for easier comparison (ignoring order)
+        expected_track_names = set(expected_tracks.keys())
+        actual_track_names = set(track_metadata.get("tracks", {}).keys())
 
-            # Process each validation rule
-            for rule in rules:
-                rule_type = rule.get("type")
+        if expected_track_names != actual_track_names:
+            missing_tracks = expected_track_names - actual_track_names
+            extra_tracks = actual_track_names - expected_track_names
 
-                if rule_type == "clients_share_track":
-                    # Check if specified clients share the same track
-                    clients = rule.get("clients", [])
-                    if len(clients) >= 2:
-                        client_tracks = [client_track_mapping.get(str(c)) for c in clients]
-                        if len(set(client_tracks)) > 1:  # More than one unique track
-                            print(f"❌ Rule failed: Clients {clients} should share the same track")
-                            print(f"  Actual tracks: {dict(zip(clients, client_tracks))}")
-                            success = False
+            if missing_tracks:
+                print(f"❌ Missing expected tracks: {missing_tracks}")
+                tracks_match = False
+            if extra_tracks:
+                print(f"❌ Unexpected extra tracks: {extra_tracks}")
+                tracks_match = False
 
-                elif rule_type == "client_excludes":
-                    # Check if a client's track excludes another client
-                    client = str(rule.get("client"))
-                    excluded = rule.get("excludes", [])
-                    client_track = client_track_mapping.get(client)
-                    track_participants = track_metadata["tracks"].get(client_track, [])
+        if tracks_match:
+            print(f"Round {round_num}: Track names match expected")
+        else:
+            print(f"❌ Round {round_num}: Track names do not match expected")
+            success = False
 
-                    for ex in excluded:
-                        if int(ex) in track_participants:
-                            print(f"❌ Rule failed: Client {client}'s track should exclude client {ex}")
-                            success = False
-
-                elif rule_type == "client_includes":
-                    # Check if a client's track includes another client
-                    client = str(rule.get("client"))
-                    included = rule.get("includes", [])
-                    client_track = client_track_mapping.get(client)
-                    track_participants = track_metadata["tracks"].get(client_track, [])
-
-                    for inc in included:
-                        if int(inc) not in track_participants:
-                            print(f"❌ Rule failed: Client {client}'s track should include client {inc}")
-                            success = False
-
-                elif rule_type == "clients_on_track":
-                    # Check if specified clients are on a specific track
-                    track_name = rule.get("track_name")
-                    clients = rule.get("clients", [])
-                    clients_on_track = [c for c, t in client_track_mapping.items() if t == track_name]
-
-                    for client in clients:
-                        if str(client) not in clients_on_track:
-                            print(f"❌ Rule failed: Client {client} should be on track '{track_name}'")
-                            print(f"  Actual track: {client_track_mapping.get(str(client))}")
-                            success = False
-
-        # Fall back to track name checking for backward compatibility or when no rules exist
-        elif not is_time_limited_scenario or round_num < 3:
-            actual_tracks = set(track_metadata["tracks"].keys())
-            expected_track_set = set(current_expected_tracks.keys())
-
-            if actual_tracks == expected_track_set:
-                print(f"Round {round_num}: Track names match expected")
+        # Print detailed track information
+        print(f"\nTrack assignments for round {round_num}:")
+        for track_name, description in expected_tracks.items():
+            if track_name in track_metadata.get("tracks", {}):
+                participating_clients = sorted(track_metadata["tracks"][track_name])
+                primary_clients = [
+                    client_id for client_id, track in track_metadata.get("client_tracks", {}).items()
+                    if track == track_name
+                ]
+                print(f"  Track '{track_name}':")
+                print(f"    Expected: {description}")
+                print(f"    Participating clients: {participating_clients}")
+                print(f"    Primary for clients: {sorted(primary_clients)}")
             else:
-                missing_tracks = expected_track_set - actual_tracks
-                extra_tracks = actual_tracks - expected_track_set
-
-                if missing_tracks:
-                    print(f"Round {round_num}: Missing expected tracks: {missing_tracks}")
-                if extra_tracks:
-                    print(f"Round {round_num}: Unexpected tracks: {extra_tracks}")
-
+                print(f"  ❌ Track '{track_name}' not found in actual tracks")
                 success = False
 
-            # Print track details for inspection
-            print(f"\nTrack assignments for round {round_num}:")
-            for track_name, track_clients in track_metadata["tracks"].items():
-                primary_clients = [client for client, track in track_metadata["client_tracks"].items() if track == track_name]
+        # Check validation rules for this round if available
+        round_rules_key = f"round_{round_num}_rules"
+        if round_rules_key in validation_rules:
+            print(f"Applying validation rules for round {round_num}")
+            rules = validation_rules[round_rules_key]
+            for rule in rules:
+                rule_type = rule.get("type")
+                if rule_type == "client_excludes":
+                    client = rule.get("client")
+                    excludes = rule.get("excludes", [])
+                    description = rule.get("description", "")
 
-                print(f"  Track '{track_name}':")
-                if track_name in current_expected_tracks:
-                    print(f"    Expected: {current_expected_tracks[track_name]}")
-                print(f"    Participating clients: {sorted(track_clients)}")
-                print(f"    Primary for clients: {sorted(primary_clients)}")
+                    # Get the track for this client
+                    client_track = client_track_mapping.get(str(client))
+                    if not client_track:
+                        print(f"❌ {description}: Client {client} not found in any track")
+                        success = False
+                        continue
 
-        # Special case for time-limited disagreements (backward compatibility)
-        elif is_time_limited_scenario and round_num >= 3:
+                    # Check that this client's track excludes the specified clients
+                    track_clients = track_metadata.get("tracks", {}).get(client_track, [])
+
+                    for excluded_client in excludes:
+                        if excluded_client in track_clients:
+                            print(f"❌ {description}: Client {excluded_client} should be excluded from {client_track}")
+                            success = False
+
+                elif rule_type == "clients_share_track":
+                    clients = rule.get("clients", [])
+                    description = rule.get("description", "")
+
+                    # Check that all clients are on the same track
+                    tracks = set()
+                    for client in clients:
+                        track = client_track_mapping.get(str(client))
+                        if track:
+                            tracks.add(track)
+
+                    if len(tracks) > 1:
+                        print(f"❌ {description}: Clients {clients} are on different tracks: {tracks}")
+                        success = False
+                    elif len(tracks) == 0:
+                        print(f"❌ {description}: None of the clients {clients} found in any track")
+                        success = False
+
+                elif rule_type == "clients_on_track":
+                    track_name = rule.get("track_name")
+                    clients = rule.get("clients", [])
+                    description = rule.get("description", "")
+
+                    # Check that all specified clients are on the specified track
+                    for client in clients:
+                        client_track = client_track_mapping.get(str(client))
+                        if client_track != track_name:
+                            print(f"❌ {description}: Client {client} should be on track {track_name} but is on {client_track}")
+                            success = False
+
+                elif rule_type == "track_includes_only":
+                    track_name = rule.get("track_name")
+                    clients = rule.get("clients", [])
+                    description = rule.get("description", "")
+
+                    if track_name in track_metadata.get("tracks", {}):
+                        track_clients = set(track_metadata["tracks"][track_name])
+                        expected_clients = set(str(c) for c in clients)
+
+                        if track_clients != expected_clients:
+                            extra = track_clients - expected_clients
+                            missing = expected_clients - track_clients
+                            if extra:
+                                print(f"❌ {description}: Track {track_name} has extra clients: {extra}")
+                                success = False
+                            if missing:
+                                print(f"❌ {description}: Track {track_name} is missing clients: {missing}")
+                                success = False
+                    else:
+                        print(f"❌ {description}: Track {track_name} not found")
+                        success = False
+        # Fall back to special case for time-limited disagreements if needed
+        elif is_scenario5 and round_num >= 3 and not validation_rules:
+            print(f"For Time-Limited Disagreements scenario (Scenario 5), using client-based validation")
             # Apply hard-coded rules for scenario 5
             if round_num == 3:
                 # Check if client 0 and client 5 share the same track (excluding client 1)
@@ -339,14 +411,12 @@ def verify_tracks(results_dir, scenario):
                     print(f"❌ In round 5, client 3's track should still exclude client 0")
                     success = False
 
-            print(f"For Time-Limited Disagreements scenario, using client-based validation")
-
     if success:
-        print("\n✅ SUCCESS: All tracks matched expected configuration")
-        return True
+        print("\n✅ SUCCESS: All tracks match expected configuration")
     else:
         print("\n❌ FAILURE: Some tracks did not match expected configuration")
-        return False
+
+    return success
 
 def main():
     parser = argparse.ArgumentParser(description='Test disagreement scenarios')

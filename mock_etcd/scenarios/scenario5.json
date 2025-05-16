@@ -18,6 +18,14 @@
     "track_4_no2": "For client 4, excluding client 2 (unchanged)",
     "global": "Global track (reference only)"
   },
+  "expected_tracks_round_4": {
+    "track_c0_c5_no1": "For clients 0 and 5, excluding client 1 (unchanged)",
+    "track_1_no4": "For client 1, excluding client 4 only (client 3 exclusion expired)",
+    "track_2_no5": "For client 2, excluding client 5 (unchanged)",
+    "track_3_no0": "For client 3, excluding client 0 (unchanged)",
+    "track_4_no2": "For client 4, excluding client 2 (unchanged)",
+    "global": "Global track (reference only)"
+  },
   "expected_tracks_round_5": {
     "track_c0_c5_no1": "For clients 0 and 5, excluding client 1 (unchanged)",
     "track_3_no0": "For client 3, excluding client 0 (unchanged)",

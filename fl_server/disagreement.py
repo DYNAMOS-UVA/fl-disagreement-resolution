@@ -39,9 +39,18 @@ def get_active_disagreements(disagreements, current_round):
         dict: Dictionary of active disagreements for the current round
     """
     active_disagreements = {}
+    expired_disagreements = {}
+
+    # If no disagreements exist, return empty dict immediately
+    if not disagreements:
+        print(f"Round {current_round}: No disagreements defined in the system")
+        return {}
+
+    print(f"Filtering disagreements for round {current_round}...")
 
     for client_id, client_disagreements in disagreements.items():
         active_client_disagreements = []
+        expired_client_disagreements = []
 
         for disagreement in client_disagreements:
             start_round = disagreement.get("active_rounds", {}).get("start", 0)
@@ -51,8 +60,37 @@ def get_active_disagreements(disagreements, current_round):
             if start_round <= current_round and (end_round is None or current_round <= end_round):
                 active_client_disagreements.append(disagreement)
 
+                # Log the active disagreement for debugging
+                target_info = ""
+                if "target" in disagreement:
+                    target_info = f" with client {disagreement['target']}"
+
+                time_info = ""
+                if end_round is not None:
+                    time_info = f" (expires after round {end_round})"
+
+                print(f"  Active: Client {client_id} {disagreement.get('type')} disagreement{target_info}{time_info}")
+            else:
+                # This disagreement has expired or not yet started
+                expired_client_disagreements.append(disagreement)
+
+                reason = "not yet started" if current_round < start_round else "expired"
+                target_info = ""
+                if "target" in disagreement:
+                    target_info = f" with client {disagreement['target']}"
+
+                print(f"  Inactive: Client {client_id} {disagreement.get('type')} disagreement{target_info} ({reason})")
+
         if active_client_disagreements:
             active_disagreements[client_id] = active_client_disagreements
+
+        if expired_client_disagreements:
+            expired_disagreements[client_id] = expired_client_disagreements
+
+    if not active_disagreements:
+        print(f"Round {current_round}: All disagreements have expired or not yet started")
+    else:
+        print(f"Round {current_round}: Found {len(active_disagreements)} clients with active disagreements")
 
     return active_disagreements
 

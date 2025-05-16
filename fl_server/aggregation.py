@@ -295,6 +295,40 @@ def save_track_models(server, track_parameters, track_info):
     """
     structure = get_structure_config(server)
 
+    # Check if there are any active disagreements - don't create tracks directory if not
+    if not track_info.get("tracks", {}) or (len(track_info.get("tracks", {})) == 1 and "global" in track_info.get("tracks", {})):
+        # No active disagreements or only global track, skip creating tracks directory
+        print(f"No active disagreements for round {server.round}, skipping track creation")
+
+        # Just update the global model for this round
+        global_model_dir = os.path.join(
+            server.results_dir,
+            structure["round_template"].format(round=server.round),
+            structure["global_model_aggregated"]
+        )
+        os.makedirs(os.path.dirname(global_model_dir), exist_ok=True)
+
+        # Get a reference to a clean model to apply parameters
+        temp_model = create_model(
+            server.experiment_type,
+            input_dim=server.input_dim if server.experiment_type == "n_cmapss" else None,
+            hidden_dim=server.hidden_dim if server.experiment_type == "n_cmapss" else None,
+            output_dim=server.output_dim if server.experiment_type == "n_cmapss" else None
+        ).to(server.device)
+
+        # If we have a "global" track, use that
+        if "global" in track_parameters:
+            temp_model.set_parameters(track_parameters["global"])
+        # Otherwise use the first available track
+        elif track_parameters:
+            first_track = next(iter(track_parameters))
+            temp_model.set_parameters(track_parameters[first_track])
+
+        # Save model
+        torch.save(temp_model.state_dict(), global_model_dir)
+        print(f"Saved global model for round {server.round}")
+        return
+
     # Create "tracks" directory for this round
     round_dir = os.path.join(
         server.results_dir,
