@@ -40,6 +40,7 @@ class MockEtcdLoader:
         """
         results_config = self.config.get("results", {})
         experiment_type = self.config.get("experiment", {}).get("type", "unknown")
+        directory_suffix = results_config.get("directory_suffix", "")
 
         # If a custom directory is specified, use it
         if results_config.get("custom_dir"):
@@ -49,7 +50,7 @@ class MockEtcdLoader:
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             results_dir = os.path.join(
                 results_config.get("base_dir", "results"),
-                f"fl_simulation_{timestamp}_{experiment_type}"
+                f"fl_simulation_{timestamp}_{experiment_type}{directory_suffix}"
             )
         # Otherwise, just use the base directory
         else:

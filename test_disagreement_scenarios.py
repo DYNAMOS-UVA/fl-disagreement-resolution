@@ -24,6 +24,14 @@ def load_scenario(scenario_path):
         print(f"Error loading scenario: {e}")
         return None
 
+def get_all_scenarios():
+    """Get a list of all available scenario files."""
+    scenario_dir = "mock_etcd/scenarios"
+    scenario_files = glob.glob(os.path.join(scenario_dir, "scenario*.json"))
+
+    # Sort scenarios numerically instead of lexicographically
+    return sorted(scenario_files, key=lambda f: int(os.path.basename(f).replace("scenario", "").replace(".json", "")))
+
 def copy_disagreements_to_etcd(scenario):
     """Copy disagreements from scenario to mock_etcd/disagreements.json."""
     try:
@@ -35,22 +43,31 @@ def copy_disagreements_to_etcd(scenario):
         print(f"Error copying disagreements: {e}")
         return False
 
-def run_test(scenario_name, dataset="mnist", fl_rounds=3, local_epochs=1):
+def run_test(scenario_input, experiment="mnist", fl_rounds=3, local_epochs=1):
     """Run a federated learning test using the specified scenario and dataset.
 
     Args:
-        scenario_name: Name of the scenario to test
-        dataset: Dataset to use (mnist or n_cmapss)
+        scenario_input: Path to the scenario file or scenario number
+        experiment: Experiment type (mnist or n_cmapss)
         fl_rounds: Number of federated learning rounds
         local_epochs: Number of local training epochs
     """
+    # Determine if scenario_input is a path or just a number/name
+    if scenario_input.isdigit() or os.path.basename(scenario_input).startswith("scenario"):
+        # For built-in scenarios, pass the scenario number/name directly
+        scenario_arg = os.path.basename(scenario_input).replace("scenario", "").replace(".json", "")
+    else:
+        # For custom scenario paths, pass the full path
+        scenario_arg = scenario_input
+
     cmd = [
         "./run_federated_experiment.sh",
-        "-e", dataset,
+        "-e", experiment,
         "-c", "0 1 2 3 4 5",
         "-r", str(fl_rounds),
         "-l", str(local_epochs),
-        "-i"
+        "-i",
+        "-S", scenario_arg
     ]
 
     print(f"Running test with command: {' '.join(cmd)}")
@@ -418,50 +435,106 @@ def verify_tracks(results_dir, scenario):
 
     return success
 
-def main():
-    parser = argparse.ArgumentParser(description='Test disagreement scenarios')
-    parser.add_argument('scenario', help='Scenario name or path to test')
-    parser.add_argument('--rounds', type=int, default=3, help='Number of federated learning rounds')
-    parser.add_argument('--epochs', type=int, default=1, help='Number of local training epochs')
-    parser.add_argument('--dataset', type=str, default='mnist', choices=['mnist', 'n_cmapss'],
-                        help='Dataset to use for testing (mnist or n_cmapss)')
+def run_single_scenario(scenario_path, args):
+    """Run and verify a single scenario.
 
-    args = parser.parse_args()
+    Args:
+        scenario_path: Path to the scenario file
+        args: Command line arguments
 
-    # Determine the scenario path
-    if os.path.exists(args.scenario):
-        scenario_path = args.scenario
-    elif os.path.exists(f"mock_etcd/scenarios/{args.scenario}.json"):
-        scenario_path = f"mock_etcd/scenarios/{args.scenario}.json"
-    else:
-        print(f"Error: Scenario file {args.scenario} not found")
-        return 1
-
+    Returns:
+        bool: True if the test passed, False otherwise
+    """
+    print(f"\n{'=' * 80}")
     print(f"Testing scenario: {scenario_path}")
-    print(f"Using dataset: {args.dataset}")
+    print(f"{'=' * 80}")
+    print(f"Using experiment type: {args.experiment}")
+    print(f"Running for {args.rounds} rounds with {args.local_epochs} local epochs per round")
 
     # Load the scenario
     scenario = load_scenario(scenario_path)
     if not scenario:
-        return 1
-
-    # Copy disagreements to mock_etcd
-    if not copy_disagreements_to_etcd(scenario):
-        return 1
+        return False
 
     # Run the test
-    results_dir = run_test(os.path.basename(scenario_path), args.dataset, args.rounds, args.epochs)
+    results_dir = run_test(scenario_path, args.experiment, args.rounds, args.local_epochs)
     if not results_dir:
-        print("Error: Test failed to run correctly")
-        return 1
+        print("❌ Error: Test failed to run correctly")
+        return False
 
     # Verify the results
     if not verify_tracks(results_dir, scenario):
-        print(f"Test failed: Tracks do not match expected configuration")
-        return 1
+        print(f"❌ Test failed: Tracks do not match expected configuration")
+        return False
 
-    print(f"Test passed: Tracks match expected configuration")
-    return 0
+    print(f"✅ Test passed: Tracks match expected configuration")
+    return True
+
+def main():
+    parser = argparse.ArgumentParser(description='Test disagreement scenarios')
+    parser.add_argument('scenario', help='Scenario name/number or "all" to run all scenarios')
+    parser.add_argument('-r', '--rounds', type=int, default=3,
+                        help='Number of federated learning rounds (default: 3)')
+    parser.add_argument('-l', '--local-epochs', type=int, default=1,
+                        help='Number of local training epochs (default: 1)')
+    parser.add_argument('-e', '--experiment', type=str, default='mnist',
+                        choices=['mnist', 'n_cmapss'],
+                        help='Experiment type to use (mnist or n_cmapss)')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='Enable verbose output')
+
+    args = parser.parse_args()
+
+    # Check if "all" scenarios should be run
+    if args.scenario.lower() == "all":
+        scenario_paths = get_all_scenarios()
+        if not scenario_paths:
+            print("Error: No scenarios found in mock_etcd/scenarios/")
+            return 1
+
+        print(f"Running all {len(scenario_paths)} scenarios...")
+
+        # Track results
+        results = {}
+        success_count = 0
+
+        for scenario_path in scenario_paths:
+            scenario_name = os.path.basename(scenario_path).replace(".json", "")
+            success = run_single_scenario(scenario_path, args)
+            results[scenario_name] = "✅ Passed" if success else "❌ Failed"
+            if success:
+                success_count += 1
+
+        # Print summary
+        print("\n" + "=" * 80)
+        print(f"SCENARIO TEST SUMMARY: {success_count}/{len(scenario_paths)} passed")
+        print("=" * 80)
+        for scenario_name, status in results.items():
+            print(f"{scenario_name:<20}: {status}")
+
+        if success_count == len(scenario_paths):
+            print("\n✅ All scenarios passed!")
+            return 0
+        else:
+            print(f"\n❌ {len(scenario_paths) - success_count} scenarios failed")
+            return 1
+    else:
+        # Determine the scenario path
+        if os.path.exists(args.scenario):
+            scenario_path = args.scenario
+        elif os.path.exists(f"mock_etcd/scenarios/scenario{args.scenario}.json"):
+            scenario_path = f"mock_etcd/scenarios/scenario{args.scenario}.json"
+        elif os.path.exists(f"mock_etcd/scenarios/{args.scenario}.json"):
+            scenario_path = f"mock_etcd/scenarios/{args.scenario}.json"
+        else:
+            print(f"Error: Scenario file {args.scenario} not found")
+            return 1
+
+        # Run single scenario
+        if run_single_scenario(scenario_path, args):
+            return 0
+        else:
+            return 1
 
 if __name__ == "__main__":
     sys.exit(main())

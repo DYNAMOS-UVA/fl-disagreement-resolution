@@ -1,7 +1,7 @@
 {
   "experiment": {
-    "type": "mnist",
-    "fl_rounds": 5,
+    "type": "n_cmapss",
+    "fl_rounds": 11,
     "client_ids": [
       0,
       1,
@@ -33,7 +33,7 @@
   },
   "training": {
     "batch_size": 64,
-    "local_epochs": 1,
+    "local_epochs": 5,
     "learning_rate": 0.001
   },
   "results": {

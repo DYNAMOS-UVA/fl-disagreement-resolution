@@ -7,15 +7,17 @@ usage() {
   echo "Usage: $0 [options]"
   echo
   echo "Options:"
-  echo "  -e, --experiment <name>  Experiment type (n_cmapss or mnist)"
+  echo "  -e, --experiment <n>  Experiment type (n_cmapss or mnist)"
   echo "  -c, --clients <ids>      Client IDs (e.g., '0 1 2 3 4 5')"
   echo "  -r, --rounds <num>       Number of FL rounds (default: 3)"
-  echo "  -l, --local-epochs <num> Number of local epochs (default: 5)"
+  echo "  -l, --local-epochs <num> Number of local training epochs (default: 5)"
   echo "  -b, --batch-size <num>   Batch size (default: 64)"
   echo "  -s, --setup-data         Setup data (for MNIST only)"
   echo "  -f, --force-setup        Force data setup even if it exists (for MNIST only)"
   echo "  -i, --iid                Use IID data distribution (for MNIST only)"
   echo "  -d, --results-dir <dir>  Custom results directory (default: auto-generated)"
+  echo "  -S, --scenario <num>     Scenario number to run (default: 9 - no disagreements)"
+  echo "                           Use 'all' to run all available scenarios sequentially"
   echo "  -C, --config <file>      Path to configuration file (default: mock_etcd/configuration.json)"
   echo "  -h, --help               Display this help and exit"
   echo
@@ -24,8 +26,33 @@ usage() {
   echo "  $0 -e mnist -c '0 1 2 3 4 5' -s -i"
   echo "  $0 -e mnist -c '0 1 2 3' -d 'results/my_experiment'"
   echo "  $0 -e mnist -c '0 1 2 3' -s -f -i  # Force new data setup with IID distribution"
+  echo "  $0 -e mnist -S 1                   # Run with scenario 1"
+  echo "  $0 -e mnist -S all                 # Run all scenarios sequentially"
   echo "  $0 -C custom_config.json           # Use a custom configuration file"
   exit 1
+}
+
+# Function to get all available scenarios
+get_all_scenarios() {
+  scenario_dir="mock_etcd/scenarios"
+  # Use sort with -V option for natural sort of version numbers
+  find "$scenario_dir" -name "scenario*.json" | sort -V
+}
+
+# Function to run a single scenario
+run_single_scenario() {
+  local scenario=$1
+  local original_args=("${@:2}")
+
+  echo "================================================================="
+  echo "Running experiment with scenario $scenario"
+  echo "================================================================="
+
+  # Run the command with the specific scenario
+  "${original_args[@]}" -S "$scenario"
+
+  echo "Experiment with scenario $scenario completed."
+  echo
 }
 
 # Default values - these will be used to override the config file
@@ -39,6 +66,7 @@ FORCE_SETUP=""
 IID=""
 RESULTS_DIR=""
 CONFIG_FILE="mock_etcd/configuration.json"
+SCENARIO="9"  # Default to scenario 9 (no disagreements)
 OVERRIDE_FLAG=""
 
 # Parse arguments
@@ -86,6 +114,10 @@ while [ "$1" != "" ]; do
       RESULTS_DIR="--results_dir $1"
       OVERRIDE_FLAG="--override"
       ;;
+    -S | --scenario )
+      shift
+      SCENARIO=$1
+      ;;
     -C | --config )
       shift
       CONFIG_FILE=$1
@@ -100,6 +132,85 @@ while [ "$1" != "" ]; do
   esac
   shift
 done
+
+# Check if we should run all scenarios
+if [ "$SCENARIO" = "all" ]; then
+  echo "Running all available scenarios..."
+
+  # Get all scenarios
+  scenario_files=$(get_all_scenarios)
+
+  if [ -z "$scenario_files" ]; then
+    echo "Error: No scenario files found in mock_etcd/scenarios/"
+    exit 1
+  fi
+
+  # Store original command line without the scenario parameter
+  original_cmd=("$0")
+
+  # Add all arguments except the scenario
+  [ -n "$EXPERIMENT" ] && original_cmd+=("-e" "$EXPERIMENT")
+  [ -n "$CLIENTS" ] && original_cmd+=("-c" "$CLIENTS")
+  [ -n "$ROUNDS" ] && original_cmd+=("-r" "$ROUNDS")
+  [ -n "$LOCAL_EPOCHS" ] && original_cmd+=("-l" "$LOCAL_EPOCHS")
+  [ -n "$BATCH_SIZE" ] && original_cmd+=("-b" "$BATCH_SIZE")
+  [ -n "$SETUP_DATA" ] && original_cmd+=("-s")
+  [ -n "$FORCE_SETUP" ] && original_cmd+=("-f")
+  [ -n "$IID" ] && original_cmd+=("-i")
+  [ -n "$RESULTS_DIR" ] && original_cmd+=("-d" "${RESULTS_DIR#* }")
+  [ -n "$CONFIG_FILE" ] && original_cmd+=("-C" "$CONFIG_FILE")
+
+  # Run each scenario
+  for scenario_file in $scenario_files; do
+    # Extract scenario number
+    scenario_num=$(basename "$scenario_file" .json | sed 's/scenario//')
+    run_single_scenario "$scenario_num" "${original_cmd[@]}"
+  done
+
+  echo "All scenarios completed."
+  exit 0
+fi
+
+# Process scenario and prepare disagreements
+if [ -n "$SCENARIO" ]; then
+  # Determine scenario path
+  if [ -f "$SCENARIO" ]; then
+    SCENARIO_PATH="$SCENARIO"
+  elif [ -f "mock_etcd/scenarios/scenario${SCENARIO}.json" ]; then
+    SCENARIO_PATH="mock_etcd/scenarios/scenario${SCENARIO}.json"
+  else
+    echo "Error: Scenario file not found for scenario ${SCENARIO}"
+    exit 1
+  fi
+
+  echo "Using scenario: $SCENARIO_PATH"
+  # Copy the disagreements to the target location
+  if [ -f "$SCENARIO_PATH" ]; then
+    # Extract disagreements section and save to disagreements.json
+    python3 -c "
+import json
+with open('$SCENARIO_PATH', 'r') as f:
+    scenario = json.load(f)
+with open('mock_etcd/disagreements.json', 'w') as f:
+    json.dump(scenario.get('disagreements', {}), f, indent=2)
+print('Copied disagreements from scenario to mock_etcd/disagreements.json')
+    "
+  fi
+
+  # If no custom results directory is specified, append scenario tag to the auto-generated directory
+  if [ -z "$RESULTS_DIR" ]; then
+    # Update the configuration to include scenario tag in directory name
+    python3 -c "
+import json
+with open('$CONFIG_FILE', 'r') as f:
+    config = json.load(f)
+if not config.get('results', {}).get('custom_dir'):
+    config.setdefault('results', {})['directory_suffix'] = '_s${SCENARIO}'
+with open('$CONFIG_FILE', 'w') as f:
+    json.dump(config, f, indent=2)
+    "
+  fi
+fi
 
 # Command to run the orchestrator
 CMD="uv run fl_orchestrator.py --config $CONFIG_FILE $OVERRIDE_FLAG"
@@ -150,10 +261,24 @@ if [ "$CLIENTS" != "" ]; then
   echo "Using clients: $CLIENTS"
 fi
 
+echo "Using scenario: $SCENARIO"
 echo "Parameters will override configuration in $CONFIG_FILE"
 echo "Running command: $CMD"
 
 # Execute the command
 eval $CMD
+
+# Restore the configuration file to its original state if we modified it
+if [ -n "$SCENARIO" ] && [ -z "$RESULTS_DIR" ]; then
+  python3 -c "
+import json
+with open('$CONFIG_FILE', 'r') as f:
+    config = json.load(f)
+if 'directory_suffix' in config.get('results', {}):
+    del config['results']['directory_suffix']
+with open('$CONFIG_FILE', 'w') as f:
+    json.dump(config, f, indent=2)
+  "
+fi
 
 echo "Experiment completed."
