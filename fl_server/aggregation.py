@@ -175,6 +175,44 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
     custom_tracks = [t for t in tracks.keys() if t != "global"]
     has_custom_tracks = len(custom_tracks) > 0
 
+    # Get initial model parameters as a fallback
+    initial_model_params = None
+    try:
+        initial_model_dir = os.path.join(
+            server.results_dir,
+            "model_storage/global_model_initial"
+        )
+        if os.path.exists(os.path.join(initial_model_dir, "model.pt")):
+            temp_model.load_state_dict(torch.load(os.path.join(initial_model_dir, "model.pt"), map_location=server.device))
+            initial_model_params = [p.clone() for p in temp_model.get_parameters()]
+            print("Loaded initial model parameters as fallback")
+    except Exception as e:
+        print(f"Warning: Could not load initial model as fallback: {e}")
+
+    # First, create a true global model with standard FedAvg for reference
+    # This ensures we always have a properly trained global model even in complex disagreement scenarios
+    true_global_params = [torch.zeros_like(param) for param in server.global_model.parameters()]
+    total_global_weight = 0.0
+
+    for client_id, client_params in client_parameters_dict.items():
+        # Use standard weight for global model
+        weight = aggregation_weights.get(client_id, 1.0 / len(client_dirs))
+        total_global_weight += weight
+
+        # Add weighted parameters to global parameters
+        for i, param in enumerate(client_params):
+            true_global_params[i] += param * weight
+
+    # Normalize global parameters
+    if total_global_weight > 0:
+        for i in range(len(true_global_params)):
+            true_global_params[i] /= total_global_weight
+
+    print(f"Created true global model with parameters from all {len(client_parameters_dict)} clients")
+
+    # Store true global model even if it's not part of the tracks
+    track_parameters["true_global"] = true_global_params
+
     # Aggregate each track
     for track_name, track_clients in tracks.items():
         # Skip the default track if we have disagreements - we want completely separate tracks
@@ -187,6 +225,12 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
         # Skip tracks with no clients
         if not track_clients:
             print(f"Skipping empty track: {track_name}")
+            continue
+
+        # Special case: if this is the global track, use the true global parameters we created
+        if track_name == "global":
+            track_parameters[track_name] = [p.clone() for p in true_global_params]
+            print(f"  Using true global model for track '{track_name}'")
             continue
 
         # Initialize parameters for this track
@@ -224,9 +268,9 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
         # Now add background models with lower weight
         # Background clients participate but with reduced weight
         background_clients_aggregated = []
-        if track_name in background_parameters_dict:
-            background_weight = 0.0
+        background_weight = 0.0
 
+        if track_name in background_parameters_dict:
             for client_id, bg_params in background_parameters_dict[track_name].items():
                 # Skip client if it's already included as primary
                 if track_info.get("client_tracks", {}).get(str(client_id)) == track_name:
@@ -245,18 +289,33 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
 
             print(f"  Background models aggregated: {sorted(background_clients_aggregated)} with total weight {background_weight:.4f}")
 
-            # Adjust normalization to account for background models
-            total_weight = primary_weight + background_weight
-            if total_weight > 0:
-                for i in range(len(track_parameters[track_name])):
-                    track_parameters[track_name][i] /= total_weight
-                print(f"  Track '{track_name}' normalized with combined weight {total_weight:.4f}")
-        elif primary_weight > 0:
-            # Normalize primary-only models if weights don't sum to 1
-            if abs(primary_weight - 1.0) > 1e-6:
-                for i in range(len(track_parameters[track_name])):
-                    track_parameters[track_name][i] /= primary_weight
-                print(f"  Track '{track_name}' normalized with primary-only weight {primary_weight:.4f}")
+        # Adjust normalization to account for background models
+        total_weight = primary_weight + background_weight
+
+        # Safeguard against empty or extremely imbalanced tracks
+        if total_weight < 0.01:
+            print(f"  ⚠️ Warning: Very low total weight ({total_weight:.4f}) for track '{track_name}'")
+
+            # Use the true global model as fallback (more reliable than initial model)
+            print(f"  ⚠️ Using true global model parameters as fallback for track '{track_name}'")
+            track_parameters[track_name] = [p.clone() for p in true_global_params]
+        elif total_weight > 0:
+            for i in range(len(track_parameters[track_name])):
+                track_parameters[track_name][i] /= total_weight
+            print(f"  Track '{track_name}' normalized with combined weight {total_weight:.4f}")
+
+        # Check for invalid values in the aggregated parameters
+        has_invalid = False
+        for param in track_parameters[track_name]:
+            if torch.isnan(param).any() or torch.isinf(param).any():
+                has_invalid = True
+                break
+
+        if has_invalid:
+            print(f"  ⚠️ Warning: Invalid values detected in track '{track_name}' parameters")
+            # Use the true global model as fallback (more reliable than initial model)
+            print(f"  ⚠️ Using true global model parameters as fallback for track '{track_name}'")
+            track_parameters[track_name] = [p.clone() for p in true_global_params]
 
         print(f"  Track '{track_name}' aggregation complete.")
 
@@ -264,26 +323,29 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
     save_track_models(server, track_parameters, track_info)
 
     # Update server's global model with parameters from appropriate track
-    # For compatibility with server code that expects a global model
+    # Always use the true global model to ensure the global model is updated consistently
+    server.global_model.set_parameters(track_parameters["true_global"])
+    print(f"\nUpdated server's global model with parameters from true global model")
+    print(f"=== END AGGREGATION FOR ROUND {server.round} ===\n")
+
+    # But also return the selected track parameters for track-specific logic
     selected_track = None
 
     # First, try to use the "global" track if it exists
     if "global" in track_parameters:
         selected_track = "global"
-    elif track_parameters:
-        # Otherwise, use the first available track
-        selected_track = next(iter(track_parameters))
+    elif len(track_parameters) > 1:  # If we have more than just the true_global
+        # Use the first regular track (not true_global)
+        for track_name in track_parameters:
+            if track_name != "true_global":
+                selected_track = track_name
+                break
 
     if selected_track:
-        server.global_model.set_parameters(track_parameters[selected_track])
-        print(f"\nUpdated server's global model with parameters from track: '{selected_track}'")
-        print(f"=== END AGGREGATION FOR ROUND {server.round} ===\n")
         return track_parameters[selected_track]
     else:
-        print("Warning: No tracks were aggregated")
-        print(f"=== END AGGREGATION FOR ROUND {server.round} ===\n")
-        # Return the current model parameters if no tracks were aggregated
-        return [param.clone() for param in server.global_model.parameters()]
+        # If no proper track was found, return the true global parameters
+        return track_parameters["true_global"]
 
 def save_track_models(server, track_parameters, track_info):
     """Save all track models to disk.
@@ -295,38 +357,32 @@ def save_track_models(server, track_parameters, track_info):
     """
     structure = get_structure_config(server)
 
+    # Get a reference to a clean model to apply parameters
+    temp_model = create_model(
+        server.experiment_type,
+        input_dim=server.input_dim if server.experiment_type == "n_cmapss" else None,
+        hidden_dim=server.hidden_dim if server.experiment_type == "n_cmapss" else None,
+        output_dim=server.output_dim if server.experiment_type == "n_cmapss" else None
+    ).to(server.device)
+
+    # Always save the true global model to the global model aggregated location
+    global_model_dir = os.path.join(
+        server.results_dir,
+        structure["round_template"].format(round=server.round),
+        structure["global_model_aggregated"]
+    )
+    os.makedirs(os.path.dirname(global_model_dir), exist_ok=True)
+
+    if "true_global" in track_parameters:
+        temp_model.set_parameters(track_parameters["true_global"])
+        model_path = os.path.join(global_model_dir, "model.pt")
+        torch.save(temp_model.state_dict(), model_path)
+        print(f"Saved true global model to {global_model_dir}")
+
     # Check if there are any active disagreements - don't create tracks directory if not
     if not track_info.get("tracks", {}) or (len(track_info.get("tracks", {})) == 1 and "global" in track_info.get("tracks", {})):
         # No active disagreements or only global track, skip creating tracks directory
         print(f"No active disagreements for round {server.round}, skipping track creation")
-
-        # Just update the global model for this round
-        global_model_dir = os.path.join(
-            server.results_dir,
-            structure["round_template"].format(round=server.round),
-            structure["global_model_aggregated"]
-        )
-        os.makedirs(os.path.dirname(global_model_dir), exist_ok=True)
-
-        # Get a reference to a clean model to apply parameters
-        temp_model = create_model(
-            server.experiment_type,
-            input_dim=server.input_dim if server.experiment_type == "n_cmapss" else None,
-            hidden_dim=server.hidden_dim if server.experiment_type == "n_cmapss" else None,
-            output_dim=server.output_dim if server.experiment_type == "n_cmapss" else None
-        ).to(server.device)
-
-        # If we have a "global" track, use that
-        if "global" in track_parameters:
-            temp_model.set_parameters(track_parameters["global"])
-        # Otherwise use the first available track
-        elif track_parameters:
-            first_track = next(iter(track_parameters))
-            temp_model.set_parameters(track_parameters[first_track])
-
-        # Save model
-        torch.save(temp_model.state_dict(), global_model_dir)
-        print(f"Saved global model for round {server.round}")
         return
 
     # Create "tracks" directory for this round
@@ -336,14 +392,6 @@ def save_track_models(server, track_parameters, track_info):
     )
     tracks_dir = os.path.join(round_dir, "tracks")
     os.makedirs(tracks_dir, exist_ok=True)
-
-    # Get a reference to a clean model to apply parameters
-    temp_model = create_model(
-        server.experiment_type,
-        input_dim=server.input_dim if server.experiment_type == "n_cmapss" else None,
-        hidden_dim=server.hidden_dim if server.experiment_type == "n_cmapss" else None,
-        output_dim=server.output_dim if server.experiment_type == "n_cmapss" else None
-    ).to(server.device)
 
     # Save track metadata
     track_metadata = {
@@ -358,6 +406,10 @@ def save_track_models(server, track_parameters, track_info):
 
     # Save each track model
     for track_name, parameters in track_parameters.items():
+        # Skip the true_global - we've already saved it as the global model
+        if track_name == "true_global":
+            continue
+
         track_dir = os.path.join(tracks_dir, track_name)
         os.makedirs(track_dir, exist_ok=True)
 
