@@ -1,0 +1,61 @@
+{
+  "name": "Deep Rewind Test Scenario",
+  "description": "A scenario where clients first collaborate for 2 rounds, then client 0 introduces an inbound exclusion against client 1 in round 3. This tests the deep_rewind mechanism that retroactively removes client 1's influence from client 0's model.",
+  "expected_tracks_round_1": {
+    "global": "Global track (all clients collaborate initially)"
+  },
+  "expected_tracks_round_2": {
+    "global": "Global track (all clients still collaborate)"
+  },
+  "expected_tracks_round_3": {
+    "global": "Global track (for clients not involved in disagreements)",
+    "track_0_no1": "Track for client 0 that excludes client 1's contributions"
+  },
+  "validation_rules": {
+    "round_1_rules": [
+      {
+        "type": "clients_share_track",
+        "clients": [0, 1, 2],
+        "description": "All clients should be on global track in round 1"
+      }
+    ],
+    "round_2_rules": [
+      {
+        "type": "clients_share_track",
+        "clients": [0, 1, 2],
+        "description": "All clients should be on global track in round 2"
+      }
+    ],
+    "round_3_rules": [
+      {
+        "type": "clients_on_track",
+        "track_name": "track_0_no1",
+        "clients": [0],
+        "description": "Client 0 should be on a track that excludes client 1"
+      },
+      {
+        "type": "client_excludes",
+        "client": 0,
+        "excludes": [1],
+        "description": "Client 0's track should exclude client 1"
+      },
+      {
+        "type": "clients_share_track",
+        "clients": [1, 2],
+        "description": "Clients 1 and 2 should share a track"
+      }
+    ]
+  },
+  "disagreements": {
+    "0": [
+      {
+        "type": "inbound",
+        "target": 1,
+        "active_rounds": {
+          "start": 3,
+          "end": null
+        }
+      }
+    ]
+  }
+}

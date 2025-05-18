@@ -353,6 +353,8 @@ class FederatedServer:
         Returns:
             str: Path to the prepared model directory
         """
+        import glob  # Add explicit import to fix UnboundLocalError
+
         if not self.results_dir:
             return
 
@@ -377,7 +379,7 @@ class FederatedServer:
         os.makedirs(aggregated_model_dir, exist_ok=True)
 
         # Check if there are active disagreements in the current round
-        etcd_dir = os.path.join(os.path.dirname(self.results_dir), "mock_etcd")
+        etcd_dir = "mock_etcd"
         disagreements = load_disagreements(etcd_dir)
         active_disagreements = get_active_disagreements(disagreements, round_num)
 
@@ -395,12 +397,11 @@ class FederatedServer:
                 print(f"Creating initial tracks for round {round_num} from global initial model")
 
                 # Create track info for this round with active disagreements
-                client_dirs = glob.glob(os.path.join(os.path.dirname(round_dir), "*/clients/client_*"))
+                client_dirs = glob.glob(os.path.join(source_model_dir, "clients/client_*"))
                 client_ids = [int(os.path.basename(d).split("_")[1]) for d in client_dirs]
 
                 if not client_ids:
                     # If no client dirs found yet, use the configured client IDs
-                    import glob
                     client_dirs = glob.glob(os.path.join(self.results_dir, "output/clients/client_*"))
                     client_ids = [int(os.path.basename(d).split("_")[1]) for d in client_dirs]
 
@@ -486,6 +487,15 @@ class FederatedServer:
                     # Create track info for this round with active disagreements
                     client_dirs = glob.glob(os.path.join(prev_round_dir, "clients/client_*"))
                     client_ids = [int(os.path.basename(d).split("_")[1]) for d in client_dirs]
+
+                    if not client_ids:
+                        # If no client dirs found yet, use the configured client IDs
+                        client_dirs = glob.glob(os.path.join(self.results_dir, "output/clients/client_*"))
+                        client_ids = [int(os.path.basename(d).split("_")[1]) for d in client_dirs]
+
+                    if not client_ids:
+                        # Fall back to client IDs from the results
+                        client_ids = self.results.get("client_ids", [])
 
                     track_info = create_model_tracks(active_disagreements, client_ids)
 
@@ -596,7 +606,7 @@ class FederatedServer:
                     continue
 
                 print(f"Loading track '{track_name}' model from previous round")
-                self.load_model(model_path)
+                self.load_model(prev_track_dir)
 
                 # Save model to new track directory
                 new_model_path = os.path.join(new_track_dir, "model.pt")
