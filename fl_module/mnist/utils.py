@@ -3,9 +3,7 @@
 import os
 import random
 import numpy as np
-import torch
 from torch.utils.data import DataLoader
-import torchvision
 from torchvision import datasets, transforms
 
 from fl_module.mnist.dataset import MNISTDataset

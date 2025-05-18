@@ -38,7 +38,7 @@
   },
   "disagreement": {
     "initiation_mechanism": "deep_rewind",
-    "lifting_mechanism": "deep_incr_finetune",
+    "lifting_mechanism": "shallow",
     "deep_lifting_finetune_rounds": 2
   },
   "results": {

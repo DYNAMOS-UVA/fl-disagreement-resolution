@@ -2,23 +2,19 @@
 
 import os
 import torch
-import torch.nn as nn
 import json
 from datetime import datetime
 import glob
-import traceback
 
 from fl_module import create_model
 import fl_module
 from fl_server.evaluation import evaluate_model
-from fl_server.aggregation import aggregate_models_from_files, get_structure_config
+from fl_server.aggregation import aggregate_models_from_files
 from fl_server.utils import make_json_serializable
 from fl_server.disagreement import (
     load_disagreements,
     get_active_disagreements,
-    create_model_tracks,
-    get_track_for_client,
-    get_clients_in_track
+    create_model_tracks
 )
 
 class FederatedServer:
@@ -346,7 +342,7 @@ class FederatedServer:
 
         # Save the initial model
         self.save_model(initial_model_dir)
-        print(f"Initialized and saved the initial global model")
+        print("Initialized and saved the initial global model")
 
     def prepare_training_model(self, round_num, use_initial=False):
         """Prepare the global model for a specific round.
@@ -358,7 +354,6 @@ class FederatedServer:
         Returns:
             str: Path to the prepared model directory
         """
-        import glob
 
         if not self.results_dir:
             return None # Return None if results_dir is not set
@@ -377,8 +372,6 @@ class FederatedServer:
         os.makedirs(round_dir, exist_ok=True)
         training_model_dir = os.path.join(round_dir, structure["global_model"])
         os.makedirs(training_model_dir, exist_ok=True)
-        # aggregated_model_dir = os.path.join(round_dir, structure["global_model_aggregated"]) # This dir is created later or by aggregate_client_models
-        # os.makedirs(aggregated_model_dir, exist_ok=True)
 
         etcd_dir = "mock_etcd"
         disagreements = load_disagreements(etcd_dir)
@@ -421,7 +414,8 @@ class FederatedServer:
                     "tracks": {k: list(v) for k, v in track_info.get("tracks", {}).items()},
                     "client_tracks": track_info.get("client_tracks", {})
                 }
-                with open(metadata_path, "w") as f: json.dump(track_metadata_content, f, indent=2)
+                with open(metadata_path, "w") as f:
+                    json.dump(track_metadata_content, f, indent=2)
 
                 for track_name_iter in track_info.get("tracks", {}):
                     track_dir_iter = os.path.join(tracks_dir, track_name_iter)
@@ -434,7 +428,8 @@ class FederatedServer:
                         "rewound_this_round": False, # Cannot be rewound in round 1 from initial
                         "finetuning_status": {}
                     }
-                    with open(os.path.join(track_dir_iter, "metadata.json"), "w") as f_meta_track: json.dump(individual_track_meta, f_meta_track, indent=2)
+                    with open(os.path.join(track_dir_iter, "metadata.json"), "w") as f_meta_track:
+                        json.dump(individual_track_meta, f_meta_track, indent=2)
                     print(f"Created initial track '{track_name_iter}' for round {round_num}")
 
             self.save_model(training_model_dir)
@@ -484,14 +479,18 @@ class FederatedServer:
                         prev_track_finetuning_status_loaded = {}
                         if os.path.exists(prev_finetune_status_path):
                             try:
-                                with open(prev_finetune_status_path, 'r') as f_fs: prev_track_finetuning_status_loaded = json.load(f_fs)
-                            except Exception as e: print(f"    Warning: Could not load previous finetuning status for track '{track_name}': {e}")
+                                with open(prev_finetune_status_path, 'r') as f_fs:
+                                    prev_track_finetuning_status_loaded = json.load(f_fs)
+                            except Exception as e:
+                                print(f"    Warning: Could not load previous finetuning status for track '{track_name}': {e}")
                         prev_track_clients_metadata = set()
                         prev_track_metadata_path_iter = os.path.join(prev_specific_track_dir, "metadata.json")
                         if os.path.exists(prev_track_metadata_path_iter):
                             try:
-                                with open(prev_track_metadata_path_iter, 'r') as f_meta: prev_track_clients_metadata = set(json.load(f_meta).get("client_ids", []))
-                            except Exception as e: print(f"    Warning: Could not load previous metadata for track '{track_name}': {e}")
+                                with open(prev_track_metadata_path_iter, 'r') as f_meta:
+                                    prev_track_clients_metadata = set(json.load(f_meta).get("client_ids", []))
+                            except Exception as e:
+                                print(f"    Warning: Could not load previous metadata for track '{track_name}': {e}")
                         for client_id_numeric in clients_in_this_track_list:
                             client_id_str_iter = str(client_id_numeric)
                             if client_id_numeric not in prev_track_clients_metadata and track_existed_previously_as_specific_dir:
@@ -502,9 +501,11 @@ class FederatedServer:
                                 if progress <= finetune_total_rounds:
                                     print(f"    Client {client_id_str_iter} continuing finetuning in track '{track_name}', round {progress}/{finetune_total_rounds}")
                                     current_track_finetuning_status[client_id_str_iter] = progress
-                                else: print(f"    Client {client_id_str_iter} completed finetuning in track '{track_name}'.")
+                                else:
+                                    print(f"    Client {client_id_str_iter} completed finetuning in track '{track_name}'.")
                     if current_track_finetuning_status:
-                        with open(os.path.join(current_specific_track_dir, "finetuning_status.json"), 'w') as f_fs_curr: json.dump(current_track_finetuning_status, f_fs_curr, indent=2)
+                        with open(os.path.join(current_specific_track_dir, "finetuning_status.json"), 'w') as f_fs_curr:
+                            json.dump(current_track_finetuning_status, f_fs_curr, indent=2)
                         print(f"    Saved finetuning status for track '{track_name}'.")
 
                     print(f"  Evaluating track: '{track_name}'. Existed previously: {track_existed_previously_as_specific_dir}")
@@ -519,24 +520,32 @@ class FederatedServer:
                                 for cid_str, d_list in active_disags_prev_round.items():
                                     for d_item in d_list:
                                         if d_item.get('type') == 'full':
-                                            try: fully_excluded_prev.add(int(cid_str.split('_')[-1]) if '_' in cid_str else int(cid_str))
-                                            except ValueError: print(f"Warning: Could not parse client ID '{cid_str}' during rewind check for global track.")
+                                            try:
+                                                fully_excluded_prev.add(int(cid_str.split('_')[-1]) if '_' in cid_str else int(cid_str))
+                                            except ValueError:
+                                                print(f"Warning: Could not parse client ID '{cid_str}' during rewind check for global track.")
                             conceptual_prev_global_clients = all_system_clients - fully_excluded_prev
                             if clients_in_this_track_set != conceptual_prev_global_clients:
                                 composition_has_changed = True
-                                print(f"    Global track is new to 'tracks' dir. Composition changed.")
-                            else: print(f"    Global track is new to 'tracks' dir. Composition UNCHANGED.")
+                                print("    Global track is new to 'tracks' dir. Composition changed.")
+                            else:
+                                print("    Global track is new to 'tracks' dir. Composition UNCHANGED.")
                         else: # Non-global track, new to dir structure
                             composition_has_changed = True
                             print(f"    Non-global track '{track_name}' is new. Marking composition changed.")
                     else: # Track existed previously
                         prev_meta_path = os.path.join(prev_specific_track_dir, "metadata.json")
                         if os.path.exists(prev_meta_path):
-                            with open(prev_meta_path, 'r') as f_m: prev_clients = set(json.load(f_m).get("client_ids", []))
+                            with open(prev_meta_path, 'r') as f_m:
+                                prev_clients = set(json.load(f_m).get("client_ids", []))
                             if prev_clients != clients_in_this_track_set:
-                                composition_has_changed = True; print(f"    Track '{track_name}' existed and composition changed.")
-                            else: print(f"    Track '{track_name}' existed and composition UNCHANGED.")
-                        else: composition_has_changed = True; print(f"    Track '{track_name}' existed but no prev metadata. Marking changed.")
+                                composition_has_changed = True
+                                print(f"    Track '{track_name}' existed and composition changed.")
+                            else:
+                                print(f"    Track '{track_name}' existed and composition UNCHANGED.")
+                        else:
+                            composition_has_changed = True
+                            print(f"    Track '{track_name}' existed but no prev metadata. Marking changed.")
 
                     perform_rewind_for_this_track = (initiation_mechanism == "deep_rewind" and composition_has_changed)
                     print(f"    Perform rewind for '{track_name}': {perform_rewind_for_this_track}")
@@ -551,9 +560,12 @@ class FederatedServer:
                             if client_model_files_hist:
                                 print(f"  Rewinding '{track_name}' for hist_round {hist_round} with {len(client_model_files_hist)} models.")
                                 aggregated_state = self._aggregate_model_states_from_files_for_rewind(client_model_files_hist, self.device)
-                                if aggregated_state: current_rewound_model_state = aggregated_state
-                                else: print(f"  Warning: Aggregation failed for '{track_name}' in hist_round {hist_round}.")
-                            else: print(f"  No models for '{track_name}' in hist_round {hist_round} for rewind.")
+                                if aggregated_state:
+                                    current_rewound_model_state = aggregated_state
+                                else:
+                                    print(f"  Warning: Aggregation failed for '{track_name}' in hist_round {hist_round}.")
+                            else:
+                                print(f"  No models for '{track_name}' in hist_round {hist_round} for rewind.")
                         self.global_model.load_state_dict(current_rewound_model_state)
                         self.save_model(current_specific_track_dir)
                         print(f"  Deep rewind complete for '{track_name}'. Saved to {current_specific_track_dir}")
@@ -569,9 +581,11 @@ class FederatedServer:
 
                     individual_track_meta = {"track_name": track_name, "round": round_num, "client_ids": clients_in_this_track_list, "rewound_this_round": perform_rewind_for_this_track,
                                            "finetuning_status": {cid_str: f"{prog}/{finetune_total_rounds}" for cid_str, prog in current_track_finetuning_status.items()} if current_track_finetuning_status else {}}
-                    with open(os.path.join(current_specific_track_dir, "metadata.json"), "w") as f_track_meta: json.dump(individual_track_meta, f_track_meta, indent=2)
+                    with open(os.path.join(current_specific_track_dir, "metadata.json"), "w") as f_track_meta:
+                        json.dump(individual_track_meta, f_track_meta, indent=2)
 
-                with open(os.path.join(current_round_tracks_dir, "track_metadata.json"), "w") as f_meta_overall: json.dump(current_round_track_metadata_content, f_meta_overall, indent=2)
+                with open(os.path.join(current_round_tracks_dir, "track_metadata.json"), "w") as f_meta_overall:
+                    json.dump(current_round_track_metadata_content, f_meta_overall, indent=2)
                 print(f"Saved track metadata for round {round_num}.")
             else: # No active disagreements
                 print(f"No active disagreements for round {round_num}. Using standard global model from {prev_global_aggregated_dir}")
@@ -583,9 +597,11 @@ class FederatedServer:
                     prev_global_finetuning_status_loaded = {}
                     if os.path.exists(prev_global_finetune_status_path):
                         try:
-                            with open(prev_global_finetune_status_path, 'r') as f_fs: prev_global_finetuning_status_loaded = json.load(f_fs)
+                            with open(prev_global_finetune_status_path, 'r') as f_fs:
+                                prev_global_finetuning_status_loaded = json.load(f_fs)
                             print(f"    Loaded previous global_finetuning_status.json from {prev_global_finetune_status_path}")
-                        except Exception as e: print(f"    Warning: Could not load previous global finetuning status: {e}")
+                        except Exception as e:
+                            print(f"    Warning: Could not load previous global finetuning status: {e}")
 
                     prev_round_track_metadata_path = os.path.join(prev_round_main_dir, "tracks", "track_metadata.json")
                     prev_round_had_active_tracks = os.path.exists(prev_round_track_metadata_path)
@@ -608,8 +624,10 @@ class FederatedServer:
                     if os.path.exists(prev_round_clients_dir):
                         client_model_dirs = glob.glob(os.path.join(prev_round_clients_dir, f"{structure['client_prefix']}*"))
                         for d_path in client_model_dirs:
-                            try: prev_round_submitted_model_ids.add(int(os.path.basename(d_path).replace(structure['client_prefix'], "")))
-                            except ValueError: pass
+                            try:
+                                prev_round_submitted_model_ids.add(int(os.path.basename(d_path).replace(structure['client_prefix'], "")))
+                            except ValueError:
+                                pass
                     print(f"    Clients who submitted models in R{round_num-1}: {sorted(list(prev_round_submitted_model_ids))}")
                     current_global_participants = set(self.results.get("client_ids", [])) - self.fully_excluded_clients_for_current_round
                     print(f"    Current global participants in R{round_num}: {sorted(list(current_global_participants))}")
@@ -645,9 +663,11 @@ class FederatedServer:
                     if current_global_finetuning_status:
                         current_global_finetune_status_path = os.path.join(round_dir, "global_finetuning_status.json")
                         try:
-                            with open(current_global_finetune_status_path, 'w') as f_fs_global: json.dump(current_global_finetuning_status, f_fs_global, indent=2)
+                            with open(current_global_finetune_status_path, 'w') as f_fs_global:
+                                json.dump(current_global_finetuning_status, f_fs_global, indent=2)
                             print(f"    Saved global finetuning status to {current_global_finetune_status_path}")
-                        except Exception as e: print(f"    Warning: Could not save global finetuning status: {e}")
+                        except Exception as e:
+                            print(f"    Warning: Could not save global finetuning status: {e}")
 
         print(f"=== END SERVER PREPARATION FOR ROUND {round_num} ===\\n")
         return training_model_dir
@@ -682,9 +702,6 @@ class FederatedServer:
                 try:
                     with open(metadata_path, 'r') as f:
                         track_metadata = json.load(f)
-
-                    # Convert client_id to string format if needed
-                    client_id_str = f"client_{client_id}" if isinstance(client_id, int) else client_id
 
                     # Get the primary track for this client
                     primary_track = track_metadata.get("client_tracks", {}).get(str(client_id))

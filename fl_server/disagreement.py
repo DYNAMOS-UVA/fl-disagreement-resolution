@@ -2,7 +2,6 @@
 
 import os
 import json
-import copy
 from collections import defaultdict
 
 def load_disagreements(etcd_dir):

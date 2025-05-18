@@ -5,7 +5,7 @@ import torch
 import json
 from datetime import datetime
 
-from fl_module import create_model
+from fl_module.models import create_model
 import fl_module
 from fl_client.utils import save_training_results
 from fl_client.training import train_model
@@ -205,7 +205,6 @@ class FederatedClient:
         # Check if there are tracks for this round
         tracks_dir = os.path.join(round_dir, "tracks")
         primary_track_loaded = False
-        primary_track_name = None
 
         # Clear any existing background tracks
         self.background_tracks = []
@@ -227,7 +226,6 @@ class FederatedClient:
                     primary_track = track_metadata.get("client_tracks", {}).get(str(self.client_id))
 
                     if primary_track:
-                        primary_track_name = primary_track
                         print(f"Client {self.client_id} is assigned to primary track: '{primary_track}'")
 
                         # Look for track metadata to get details about this track
@@ -318,7 +316,6 @@ class FederatedClient:
                 if os.path.exists(model_path):
                     self.model.load_state_dict(torch.load(model_path, map_location=self.device))
                     print(f"Successfully loaded standard global model from {global_model_dir}")
-                    primary_track_name = "global"
                     self.background_tracks = []  # No background tracks in standard mode
                     print(f"=== END CLIENT {self.client_id} MODEL LOADING ===\n")
                     return True
@@ -348,7 +345,7 @@ class FederatedClient:
         print(f"\n=== CLIENT {self.client_id} TRAINING FOR ROUND {round_num} ===")
 
         # Train primary model
-        print(f"Training primary model...")
+        print("Training primary model...")
         training_results = train_model(self, epochs)
 
         # Add round number to the training results

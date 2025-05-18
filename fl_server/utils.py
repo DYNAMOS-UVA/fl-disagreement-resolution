@@ -3,8 +3,6 @@
 import os
 import json
 import numpy as np
-from datetime import datetime
-from fl_client.utils import get_structure_config
 
 def make_json_serializable(obj):
     """Convert an object with potential NumPy types to JSON serializable format.

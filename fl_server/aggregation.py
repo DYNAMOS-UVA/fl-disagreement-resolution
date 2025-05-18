@@ -10,8 +10,6 @@ from fl_server.disagreement import (
     load_disagreements,
     get_active_disagreements,
     create_model_tracks,
-    get_track_for_client,
-    get_clients_in_track
 )
 
 def aggregate_models_from_files(server, clients_dir, aggregation_weights=None):
@@ -39,7 +37,7 @@ def aggregate_models_from_files(server, clients_dir, aggregation_weights=None):
         n_clients = len(client_dirs)
         aggregation_weights = {client_id: 1.0 / n_clients for client_id in client_ids}
 
-    # Load disagreements and create model tracks
+    # Load disagreements
     etcd_dir = "mock_etcd"
     disagreements = load_disagreements(etcd_dir)
     active_disagreements = get_active_disagreements(disagreements, server.round)
@@ -226,7 +224,6 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
     has_custom_tracks = len(custom_tracks) > 0
 
     # Get initial model parameters as a fallback
-    initial_model_params = None
     try:
         initial_model_dir = os.path.join(
             server.results_dir,
@@ -234,7 +231,6 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
         )
         if os.path.exists(os.path.join(initial_model_dir, "model.pt")):
             temp_model.load_state_dict(torch.load(os.path.join(initial_model_dir, "model.pt"), map_location=server.device))
-            initial_model_params = [p.clone() for p in temp_model.get_parameters()]
             print("Loaded initial model parameters as fallback")
     except Exception as e:
         print(f"Warning: Could not load initial model as fallback: {e}")
@@ -267,7 +263,7 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
     for track_name, track_clients in tracks.items():
         # Skip the default track if we have disagreements - we want completely separate tracks
         if track_name == "default" and has_custom_tracks:
-            print(f"Skipping default track to ensure track separation in disagreement scenario")
+            print("Skipping default track to ensure track separation in disagreement scenario")
             continue
 
         print(f"\nAggregating track: '{track_name}' with clients: {sorted(track_clients)}")
@@ -401,7 +397,7 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
     # Update server's global model with parameters from appropriate track
     # Always use the true global model to ensure the global model is updated consistently
     server.global_model.set_parameters(track_parameters["true_global"])
-    print(f"\nUpdated server's global model with parameters from true global model")
+    print("\nUpdated server's global model with parameters from true global model")
     print(f"=== END AGGREGATION FOR ROUND {server.round} ===\n")
 
     # But also return the selected track parameters for track-specific logic

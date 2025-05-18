@@ -37,7 +37,7 @@ def main():
 
     # Note: This doesn't actually run aggregation since it needs client models
     # This is just for testing the server initialization
-    print("Server initialized successfully. In practice, it would be called by the orchestrator.")
+    print("Server initialized successfully. In practice, it should be called by the orchestrator.")
 
 if __name__ == "__main__":
     main()

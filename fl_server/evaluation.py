@@ -246,7 +246,7 @@ def evaluate_model(server, fl_round=None, client_results=None):
                 else:
                     print(f"{track_name} - RMSE: {track_data['rmse']:.6f}")
 
-            print(f"=== END TRACK EVALUATION ===\n")
+            print("=== END TRACK EVALUATION ===\n")
 
     # Save experiment results
     server._save_experiment_results()
