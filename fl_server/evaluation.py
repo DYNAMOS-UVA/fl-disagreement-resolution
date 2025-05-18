@@ -1118,7 +1118,7 @@ def plot_track_progress(server, round_num):
                     valid_rounds.append(round_num)
                     track_values.append(track_values[-1])
 
-                plt.plot(valid_rounds, track_values, marker='o', label=track)
+                plt.plot(valid_rounds, track_values, marker='o', markersize=4, label=track)
 
         # Add global model metric if available
         if server.experiment_type == "mnist" and metric == "accuracy" and len(server.training_history.get("global_test_accuracy", [])) > 0:
@@ -1195,7 +1195,7 @@ def plot_track_progress(server, round_num):
                     valid_rounds.append(round_num)
                     track_values.append(track_values[-1])
 
-                plt.plot(valid_rounds, track_values, marker='o', label=track)
+                plt.plot(valid_rounds, track_values, marker='o', markersize=4, label=track)
 
         plt.title(title)
         plt.xlabel('Round')

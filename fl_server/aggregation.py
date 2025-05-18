@@ -337,8 +337,7 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
 
         print(f"  Primary models aggregated: {sorted(primary_clients_aggregated)} with total weight {primary_weight:.4f}")
 
-        # Now add background models with lower weight
-        # Background clients participate but with reduced weight
+        # Now add background models
         background_clients_aggregated = []
         background_weight = 0.0
 
