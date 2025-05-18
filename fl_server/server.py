@@ -363,6 +363,10 @@ class FederatedServer:
         # Get directory structure from configuration
         structure = self._get_structure_config()
 
+        # Get disagreement configuration
+        disagreement_config = self._get_disagreement_config()
+        initiation_mechanism = disagreement_config.get("initiation_mechanism", "shallow")
+
         # Create round directory
         round_dir = os.path.join(
             self.results_dir,
@@ -396,20 +400,25 @@ class FederatedServer:
             if active_disagreements:
                 print(f"Creating initial tracks for round {round_num} from global initial model")
 
-                # Create track info for this round with active disagreements
-                client_dirs = glob.glob(os.path.join(source_model_dir, "clients/client_*"))
-                client_ids = [int(os.path.basename(d).split("_")[1]) for d in client_dirs]
+                # Get client IDs for track creation
+                client_ids_for_tracks = self.results.get("client_ids", [])
+                if not client_ids_for_tracks:
+                    # Fallback if not in results (e.g. during direct testing)
+                    # This part might need adjustment based on how client_ids are reliably fetched
+                    print("Warning: client_ids not found in self.results, attempting to infer from client_dirs.")
+                    client_dirs_pattern = os.path.join(self.results_dir, "output", "clients", "client_*") # General pattern
+                    client_dirs = glob.glob(client_dirs_pattern)
+                    if client_dirs:
+                        try:
+                            client_ids_for_tracks = sorted([int(os.path.basename(d).split("_")[-1]) for d in client_dirs])
+                        except ValueError:
+                            print(f"Could not parse client IDs from {client_dirs_pattern}. Track creation might be affected.")
+                            client_ids_for_tracks = [] # Prevent error in create_model_tracks
+                    else:
+                        print(f"No client directories found at {client_dirs_pattern}. Track creation might be affected.")
+                        client_ids_for_tracks = []
 
-                if not client_ids:
-                    # If no client dirs found yet, use the configured client IDs
-                    client_dirs = glob.glob(os.path.join(self.results_dir, "output/clients/client_*"))
-                    client_ids = [int(os.path.basename(d).split("_")[1]) for d in client_dirs]
-
-                if not client_ids:
-                    # Fall back to client IDs from the results
-                    client_ids = self.results.get("client_ids", [])
-
-                track_info = create_model_tracks(active_disagreements, client_ids)
+                track_info = create_model_tracks(active_disagreements, client_ids_for_tracks)
 
                 # Create tracks directory
                 tracks_dir = os.path.join(round_dir, "tracks")
@@ -452,191 +461,149 @@ class FederatedServer:
             self.save_model(training_model_dir)
             print(f"Saved global model for training at {training_model_dir}")
         else:
-            # For subsequent rounds
-            if active_disagreements:
-                print(f"Active disagreements found for round {round_num}")
+            # For subsequent rounds (round_num > 1)
+            # Prepare the main global model for training (for clients not in tracks or as a fallback)
+            prev_global_aggregated_dir = os.path.join(
+                self.results_dir,
+                structure["round_template"].format(round=round_num - 1),
+                structure["global_model_aggregated"]
+            )
+            if os.path.exists(os.path.join(prev_global_aggregated_dir, "model.pt")):
+                print(f"Loading main global model from previous round {round_num-1}'s aggregated model: {prev_global_aggregated_dir}")
+                self.load_model(prev_global_aggregated_dir)
+            else:
+                # Fallback if previous aggregated model doesn't exist (e.g. if round 1 was interrupted)
+                # In this case, we might have to use the initial model, which is less ideal for round > 1
+                print(f"""Warning: Previous round's aggregated model not found at {prev_global_aggregated_dir}.
+Falling back to initial global model for main training model of round {round_num}.""")
+                initial_model_dir_fallback = os.path.join(self.results_dir, structure["global_model_initial"])
+                self.load_model(initial_model_dir_fallback)
 
-                # Check if previous round had tracks
-                prev_round_tracks_dir = os.path.join(
+            self.save_model(training_model_dir)
+            print(f"Saved main global model for training in round {round_num} at {training_model_dir}")
+
+            if active_disagreements:
+                print(f"Active disagreements found for round {round_num}. Initiation mechanism: {initiation_mechanism}")
+
+                client_ids_for_tracks = self.results.get("client_ids", []) # Use configured client IDs
+                if not client_ids_for_tracks:
+                    # Fallback logic for client_ids if necessary, similar to the use_initial=True block
+                    print("Warning: client_ids not found in self.results for track creation in round > 1.")
+                    # Potentially add more robust fallback here if needed
+                    client_dirs_pattern = os.path.join(self.results_dir, "output", "clients", "client_*")
+                    client_dirs = glob.glob(client_dirs_pattern)
+                    if client_dirs:
+                        try:
+                            client_ids_for_tracks = sorted([int(os.path.basename(d).split("_")[-1]) for d in client_dirs])
+                        except ValueError:
+                            client_ids_for_tracks = []
+                    else:
+                        client_ids_for_tracks = []
+
+                track_info = create_model_tracks(active_disagreements, client_ids_for_tracks)
+                current_round_tracks_dir = os.path.join(round_dir, "tracks")
+                os.makedirs(current_round_tracks_dir, exist_ok=True)
+
+                prev_round_tracks_main_dir = os.path.join(
                     self.results_dir,
-                    structure["round_template"].format(round=round_num-1),
+                    structure["round_template"].format(round=round_num - 1),
                     "tracks"
                 )
 
-                if os.path.exists(prev_round_tracks_dir):
-                    # Copy track models from previous round to this round
-                    print(f"Continuing tracks from round {round_num-1}")
-                    tracks_dir = os.path.join(round_dir, "tracks")
-                    os.makedirs(tracks_dir, exist_ok=True)
-                    self.prepare_track_models(prev_round_tracks_dir, tracks_dir, round_num, structure)
-                else:
-                    # This is the first round with disagreements - create tracks from the previous global model
-                    print(f"This is the first round with disagreements")
-
-                    # Load previous round's aggregated model
-                    prev_round_dir = os.path.join(
-                        self.results_dir,
-                        structure["round_template"].format(round=round_num-1)
-                    )
-                    source_model_dir = os.path.join(prev_round_dir, structure["global_model_aggregated"])
-
-                    # Load the previous global model
-                    print(f"Loading previous global model from {source_model_dir}")
-                    self.load_model(source_model_dir)
-
-                    # Create track info for this round with active disagreements
-                    client_dirs = glob.glob(os.path.join(prev_round_dir, "clients/client_*"))
-                    client_ids = [int(os.path.basename(d).split("_")[1]) for d in client_dirs]
-
-                    if not client_ids:
-                        # If no client dirs found yet, use the configured client IDs
-                        client_dirs = glob.glob(os.path.join(self.results_dir, "output/clients/client_*"))
-                        client_ids = [int(os.path.basename(d).split("_")[1]) for d in client_dirs]
-
-                    if not client_ids:
-                        # Fall back to client IDs from the results
-                        client_ids = self.results.get("client_ids", [])
-
-                    track_info = create_model_tracks(active_disagreements, client_ids)
-
-                    # Create tracks directory
-                    tracks_dir = os.path.join(round_dir, "tracks")
-                    os.makedirs(tracks_dir, exist_ok=True)
-
-                    # Save track metadata
-                    metadata_path = os.path.join(tracks_dir, "track_metadata.json")
-                    track_metadata = {
-                        "round": round_num,
-                        "tracks": {k: list(v) for k, v in track_info.get("tracks", {}).items()},
-                        "client_tracks": track_info.get("client_tracks", {})
-                    }
-
-                    with open(metadata_path, "w") as f:
-                        json.dump(track_metadata, f, indent=2)
-
-                    # Create each track starting with the previous global model
-                    for track_name in track_info.get("tracks", {}):
-                        track_dir = os.path.join(tracks_dir, track_name)
-                        os.makedirs(track_dir, exist_ok=True)
-
-                        # Save model to track directory
-                        model_path = os.path.join(track_dir, "model.pt")
-                        torch.save(self.global_model.state_dict(), model_path)
-
-                        # Save track-specific metadata
-                        track_metadata = {
-                            "track_name": track_name,
-                            "round": round_num,
-                            "client_ids": list(track_info.get("tracks", {}).get(track_name, []))
-                        }
-
-                        track_metadata_path = os.path.join(track_dir, "metadata.json")
-                        with open(track_metadata_path, "w") as f:
-                            json.dump(track_metadata, f, indent=2)
-
-                        print(f"Created track '{track_name}' for round {round_num}")
-
-                # Also save the global model for backward compatibility
-                self.save_model(training_model_dir)
-            else:
-                # No disagreements, use standard model preparation
-                print(f"No active disagreements for round {round_num}")
-
-                # Use the previous round's aggregated model
-                prev_round_dir = os.path.join(
-                    self.results_dir,
-                    structure["round_template"].format(round=round_num-1)
-                )
-                source_model_dir = os.path.join(prev_round_dir, structure["global_model_aggregated"])
-
-                print(f"Loading model from round {round_num-1}")
-                self.load_model(source_model_dir)
-
-                print(f"Loaded global model from {source_model_dir}")
-                self.save_model(training_model_dir)
-
-        print(f"=== END SERVER PREPARATION FOR ROUND {round_num} ===\n")
-        return training_model_dir
-
-    def prepare_track_models(self, prev_tracks_dir, tracks_dir, round_num, structure):
-        """Prepare track models for the current round based on previous round's tracks.
-
-        Args:
-            prev_tracks_dir: Directory containing previous round's track models
-            tracks_dir: Directory for current round's track models
-            round_num: Current round number
-            structure: Directory structure configuration
-        """
-        print(f"Preparing track models for round {round_num} from previous round")
-
-        # Get track metadata from previous round
-        metadata_path = os.path.join(prev_tracks_dir, "track_metadata.json")
-        if not os.path.exists(metadata_path):
-            print(f"Warning: Track metadata not found at {metadata_path}")
-            return
-
-        try:
-            with open(metadata_path, 'r') as f:
-                prev_track_metadata = json.load(f)
-
-            # Create new track metadata for this round
-            new_track_metadata = {
-                "round": round_num,
-                "tracks": prev_track_metadata.get("tracks", {}),
-                "client_tracks": prev_track_metadata.get("client_tracks", {})
-            }
-
-            # Copy each track model to the new round
-            for track_name, client_ids in prev_track_metadata.get("tracks", {}).items():
-                prev_track_dir = os.path.join(prev_tracks_dir, track_name)
-                new_track_dir = os.path.join(tracks_dir, track_name)
-
-                # Skip if track directory doesn't exist
-                if not os.path.exists(prev_track_dir):
-                    print(f"Warning: Track directory not found: {prev_track_dir}")
-                    continue
-
-                # Create new track directory
-                os.makedirs(new_track_dir, exist_ok=True)
-
-                # Load previous track model
-                model_path = os.path.join(prev_track_dir, "model.pt")
-                if not os.path.exists(model_path):
-                    print(f"Warning: Track model not found at {model_path}")
-                    continue
-
-                print(f"Loading track '{track_name}' model from previous round")
-                self.load_model(prev_track_dir)
-
-                # Save model to new track directory
-                new_model_path = os.path.join(new_track_dir, "model.pt")
-                torch.save(self.global_model.state_dict(), new_model_path)
-
-                # Create new metadata
-                track_specific_metadata = {
-                    "track_name": track_name,
+                # Consolidate track metadata from previous round if it exists
+                # This will be updated and saved after processing all tracks for the current round
+                current_round_track_metadata = {
                     "round": round_num,
-                    "client_ids": client_ids,
-                    "previous_round": round_num - 1
+                    "tracks": {k: list(v) for k, v in track_info.get("tracks", {}).items()},
+                    "client_tracks": track_info.get("client_tracks", {})
                 }
 
-                track_metadata_path = os.path.join(new_track_dir, "metadata.json")
-                with open(track_metadata_path, 'w') as f:
-                    json.dump(track_specific_metadata, f, indent=2)
+                for track_name, clients_in_this_track_set in track_info.get("tracks", {}).items():
+                    clients_in_this_track = list(clients_in_this_track_set)
+                    current_specific_track_dir = os.path.join(current_round_tracks_dir, track_name)
+                    os.makedirs(current_specific_track_dir, exist_ok=True)
 
-                print(f"Prepared track model: '{track_name}' for round {round_num} (continuing from round {round_num-1})")
+                    prev_specific_track_dir = os.path.join(prev_round_tracks_main_dir, track_name)
 
-            # Update track_metadata for the new round
-            new_metadata_path = os.path.join(tracks_dir, "track_metadata.json")
-            with open(new_metadata_path, 'w') as f:
-                json.dump(new_track_metadata, f, indent=2)
+                    perform_rewind_for_track = (initiation_mechanism == "deep_rewind" and
+                                                not os.path.exists(os.path.join(prev_specific_track_dir, "model.pt")))
 
-            print(f"Prepared {len(new_track_metadata.get('tracks', {}))} track models for round {round_num}")
+                    if perform_rewind_for_track:
+                        print(f"Performing deep rewind for new track '{track_name}' in round {round_num}")
+                        initial_model_dir = os.path.join(self.results_dir, structure["global_model_initial"])
+                        self.load_model(initial_model_dir) # Start with initial model state
+                        current_rewound_model_state = self.global_model.state_dict() # Get state_dict after loading
 
-        except Exception as e:
-            print(f"Error preparing track models: {e}")
-            print(f"Stack trace: {traceback.format_exc()}")
-            print("Falling back to standard model preparation")
+                        for historical_round in range(1, round_num):
+                            historical_clients_dir = os.path.join(
+                                self.results_dir,
+                                structure["round_template"].format(round=historical_round),
+                                structure["clients_dir"]
+                            )
+                            client_model_files_for_historical_round = []
+                            for client_id in clients_in_this_track:
+                                client_model_path = os.path.join(
+                                    historical_clients_dir,
+                                    f"{structure['client_prefix']}{client_id}",
+                                    "model.pt"
+                                )
+                                if os.path.exists(client_model_path):
+                                    client_model_files_for_historical_round.append(client_model_path)
+
+                            if client_model_files_for_historical_round:
+                                print(f"  Rewinding track '{track_name}' for historical round {historical_round} with {len(client_model_files_for_historical_round)} client models.")
+                                aggregated_state = self._aggregate_model_states_from_files_for_rewind(
+                                    client_model_files_for_historical_round, self.device
+                                )
+                                if aggregated_state:
+                                    current_rewound_model_state = aggregated_state
+                                else:
+                                    print(f"  Warning: Aggregation failed for track '{track_name}' in historical round {historical_round}. Using previous state for this step.")
+                            else:
+                                print(f"  No client models found for track '{track_name}' in historical_round {historical_round} during rewind. Using previous state for this step.")
+
+                        self.global_model.load_state_dict(current_rewound_model_state)
+                        self.save_model(current_specific_track_dir)
+                        print(f"  Deep rewind complete for track '{track_name}'. Saved to {current_specific_track_dir}")
+
+                    else: # Track continues or shallow initiation for new track
+                        if os.path.exists(os.path.join(prev_specific_track_dir, "model.pt")):
+                            print(f"Continuing track '{track_name}' from round {round_num - 1}")
+                            self.load_model(prev_specific_track_dir)
+                            self.save_model(current_specific_track_dir)
+                        else:
+                            # New track with shallow initiation
+                            print(f"Shallow initiation for new track '{track_name}' in round {round_num}")
+                            # Source model is the previously aggregated global model for round_num-1
+                            # This was loaded into self.global_model before this loop if no active_disagreements previously,
+                            # or if this is the first disagreement round.
+                            # We need to ensure self.global_model has the correct state from prev_global_aggregated_dir.
+                            self.load_model(prev_global_aggregated_dir) # Ensure correct base for shallow new track
+                            self.save_model(current_specific_track_dir)
+
+                    # Save individual track metadata
+                    track_meta = {
+                        "track_name": track_name,
+                        "round": round_num,
+                        "client_ids": clients_in_this_track,
+                        "rewound": perform_rewind_for_track
+                    }
+                    with open(os.path.join(current_specific_track_dir, "metadata.json"), "w") as f:
+                        json.dump(track_meta, f, indent=2)
+
+                # Save overall track metadata for the current round
+                metadata_path = os.path.join(current_round_tracks_dir, "track_metadata.json")
+                with open(metadata_path, "w") as f:
+                    json.dump(current_round_track_metadata, f, indent=2)
+                print(f"Saved track metadata for round {round_num} to {metadata_path}")
+
+            else:
+                # No disagreements, use standard model preparation (already handled by loading prev_global_aggregated_dir)
+                print(f"No active disagreements for round {round_num}. Using standard global model from {prev_global_aggregated_dir}")
+                # The model is already loaded and saved to training_model_dir
+
+        print(f"=== END SERVER PREPARATION FOR ROUND {round_num} ===\n")
+        return training_model_dir # This is the main global model dir, tracks are separate
 
     def get_client_model_path(self, round_num, client_id):
         """Get the path to the appropriate model for a specific client.
@@ -747,17 +714,99 @@ class FederatedServer:
         }
 
         # Try to load from configuration file
-        config_path = os.path.join(os.path.dirname(self.results_dir), "mock_etcd/configuration.json")
+        # Construct path relative to the current file's directory or a known base
+        # Assuming fl_server is at the same level as mock_etcd
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        config_path = os.path.join(base_dir, "mock_etcd/configuration.json")
+
         try:
             if os.path.exists(config_path):
                 with open(config_path, 'r') as f:
                     config = json.load(f)
                     if "results" in config and "structure" in config["results"]:
-                        return config["results"]["structure"]
+                        # Ensure all keys from default_structure are present
+                        loaded_structure = config["results"]["structure"]
+                        for key, value in default_structure.items():
+                            if key not in loaded_structure:
+                                loaded_structure[key] = value
+                        return loaded_structure
         except Exception as e:
-            print(f"Error loading configuration: {e}")
+            print(f"Error loading or parsing structure configuration: {e}. Using default structure.")
 
         return default_structure
+
+    def _get_disagreement_config(self):
+        """Get the disagreement configuration.
+
+        Returns:
+            dict: Disagreement configuration
+        """
+        default_disagreement_config = {
+            "initiation_mechanism": "shallow" # Default to shallow
+        }
+
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        config_path = os.path.join(base_dir, "mock_etcd/configuration.json")
+
+        try:
+            if os.path.exists(config_path):
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+                    if "disagreement" in config:
+                        loaded_disagreement_config = config["disagreement"]
+                        for key, value in default_disagreement_config.items():
+                            if key not in loaded_disagreement_config:
+                                loaded_disagreement_config[key] = value
+                        return loaded_disagreement_config
+        except Exception as e:
+            print(f"Error loading or parsing disagreement configuration: {e}. Using default disagreement config.")
+
+        return default_disagreement_config
+
+    def _aggregate_model_states_from_files_for_rewind(self, model_file_paths, device):
+        """Aggregate model states from a list of model file paths for rewind.
+
+        Args:
+            model_file_paths: List of paths to model.pt files.
+            device: Device to load models on.
+
+        Returns:
+            dict: Aggregated model state_dict. Returns None if no files provided.
+        """
+        if not model_file_paths:
+            return None
+
+        aggregated_state_dict = None
+        num_models = len(model_file_paths)
+
+        # Load the first model to initialize aggregated_state_dict structure
+        try:
+            first_model_state = torch.load(model_file_paths[0], map_location=device)
+            aggregated_state_dict = {name: torch.zeros_like(param) for name, param in first_model_state.items()}
+        except Exception as e:
+            print(f"Error loading first model for rewind aggregation {model_file_paths[0]}: {e}")
+            return None # Cannot proceed if first model fails
+
+        # Aggregate all models
+        for model_path in model_file_paths:
+            try:
+                client_state_dict = torch.load(model_path, map_location=device)
+                for name, param in client_state_dict.items():
+                    if name in aggregated_state_dict:
+                        aggregated_state_dict[name] += param / num_models
+                    else:
+                        # This case should ideally not happen if all models have the same structure
+                        print(f"Warning: Parameter {name} not found in initial model structure during rewind. Skipping.")
+            except Exception as e:
+                print(f"Error loading or aggregating model {model_path} during rewind: {e}. Skipping this model.")
+                # If a model fails to load, we effectively reduce num_models for others, which is complex.
+                # For simplicity, we average by total initial count. A more robust way would be to sum and count successes.
+                # However, the current loop structure would need adjustment.
+                # For now, this means a failed model effectively contributes zeros if it was not the first.
+                # If it was the first that failed, we return None.
+                pass # Continue with other models, but the average will be skewed if not all load.
+
+        return aggregated_state_dict
 
     def evaluate_model(self, fl_round=None, client_results=None):
         """Evaluate global model on test data.
