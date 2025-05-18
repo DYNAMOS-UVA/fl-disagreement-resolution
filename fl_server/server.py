@@ -67,6 +67,9 @@ class FederatedServer:
             "rounds": []
         }
 
+        # Load disagreement settings once
+        self.disagreement_settings = self._get_disagreement_config()
+
         # Create output directories
         if results_dir:
             # Get structure config
@@ -181,7 +184,9 @@ class FederatedServer:
         metadata = {
             "experiment_type": self.experiment_type,
             "round": self.round,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "disagreement_settings_active_this_round": self.disagreement_settings,
+            "fully_excluded_clients_this_round": sorted(list(getattr(self, 'fully_excluded_clients_for_current_round', set())))
         }
 
         metadata_path = os.path.join(model_dir, "metadata.json")
@@ -353,257 +358,299 @@ class FederatedServer:
         Returns:
             str: Path to the prepared model directory
         """
-        import glob  # Add explicit import to fix UnboundLocalError
+        import glob
 
         if not self.results_dir:
-            return
+            return None # Return None if results_dir is not set
 
         print(f"\n=== SERVER PREPARATION FOR ROUND {round_num} ===")
+        self.fully_excluded_clients_for_current_round = set()
 
-        # Get directory structure from configuration
         structure = self._get_structure_config()
+        disagreement_settings = self._get_disagreement_config()
+        initiation_mechanism = disagreement_settings.get("initiation_mechanism", "shallow")
+        lifting_mechanism = disagreement_settings.get("lifting_mechanism", "shallow")
+        finetune_total_rounds = disagreement_settings.get("deep_lifting_finetune_rounds", 3)
+        print(f"  Using initiation_mechanism: {initiation_mechanism}, lifting_mechanism: {lifting_mechanism}, deep_lifting_finetune_rounds: {finetune_total_rounds}")
 
-        # Get disagreement configuration
-        disagreement_config = self._get_disagreement_config()
-        initiation_mechanism = disagreement_config.get("initiation_mechanism", "shallow")
-
-        # Create round directory
-        round_dir = os.path.join(
-            self.results_dir,
-            structure["round_template"].format(round=round_num)
-        )
+        round_dir = os.path.join(self.results_dir, structure["round_template"].format(round=round_num))
         os.makedirs(round_dir, exist_ok=True)
-
-        # Create directory for the global model for training
         training_model_dir = os.path.join(round_dir, structure["global_model"])
         os.makedirs(training_model_dir, exist_ok=True)
+        # aggregated_model_dir = os.path.join(round_dir, structure["global_model_aggregated"]) # This dir is created later or by aggregate_client_models
+        # os.makedirs(aggregated_model_dir, exist_ok=True)
 
-        # Create directory for the aggregated model
-        aggregated_model_dir = os.path.join(round_dir, structure["global_model_aggregated"])
-        os.makedirs(aggregated_model_dir, exist_ok=True)
-
-        # Check if there are active disagreements in the current round
         etcd_dir = "mock_etcd"
         disagreements = load_disagreements(etcd_dir)
         active_disagreements = get_active_disagreements(disagreements, round_num)
 
-        # Load the appropriate source model
+        if active_disagreements:
+            for client_id_str, disags_list in active_disagreements.items():
+                for disag_item in disags_list:
+                    if disag_item.get('type') == 'full':
+                        try:
+                            numeric_id = int(client_id_str.split('_')[-1]) if '_' in client_id_str else int(client_id_str)
+                            self.fully_excluded_clients_for_current_round.add(numeric_id)
+                        except ValueError:
+                            print(f"Warning: Could not parse numeric ID from client_id_str '{client_id_str}' for full exclusion.")
+            if self.fully_excluded_clients_for_current_round:
+                print(f"  Fully excluded clients identified for round {round_num}: {sorted(list(self.fully_excluded_clients_for_current_round))}")
+
         if use_initial:
-            # For round 1 with initial model
             source_model_dir = os.path.join(self.results_dir, structure["global_model_initial"])
             print(f"Round {round_num} starting with initial global model from {source_model_dir}")
-
-            # Load the initial model
             self.load_model(source_model_dir)
 
-            # If we have disagreements in round 1, we need to create tracks from the initial model
             if active_disagreements:
                 print(f"Creating initial tracks for round {round_num} from global initial model")
-
-                # Get client IDs for track creation
                 client_ids_for_tracks = self.results.get("client_ids", [])
                 if not client_ids_for_tracks:
-                    # Fallback if not in results (e.g. during direct testing)
-                    # This part might need adjustment based on how client_ids are reliably fetched
                     print("Warning: client_ids not found in self.results, attempting to infer from client_dirs.")
-                    client_dirs_pattern = os.path.join(self.results_dir, "output", "clients", "client_*") # General pattern
+                    client_dirs_pattern = os.path.join(self.results_dir, "output", "clients", "client_*")
                     client_dirs = glob.glob(client_dirs_pattern)
-                    if client_dirs:
-                        try:
-                            client_ids_for_tracks = sorted([int(os.path.basename(d).split("_")[-1]) for d in client_dirs])
-                        except ValueError:
-                            print(f"Could not parse client IDs from {client_dirs_pattern}. Track creation might be affected.")
-                            client_ids_for_tracks = [] # Prevent error in create_model_tracks
-                    else:
-                        print(f"No client directories found at {client_dirs_pattern}. Track creation might be affected.")
-                        client_ids_for_tracks = []
+                    client_ids_for_tracks = sorted([int(os.path.basename(d).split("_")[-1]) for d in client_dirs]) if client_dirs else []
+                    if not client_ids_for_tracks:
+                         print(f"No client directories found at {client_dirs_pattern}. Track creation might be affected.")
 
                 track_info = create_model_tracks(active_disagreements, client_ids_for_tracks)
-
-                # Create tracks directory
                 tracks_dir = os.path.join(round_dir, "tracks")
                 os.makedirs(tracks_dir, exist_ok=True)
-
-                # Save track metadata
                 metadata_path = os.path.join(tracks_dir, "track_metadata.json")
-                track_metadata = {
+                track_metadata_content = {
                     "round": round_num,
                     "tracks": {k: list(v) for k, v in track_info.get("tracks", {}).items()},
                     "client_tracks": track_info.get("client_tracks", {})
                 }
+                with open(metadata_path, "w") as f: json.dump(track_metadata_content, f, indent=2)
 
-                with open(metadata_path, "w") as f:
-                    json.dump(track_metadata, f, indent=2)
-
-                # Create each track with the initial model
-                for track_name in track_info.get("tracks", {}):
-                    track_dir = os.path.join(tracks_dir, track_name)
-                    os.makedirs(track_dir, exist_ok=True)
-
-                    # Save model to track directory
-                    model_path = os.path.join(track_dir, "model.pt")
-                    torch.save(self.global_model.state_dict(), model_path)
-
-                    # Save track-specific metadata
-                    track_metadata = {
-                        "track_name": track_name,
+                for track_name_iter in track_info.get("tracks", {}):
+                    track_dir_iter = os.path.join(tracks_dir, track_name_iter)
+                    os.makedirs(track_dir_iter, exist_ok=True)
+                    torch.save(self.global_model.state_dict(), os.path.join(track_dir_iter, "model.pt"))
+                    individual_track_meta = {
+                        "track_name": track_name_iter,
                         "round": round_num,
-                        "client_ids": list(track_info.get("tracks", {}).get(track_name, []))
+                        "client_ids": list(track_info.get("tracks", {}).get(track_name_iter, [])),
+                        "rewound_this_round": False, # Cannot be rewound in round 1 from initial
+                        "finetuning_status": {}
                     }
+                    with open(os.path.join(track_dir_iter, "metadata.json"), "w") as f_meta_track: json.dump(individual_track_meta, f_meta_track, indent=2)
+                    print(f"Created initial track '{track_name_iter}' for round {round_num}")
 
-                    track_metadata_path = os.path.join(track_dir, "metadata.json")
-                    with open(track_metadata_path, "w") as f:
-                        json.dump(track_metadata, f, indent=2)
-
-                    print(f"Created initial track '{track_name}' for round {round_num}")
-
-            # Save the initial model as the global model for training
             self.save_model(training_model_dir)
             print(f"Saved global model for training at {training_model_dir}")
-        else:
-            # For subsequent rounds (round_num > 1)
-            # Prepare the main global model for training (for clients not in tracks or as a fallback)
-            prev_global_aggregated_dir = os.path.join(
-                self.results_dir,
-                structure["round_template"].format(round=round_num - 1),
-                structure["global_model_aggregated"]
-            )
+        else: # Not use_initial (round_num > 1 typically)
+            prev_global_aggregated_dir = os.path.join(self.results_dir, structure["round_template"].format(round=round_num - 1), structure["global_model_aggregated"])
             if os.path.exists(os.path.join(prev_global_aggregated_dir, "model.pt")):
                 print(f"Loading main global model from previous round {round_num-1}'s aggregated model: {prev_global_aggregated_dir}")
                 self.load_model(prev_global_aggregated_dir)
             else:
-                # Fallback if previous aggregated model doesn't exist (e.g. if round 1 was interrupted)
-                # In this case, we might have to use the initial model, which is less ideal for round > 1
-                print(f"""Warning: Previous round's aggregated model not found at {prev_global_aggregated_dir}.
-Falling back to initial global model for main training model of round {round_num}.""")
+                print(f"""Warning: Previous round's aggregated model not found at {prev_global_aggregated_dir}. Falling back to initial global model for main training model of round {round_num}.""")
                 initial_model_dir_fallback = os.path.join(self.results_dir, structure["global_model_initial"])
                 self.load_model(initial_model_dir_fallback)
-
             self.save_model(training_model_dir)
             print(f"Saved main global model for training in round {round_num} at {training_model_dir}")
 
             if active_disagreements:
                 print(f"Active disagreements found for round {round_num}. Initiation mechanism: {initiation_mechanism}")
-
-                client_ids_for_tracks = self.results.get("client_ids", []) # Use configured client IDs
-                if not client_ids_for_tracks:
-                    # Fallback logic for client_ids if necessary, similar to the use_initial=True block
+                client_ids_for_tracks = self.results.get("client_ids", [])
+                if not client_ids_for_tracks: # Fallback for client_ids
                     print("Warning: client_ids not found in self.results for track creation in round > 1.")
-                    # Potentially add more robust fallback here if needed
                     client_dirs_pattern = os.path.join(self.results_dir, "output", "clients", "client_*")
                     client_dirs = glob.glob(client_dirs_pattern)
-                    if client_dirs:
-                        try:
-                            client_ids_for_tracks = sorted([int(os.path.basename(d).split("_")[-1]) for d in client_dirs])
-                        except ValueError:
-                            client_ids_for_tracks = []
-                    else:
-                        client_ids_for_tracks = []
+                    client_ids_for_tracks = sorted([int(os.path.basename(d).split("_")[-1]) for d in client_dirs]) if client_dirs else []
 
                 track_info = create_model_tracks(active_disagreements, client_ids_for_tracks)
                 current_round_tracks_dir = os.path.join(round_dir, "tracks")
                 os.makedirs(current_round_tracks_dir, exist_ok=True)
+                prev_round_tracks_main_dir = os.path.join(self.results_dir, structure["round_template"].format(round=round_num - 1), "tracks")
 
-                prev_round_tracks_main_dir = os.path.join(
-                    self.results_dir,
-                    structure["round_template"].format(round=round_num - 1),
-                    "tracks"
-                )
-
-                # Consolidate track metadata from previous round if it exists
-                # This will be updated and saved after processing all tracks for the current round
-                current_round_track_metadata = {
+                current_round_track_metadata_content = {
                     "round": round_num,
                     "tracks": {k: list(v) for k, v in track_info.get("tracks", {}).items()},
                     "client_tracks": track_info.get("client_tracks", {})
                 }
 
                 for track_name, clients_in_this_track_set in track_info.get("tracks", {}).items():
-                    clients_in_this_track = list(clients_in_this_track_set)
+                    clients_in_this_track_list = list(clients_in_this_track_set)
                     current_specific_track_dir = os.path.join(current_round_tracks_dir, track_name)
                     os.makedirs(current_specific_track_dir, exist_ok=True)
-
                     prev_specific_track_dir = os.path.join(prev_round_tracks_main_dir, track_name)
+                    track_existed_previously_as_specific_dir = os.path.exists(os.path.join(prev_specific_track_dir, "model.pt"))
 
-                    perform_rewind_for_track = (initiation_mechanism == "deep_rewind" and
-                                                not os.path.exists(os.path.join(prev_specific_track_dir, "model.pt")))
+                    current_track_finetuning_status = {}
+                    if lifting_mechanism == "deep_incr_finetune":
+                        prev_finetune_status_path = os.path.join(prev_specific_track_dir, "finetuning_status.json")
+                        prev_track_finetuning_status_loaded = {}
+                        if os.path.exists(prev_finetune_status_path):
+                            try:
+                                with open(prev_finetune_status_path, 'r') as f_fs: prev_track_finetuning_status_loaded = json.load(f_fs)
+                            except Exception as e: print(f"    Warning: Could not load previous finetuning status for track '{track_name}': {e}")
+                        prev_track_clients_metadata = set()
+                        prev_track_metadata_path_iter = os.path.join(prev_specific_track_dir, "metadata.json")
+                        if os.path.exists(prev_track_metadata_path_iter):
+                            try:
+                                with open(prev_track_metadata_path_iter, 'r') as f_meta: prev_track_clients_metadata = set(json.load(f_meta).get("client_ids", []))
+                            except Exception as e: print(f"    Warning: Could not load previous metadata for track '{track_name}': {e}")
+                        for client_id_numeric in clients_in_this_track_list:
+                            client_id_str_iter = str(client_id_numeric)
+                            if client_id_numeric not in prev_track_clients_metadata and track_existed_previously_as_specific_dir:
+                                print(f"    Client {client_id_str_iter} is new to track '{track_name}'. Starting incremental finetuning.")
+                                current_track_finetuning_status[client_id_str_iter] = 1
+                            elif client_id_str_iter in prev_track_finetuning_status_loaded:
+                                progress = prev_track_finetuning_status_loaded[client_id_str_iter] + 1
+                                if progress <= finetune_total_rounds:
+                                    print(f"    Client {client_id_str_iter} continuing finetuning in track '{track_name}', round {progress}/{finetune_total_rounds}")
+                                    current_track_finetuning_status[client_id_str_iter] = progress
+                                else: print(f"    Client {client_id_str_iter} completed finetuning in track '{track_name}'.")
+                    if current_track_finetuning_status:
+                        with open(os.path.join(current_specific_track_dir, "finetuning_status.json"), 'w') as f_fs_curr: json.dump(current_track_finetuning_status, f_fs_curr, indent=2)
+                        print(f"    Saved finetuning status for track '{track_name}'.")
 
-                    if perform_rewind_for_track:
-                        print(f"Performing deep rewind for new track '{track_name}' in round {round_num}")
-                        initial_model_dir = os.path.join(self.results_dir, structure["global_model_initial"])
-                        self.load_model(initial_model_dir) # Start with initial model state
-                        current_rewound_model_state = self.global_model.state_dict() # Get state_dict after loading
+                    print(f"  Evaluating track: '{track_name}'. Existed previously: {track_existed_previously_as_specific_dir}")
+                    is_new_track_to_dir_structure = not track_existed_previously_as_specific_dir
+                    composition_has_changed = False
+                    if is_new_track_to_dir_structure:
+                        if track_name == "global":
+                            all_system_clients = set(self.results.get("client_ids", []))
+                            active_disags_prev_round = get_active_disagreements(disagreements, round_num - 1 if round_num > 0 else 0)
+                            fully_excluded_prev = set()
+                            if active_disags_prev_round:
+                                for cid_str, d_list in active_disags_prev_round.items():
+                                    for d_item in d_list:
+                                        if d_item.get('type') == 'full':
+                                            try: fully_excluded_prev.add(int(cid_str.split('_')[-1]) if '_' in cid_str else int(cid_str))
+                                            except ValueError: print(f"Warning: Could not parse client ID '{cid_str}' during rewind check for global track.")
+                            conceptual_prev_global_clients = all_system_clients - fully_excluded_prev
+                            if clients_in_this_track_set != conceptual_prev_global_clients:
+                                composition_has_changed = True
+                                print(f"    Global track is new to 'tracks' dir. Composition changed.")
+                            else: print(f"    Global track is new to 'tracks' dir. Composition UNCHANGED.")
+                        else: # Non-global track, new to dir structure
+                            composition_has_changed = True
+                            print(f"    Non-global track '{track_name}' is new. Marking composition changed.")
+                    else: # Track existed previously
+                        prev_meta_path = os.path.join(prev_specific_track_dir, "metadata.json")
+                        if os.path.exists(prev_meta_path):
+                            with open(prev_meta_path, 'r') as f_m: prev_clients = set(json.load(f_m).get("client_ids", []))
+                            if prev_clients != clients_in_this_track_set:
+                                composition_has_changed = True; print(f"    Track '{track_name}' existed and composition changed.")
+                            else: print(f"    Track '{track_name}' existed and composition UNCHANGED.")
+                        else: composition_has_changed = True; print(f"    Track '{track_name}' existed but no prev metadata. Marking changed.")
 
-                        for historical_round in range(1, round_num):
-                            historical_clients_dir = os.path.join(
-                                self.results_dir,
-                                structure["round_template"].format(round=historical_round),
-                                structure["clients_dir"]
-                            )
-                            client_model_files_for_historical_round = []
-                            for client_id in clients_in_this_track:
-                                client_model_path = os.path.join(
-                                    historical_clients_dir,
-                                    f"{structure['client_prefix']}{client_id}",
-                                    "model.pt"
-                                )
-                                if os.path.exists(client_model_path):
-                                    client_model_files_for_historical_round.append(client_model_path)
+                    perform_rewind_for_this_track = (initiation_mechanism == "deep_rewind" and composition_has_changed)
+                    print(f"    Perform rewind for '{track_name}': {perform_rewind_for_this_track}")
 
-                            if client_model_files_for_historical_round:
-                                print(f"  Rewinding track '{track_name}' for historical round {historical_round} with {len(client_model_files_for_historical_round)} client models.")
-                                aggregated_state = self._aggregate_model_states_from_files_for_rewind(
-                                    client_model_files_for_historical_round, self.device
-                                )
-                                if aggregated_state:
-                                    current_rewound_model_state = aggregated_state
-                                else:
-                                    print(f"  Warning: Aggregation failed for track '{track_name}' in historical round {historical_round}. Using previous state for this step.")
-                            else:
-                                print(f"  No client models found for track '{track_name}' in historical_round {historical_round} during rewind. Using previous state for this step.")
-
+                    if perform_rewind_for_this_track:
+                        print(f"Performing deep rewind for track '{track_name}'.")
+                        self.load_model(os.path.join(self.results_dir, structure["global_model_initial"]))
+                        current_rewound_model_state = self.global_model.state_dict()
+                        for hist_round in range(1, round_num):
+                            hist_clients_dir = os.path.join(self.results_dir, structure["round_template"].format(round=hist_round), structure["clients_dir"])
+                            client_model_files_hist = [os.path.join(hist_clients_dir, f"{structure['client_prefix']}{cid}", "model.pt") for cid in clients_in_this_track_list if os.path.exists(os.path.join(hist_clients_dir, f"{structure['client_prefix']}{cid}", "model.pt"))]
+                            if client_model_files_hist:
+                                print(f"  Rewinding '{track_name}' for hist_round {hist_round} with {len(client_model_files_hist)} models.")
+                                aggregated_state = self._aggregate_model_states_from_files_for_rewind(client_model_files_hist, self.device)
+                                if aggregated_state: current_rewound_model_state = aggregated_state
+                                else: print(f"  Warning: Aggregation failed for '{track_name}' in hist_round {hist_round}.")
+                            else: print(f"  No models for '{track_name}' in hist_round {hist_round} for rewind.")
                         self.global_model.load_state_dict(current_rewound_model_state)
                         self.save_model(current_specific_track_dir)
-                        print(f"  Deep rewind complete for track '{track_name}'. Saved to {current_specific_track_dir}")
-
-                    else: # Track continues or shallow initiation for new track
-                        if os.path.exists(os.path.join(prev_specific_track_dir, "model.pt")):
-                            print(f"Continuing track '{track_name}' from round {round_num - 1}")
-                            self.load_model(prev_specific_track_dir)
-                            self.save_model(current_specific_track_dir)
+                        print(f"  Deep rewind complete for '{track_name}'. Saved to {current_specific_track_dir}")
+                    else: # Not rewinding this track
+                        source_model_for_track_path = prev_specific_track_dir if track_existed_previously_as_specific_dir else prev_global_aggregated_dir
+                        print(f"Loading model for track '{track_name}' from '{source_model_for_track_path}'.")
+                        if os.path.exists(os.path.join(source_model_for_track_path, "model.pt")):
+                            self.load_model(source_model_for_track_path)
                         else:
-                            # New track with shallow initiation
-                            print(f"Shallow initiation for new track '{track_name}' in round {round_num}")
-                            # Source model is the previously aggregated global model for round_num-1
-                            # This was loaded into self.global_model before this loop if no active_disagreements previously,
-                            # or if this is the first disagreement round.
-                            # We need to ensure self.global_model has the correct state from prev_global_aggregated_dir.
-                            self.load_model(prev_global_aggregated_dir) # Ensure correct base for shallow new track
-                            self.save_model(current_specific_track_dir)
+                            print(f"Warning: Source model '{source_model_for_track_path}' for track '{track_name}' not found. Using initial global model.")
+                            self.load_model(os.path.join(self.results_dir, structure["global_model_initial"]))
+                        self.save_model(current_specific_track_dir)
 
-                    # Save individual track metadata
-                    track_meta = {
-                        "track_name": track_name,
-                        "round": round_num,
-                        "client_ids": clients_in_this_track,
-                        "rewound": perform_rewind_for_track
-                    }
-                    with open(os.path.join(current_specific_track_dir, "metadata.json"), "w") as f:
-                        json.dump(track_meta, f, indent=2)
+                    individual_track_meta = {"track_name": track_name, "round": round_num, "client_ids": clients_in_this_track_list, "rewound_this_round": perform_rewind_for_this_track,
+                                           "finetuning_status": {cid_str: f"{prog}/{finetune_total_rounds}" for cid_str, prog in current_track_finetuning_status.items()} if current_track_finetuning_status else {}}
+                    with open(os.path.join(current_specific_track_dir, "metadata.json"), "w") as f_track_meta: json.dump(individual_track_meta, f_track_meta, indent=2)
 
-                # Save overall track metadata for the current round
-                metadata_path = os.path.join(current_round_tracks_dir, "track_metadata.json")
-                with open(metadata_path, "w") as f:
-                    json.dump(current_round_track_metadata, f, indent=2)
-                print(f"Saved track metadata for round {round_num} to {metadata_path}")
-
-            else:
-                # No disagreements, use standard model preparation (already handled by loading prev_global_aggregated_dir)
+                with open(os.path.join(current_round_tracks_dir, "track_metadata.json"), "w") as f_meta_overall: json.dump(current_round_track_metadata_content, f_meta_overall, indent=2)
+                print(f"Saved track metadata for round {round_num}.")
+            else: # No active disagreements
                 print(f"No active disagreements for round {round_num}. Using standard global model from {prev_global_aggregated_dir}")
-                # The model is already loaded and saved to training_model_dir
+                if round_num > 1 and lifting_mechanism == "deep_incr_finetune":
+                    print("    Global finetuning check: lifting_mechanism is deep_incr_finetune and no active tracks.")
+                    current_global_finetuning_status = {}
+                    prev_round_main_dir = os.path.join(self.results_dir, structure["round_template"].format(round=round_num - 1))
+                    prev_global_finetune_status_path = os.path.join(prev_round_main_dir, "global_finetuning_status.json")
+                    prev_global_finetuning_status_loaded = {}
+                    if os.path.exists(prev_global_finetune_status_path):
+                        try:
+                            with open(prev_global_finetune_status_path, 'r') as f_fs: prev_global_finetuning_status_loaded = json.load(f_fs)
+                            print(f"    Loaded previous global_finetuning_status.json from {prev_global_finetune_status_path}")
+                        except Exception as e: print(f"    Warning: Could not load previous global finetuning status: {e}")
 
-        print(f"=== END SERVER PREPARATION FOR ROUND {round_num} ===\n")
-        return training_model_dir # This is the main global model dir, tracks are separate
+                    prev_round_track_metadata_path = os.path.join(prev_round_main_dir, "tracks", "track_metadata.json")
+                    prev_round_had_active_tracks = os.path.exists(prev_round_track_metadata_path)
+                    prev_round_client_track_map = {} # Stores client_id_str -> track_name from previous round
+
+                    if prev_round_had_active_tracks:
+                        print(f"    Tracks were active in previous round (R{round_num-1}). Will check if clients rejoin from non-global tracks.")
+                        try:
+                            with open(prev_round_track_metadata_path, 'r') as f_prev_meta:
+                                prev_track_meta_content = json.load(f_prev_meta)
+                                # Ensure keys are strings for consistent lookup
+                                prev_round_client_track_map = {str(k): v for k, v in prev_track_meta_content.get("client_tracks", {}).items()}
+                        except Exception as e:
+                            print(f"    Warning: Could not load client_tracks from previous round's track_metadata.json: {e}")
+                    else:
+                        print(f"    No tracks were active in previous round (R{round_num-1}). Finetuning initiation relies on absence or loaded global status.")
+
+                    prev_round_clients_dir = os.path.join(prev_round_main_dir, structure["clients_dir"])
+                    prev_round_submitted_model_ids = set()
+                    if os.path.exists(prev_round_clients_dir):
+                        client_model_dirs = glob.glob(os.path.join(prev_round_clients_dir, f"{structure['client_prefix']}*"))
+                        for d_path in client_model_dirs:
+                            try: prev_round_submitted_model_ids.add(int(os.path.basename(d_path).replace(structure['client_prefix'], "")))
+                            except ValueError: pass
+                    print(f"    Clients who submitted models in R{round_num-1}: {sorted(list(prev_round_submitted_model_ids))}")
+                    current_global_participants = set(self.results.get("client_ids", [])) - self.fully_excluded_clients_for_current_round
+                    print(f"    Current global participants in R{round_num}: {sorted(list(current_global_participants))}")
+
+                    for client_id_numeric in current_global_participants:
+                        client_id_str_gf = str(client_id_numeric)
+                        start_new_finetuning_for_client = False
+                        if client_id_numeric not in prev_round_submitted_model_ids:
+                            print(f"    Global: Client {client_id_str_gf} was absent in R{round_num-1}, now joining. Starting finetuning.")
+                            start_new_finetuning_for_client = True
+                        elif prev_round_had_active_tracks:
+                            client_prev_track = prev_round_client_track_map.get(client_id_str_gf)
+                            if client_prev_track and client_prev_track != "global":
+                                print(f"    Global: Client {client_id_str_gf} is rejoining from a non-global track ('{client_prev_track}') in R{round_num-1}. Starting finetuning.")
+                                start_new_finetuning_for_client = True
+                            else:
+                                # Client was present, tracks existed, but client was on 'global' track or track info missing for them.
+                                # No NEW finetuning initiation due to track dissolution itself.
+                                print(f"    Global: Client {client_id_str_gf} was on '{client_prev_track or '(no specific track assigned / or global)'}' in tracked R{round_num-1}. No new finetuning initiated by track dissolution.")
+
+                        if start_new_finetuning_for_client:
+                            current_global_finetuning_status[client_id_str_gf] = 1
+                        elif client_id_str_gf in prev_global_finetuning_status_loaded:
+                            # Not starting NEW, but might be CONTINUING a previous global finetune cycle
+                            progress_gf = prev_global_finetuning_status_loaded[client_id_str_gf] + 1
+                            if progress_gf <= finetune_total_rounds:
+                                print(f"    Global: Client {client_id_str_gf} continuing existing global finetuning, round {progress_gf}/{finetune_total_rounds}")
+                                current_global_finetuning_status[client_id_str_gf] = progress_gf
+                            else:
+                                print(f"    Global: Client {client_id_str_gf} completed existing global finetuning.")
+                        # Else: Client was present, no new trigger, and not in prev_global_finetuning_status_loaded -> no finetuning action for this client.
+
+                    if current_global_finetuning_status:
+                        current_global_finetune_status_path = os.path.join(round_dir, "global_finetuning_status.json")
+                        try:
+                            with open(current_global_finetune_status_path, 'w') as f_fs_global: json.dump(current_global_finetuning_status, f_fs_global, indent=2)
+                            print(f"    Saved global finetuning status to {current_global_finetune_status_path}")
+                        except Exception as e: print(f"    Warning: Could not save global finetuning status: {e}")
+
+        print(f"=== END SERVER PREPARATION FOR ROUND {round_num} ===\\n")
+        return training_model_dir
 
     def get_client_model_path(self, round_num, client_id):
         """Get the path to the appropriate model for a specific client.
@@ -742,7 +789,9 @@ Falling back to initial global model for main training model of round {round_num
             dict: Disagreement configuration
         """
         default_disagreement_config = {
-            "initiation_mechanism": "shallow" # Default to shallow
+            "initiation_mechanism": "shallow", # Default to shallow
+            "lifting_mechanism": "shallow",    # Default to shallow
+            "deep_lifting_finetune_rounds": 3  # Default to 3 rounds
         }
 
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

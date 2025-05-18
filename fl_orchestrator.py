@@ -29,7 +29,7 @@ class FederatedOrchestrator:
 
         # Extract common parameters
         self.experiment_type = self.exp_config.get("type")
-        self.client_ids = self.exp_config.get("client_ids")
+        self.client_ids_in_experiment = self.exp_config.get("client_ids")
         self.fl_rounds = self.exp_config.get("fl_rounds")
         self.results_dir = self.results_config.get("results_dir")
 
@@ -48,7 +48,7 @@ class FederatedOrchestrator:
         # Initialize clients
         self.clients = self._init_clients()
 
-        print(f"Initialized federated learning orchestrator with {len(self.client_ids)} clients for {self.experiment_type} experiment")
+        print(f"Initialized federated learning orchestrator with {len(self.client_ids_in_experiment)} clients for {self.experiment_type} experiment")
         print(f"Results directory: {self.results_dir}")
 
     def _setup_data_if_needed(self):
@@ -58,7 +58,7 @@ class FederatedOrchestrator:
             # Check if data already exists for all clients
             train_client_data_exists = all(
                 os.path.exists(os.path.join("data/mnist", 'train', f'client_{i}', 'mnist_data.npz'))
-                for i in range(max(self.client_ids) + 1)
+                for i in range(max(self.client_ids_in_experiment) + 1)
             )
             test_data_exists = os.path.exists(os.path.join("data/mnist", 'test', 'mnist_test.npz'))
 
@@ -66,7 +66,7 @@ class FederatedOrchestrator:
             if not (train_client_data_exists and test_data_exists) or self.data_config.get("force_setup_data", False):
                 print("Setting up MNIST federated data...")
                 fl_module.setup_mnist_federated_data(
-                    num_clients=max(self.client_ids) + 1,  # Ensure enough clients are created
+                    num_clients=max(self.client_ids_in_experiment) + 1,  # Ensure enough clients are created
                     samples_per_client=self.data_config.get("client_sample_size", 1000),
                     iid=self.exp_config.get("iid", True)
                 )
@@ -97,7 +97,7 @@ class FederatedOrchestrator:
         # Initialize the server with experiment metadata
         server.init_experiment(
             fl_rounds=self.fl_rounds,
-            client_ids=self.client_ids,
+            client_ids=self.client_ids_in_experiment,
             iid=self.exp_config.get("iid", False) if self.experiment_type == "mnist" else None
         )
 
@@ -110,7 +110,7 @@ class FederatedOrchestrator:
             dict: Dictionary mapping client IDs to client instances
         """
         clients = {}
-        for client_id in self.client_ids:
+        for client_id in self.client_ids_in_experiment:
             clients[client_id] = FederatedClient(
                 client_id=client_id,
                 experiment_type=self.experiment_type,
@@ -166,7 +166,22 @@ class FederatedOrchestrator:
             # 2. Train local models on each client
             print("Training local models...")
 
-            for client_id, client in self.clients.items():
+            # Get fully excluded clients from the server
+            fully_excluded_clients_for_round = self.server.fully_excluded_clients_for_current_round
+
+            if fully_excluded_clients_for_round:
+                print(f"Orchestrator: Fully excluded clients for round {fl_round}: {sorted(list(fully_excluded_clients_for_round))}")
+
+            for client_id in self.client_ids_in_experiment:
+                if client_id in fully_excluded_clients_for_round:
+                    print(f"Skipping training for client {client_id} in round {fl_round} due to full exclusion.")
+                    continue
+
+                if client_id not in self.clients:
+                    print(f"Warning: Client {client_id} configured in experiment but not initialized. Skipping.")
+                    continue
+
+                client = self.clients[client_id]
                 print(f"Training client {client_id}...")
 
                 # Client loads the global model for this round

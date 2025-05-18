@@ -2,14 +2,22 @@
   "name": "Deep Rewind Test Scenario",
   "description": "A scenario where clients first collaborate for 2 rounds, then client 0 introduces an inbound exclusion against client 1 in round 3. This tests the deep_rewind mechanism that retroactively removes client 1's influence from client 0's model.",
   "expected_tracks_round_1": {
-    "global": "Global track (all clients collaborate initially)"
+    "global": "Global track (all clients collaborate)"
   },
   "expected_tracks_round_2": {
-    "global": "Global track (all clients still collaborate)"
+    "global": "Global track (all clients collaborate)"
   },
   "expected_tracks_round_3": {
-    "global": "Global track (for clients not involved in disagreements)",
-    "track_0_no1": "Track for client 0 that excludes client 1's contributions"
+    "track_0_no1": "Track for client 0 that excludes client 1's contributions",
+    "global": "Global track (for clients not involved in disagreements)"
+  },
+  "expected_tracks_round_4": {
+    "track_0_no1": "Track for client 0 that excludes client 1's contributions (ongoing)",
+    "global": "Global track (for clients not involved in disagreements) (ongoing)"
+  },
+  "expected_tracks_round_5": {
+    "track_0_no1": "Track for client 0 that excludes client 1's contributions (ongoing)",
+    "global": "Global track (for clients not involved in disagreements) (ongoing)"
   },
   "validation_rules": {
     "round_1_rules": [
@@ -50,7 +58,8 @@
     "0": [
       {
         "type": "inbound",
-        "target": 1,
+        "target": "1",
+        "description": "Client 0 disagrees with client 1 from round 3 onwards",
         "active_rounds": {
           "start": 3,
           "end": null

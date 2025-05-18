@@ -122,12 +122,22 @@ def verify_tracks(results_dir, scenario):
         active_disagreements = {}
         if "disagreements" in scenario:
             # Handle different disagreement formats
-            if isinstance(next(iter(scenario["disagreements"].values())), list):
+            if scenario["disagreements"] and isinstance(next(iter(scenario["disagreements"].values())), list):
                 # New format: list of disagreements per client
                 for client_id, disagreement_list in scenario["disagreements"].items():
                     for disagreement in disagreement_list:
+                        disagreement_type = disagreement.get("type")
                         target_id = disagreement.get("target")
-                        if not target_id:
+
+                        # For "full" exclusions, target_id is not applicable and should not cause skipping.
+                        # Other types might require a target_id, but for checking activity,
+                        # we only skip if it's NOT a "full" type AND target_id is missing.
+                        if disagreement_type == "full":
+                            # This is a full exclusion, proceed regardless of target_id
+                            pass
+                        elif not target_id:
+                            # This is NOT a full exclusion, and target_id is missing, so skip.
+                            print(f"  Skipping disagreement for client {client_id} due to missing target_id (type: {disagreement_type})") # Added for debugging
                             continue
 
                         # Check if this disagreement is active in this round
@@ -355,16 +365,16 @@ def verify_tracks(results_dir, scenario):
 
                 elif rule_type == "track_includes_only":
                     track_name = rule.get("track_name")
-                    clients = rule.get("clients", [])
+                    clients_expected_in_rule = rule.get("clients", [])
                     description = rule.get("description", "")
 
                     if track_name in track_metadata.get("tracks", {}):
-                        track_clients = set(track_metadata["tracks"][track_name])
-                        expected_clients = set(str(c) for c in clients)
+                        actual_track_clients_set = set(track_metadata["tracks"][track_name])
+                        expected_clients_set = set(clients_expected_in_rule)
 
-                        if track_clients != expected_clients:
-                            extra = track_clients - expected_clients
-                            missing = expected_clients - track_clients
+                        if actual_track_clients_set != expected_clients_set:
+                            extra = actual_track_clients_set - expected_clients_set
+                            missing = expected_clients_set - actual_track_clients_set
                             if extra:
                                 print(f"❌ {description}: Track {track_name} has extra clients: {extra}")
                                 success = False

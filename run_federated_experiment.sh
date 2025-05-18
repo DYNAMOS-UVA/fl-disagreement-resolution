@@ -265,8 +265,16 @@ echo "Using scenario: $SCENARIO"
 echo "Parameters will override configuration in $CONFIG_FILE"
 echo "Running command: $CMD"
 
-# Execute the command
-eval $CMD
+# Create logs directory if it doesn't exist
+mkdir -p logs
+
+# Define a log file path with a timestamp
+LOG_FILE="logs/experiment_$(date +%Y%m%d_%H%M%S)_${EXPERIMENT:-all}_s${SCENARIO:-none}.log"
+
+echo "Logging output to: $LOG_FILE"
+
+# Execute the command, redirecting stdout and stderr to tee, which writes to log file and terminal
+eval $CMD 2>&1 | tee "$LOG_FILE"
 
 # Restore the configuration file to its original state if we modified it
 if [ -n "$SCENARIO" ] && [ -z "$RESULTS_DIR" ]; then
