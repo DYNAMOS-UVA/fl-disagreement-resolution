@@ -9,7 +9,6 @@ import json
 import sys
 import argparse
 import subprocess
-from pathlib import Path
 import glob
 
 def load_scenario(scenario_path):
@@ -37,7 +36,7 @@ def copy_disagreements_to_etcd(scenario):
     try:
         with open('mock_etcd/disagreements.json', 'w') as f:
             json.dump(scenario['disagreements'], f, indent=2)
-        print(f"Copied disagreements to mock_etcd/disagreements.json")
+        print("Copied disagreements to mock_etcd/disagreements.json")
         return True
     except Exception as e:
         print(f"Error copying disagreements: {e}")
@@ -85,7 +84,6 @@ def verify_tracks(results_dir, scenario):
     """Verify that the created tracks match the expected tracks."""
     # Check each round and report on the tracks
     success = True
-    is_scenario5 = "name" in scenario and scenario["name"] == "Time-Limited Disagreements"
     is_empty_scenario = (
         "expected_tracks" in scenario and
         len(scenario["expected_tracks"]) == 1 and
@@ -196,7 +194,7 @@ def verify_tracks(results_dir, scenario):
             print(f"No track metadata file for round {round_num}")
 
             if round_num == 1:
-                print(f"❌ No track metadata found for round 1, which should always have metadata")
+                print("❌ No track metadata found for round 1, which should always have metadata")
                 success = False
             elif active_disagreements:
                 print(f"❌ Round {round_num}: No track metadata but disagreements should be active")
@@ -376,57 +374,6 @@ def verify_tracks(results_dir, scenario):
                     else:
                         print(f"❌ {description}: Track {track_name} not found")
                         success = False
-        # Fall back to special case for time-limited disagreements if needed
-        elif is_scenario5 and round_num >= 3 and not validation_rules:
-            print(f"For Time-Limited Disagreements scenario (Scenario 5), using client-based validation")
-            # Apply hard-coded rules for scenario 5
-            if round_num == 3:
-                # Check if client 0 and client 5 share the same track (excluding client 1)
-                client0_track = client_track_mapping.get("0")
-                client5_track = client_track_mapping.get("5")
-                if client0_track != client5_track:
-                    print(f"❌ In round 3, client 0 and client 5 should share the same track (both exclude client 1)")
-                    success = False
-
-                # Check if client 1 is on a track excluding client 4 only
-                client1_track = client_track_mapping.get("1")
-                client1_track_participants = track_metadata["tracks"].get(client1_track, [])
-
-                # Check if client 3 is a participant in client 1's track
-                if 3 not in client1_track_participants:
-                    print(f"❌ In round 3, client 1's track should include client 3 as participant (exclusion expired)")
-                    success = False
-
-                # Check if client 4 is NOT a participant in client 1's track
-                if 4 in client1_track_participants:
-                    print(f"❌ In round 3, client 1's track should exclude client 4")
-                    success = False
-
-            # For round 5, check if clients 1, 2, and 4 are on the global track
-            elif round_num == 5:
-                # Check if clients 1, 2, and 4 are assigned to the global track
-                global_track_clients = [client_id for client_id, track in client_track_mapping.items() if track == "global"]
-                required_global_clients = ["1", "2", "4"]
-
-                if not all(client in global_track_clients for client in required_global_clients):
-                    print(f"❌ In round 5, clients 1, 2, and 4 should be on the global track (all exclusions expired)")
-                    missing = [c for c in required_global_clients if c not in global_track_clients]
-                    print(f"  Missing from global track: {missing}")
-                    success = False
-
-                # Check that client 0 and client 5 still share a track
-                client0_track = client_track_mapping.get("0")
-                client5_track = client_track_mapping.get("5")
-                if client0_track != client5_track:
-                    print(f"❌ In round 5, client 0 and client 5 should still share the same track")
-                    success = False
-
-                # Check that client 3 is still on its own track excluding client 0
-                client3_track = client_track_mapping.get("3")
-                client3_track_participants = track_metadata["tracks"].get(client3_track, [])
-                if 0 in client3_track_participants:
-                    print(f"❌ In round 5, client 3's track should still exclude client 0")
-                    success = False
 
     if success:
         print("\n✅ SUCCESS: All tracks match expected configuration")
@@ -464,10 +411,10 @@ def run_single_scenario(scenario_path, args):
 
     # Verify the results
     if not verify_tracks(results_dir, scenario):
-        print(f"❌ Test failed: Tracks do not match expected configuration")
+        print("❌ Test failed: Tracks do not match expected configuration")
         return False
 
-    print(f"✅ Test passed: Tracks match expected configuration")
+    print("✅ Test passed: Tracks match expected configuration")
     return True
 
 def main():
