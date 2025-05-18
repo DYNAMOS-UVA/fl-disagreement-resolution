@@ -276,12 +276,12 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
                 if track_info.get("client_tracks", {}).get(str(client_id)) == track_name:
                     continue
 
-                # Use a lower weight for background participation (e.g., half the primary weight)
-                weight = aggregation_weights.get(client_id, 1.0 / len(track_clients)) * 0.5
+                # Use an equal weight for background participation
+                weight = aggregation_weights.get(client_id, 1.0 / len(track_clients))
                 background_weight += weight
                 background_clients_aggregated.append(client_id)
 
-                print(f"  Including background model from client {client_id} with reduced weight {weight}")
+                print(f"  Including background model from client {client_id} with weight {weight}")
 
                 # Add weighted parameters
                 for i, param in enumerate(bg_params):
