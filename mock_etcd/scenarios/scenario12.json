@@ -1,5 +1,5 @@
 {
-  "name": "Simple Time-Limited Inbound Exclusion",
+  "name": "Simple Temporary Inbound Exclusion",
   "description": "A basic scenario where client 0 disagrees with client 1, but only for rounds 1-2. After round 2, the disagreement expires and all clients use the global track.",
   "expected_tracks": {
     "track_0_no1": "For client 0, excluding client 1",
