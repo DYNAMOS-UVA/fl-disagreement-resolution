@@ -1,7 +1,7 @@
 {
   "name": "Incremental Finetune - Client 1 Full Exclusion (R2-R4) and Rejoin (R5)",
   "description": "Tests deep_incr_finetune. Client 1 is fully excluded from round 2 to 4. Client 1 rejoins main aggregation in Round 5 and finetunes for 2 rounds. Other clients (C0,C2,C3,C4,C5) remain on global model.",
-
+  "num_clients": 6,
   "expected_tracks_round_1": {},
   "expected_tracks_round_2": {
     "global": "Default track for active clients (0,2,3,4,5) while C1 is fully excluded."
@@ -14,7 +14,6 @@
   },
   "expected_tracks_round_5": {},
   "expected_tracks_round_6": {},
-
   "validation_rules": {
     "round_1_rules": [
       {
@@ -95,7 +94,6 @@
       }
     ]
   },
-
   "disagreements": {
     "1": [
       {

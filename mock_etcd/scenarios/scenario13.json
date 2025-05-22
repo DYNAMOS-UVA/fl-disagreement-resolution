@@ -1,6 +1,7 @@
 {
   "name": "Deep Rewind Test Scenario",
   "description": "A scenario where clients first collaborate for 2 rounds, then client 0 introduces an inbound exclusion against client 1 in round 3. This tests the deep_rewind mechanism that retroactively removes client 1's influence from client 0's model.",
+  "num_clients": 6,
   "expected_tracks_round_1": {
     "global": "Global track (all clients collaborate)"
   },

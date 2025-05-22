@@ -1,6 +1,7 @@
 {
   "name": "Full Exclusion Multiple Clients",
   "description": "A test scenario where multiple clients (3, 4, and 5) opt for full exclusion, removing themselves completely from federation.",
+  "num_clients": 6,
   "expected_tracks": {
     "global": "For clients 0, 1, and 2, excluding fully excluded clients 3, 4, and 5"
   },

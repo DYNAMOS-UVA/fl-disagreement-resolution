@@ -1,6 +1,7 @@
 {
   "name": "Full Exclusion from Round 4",
   "description": "Clients collaborate normally for 3 rounds. In round 4, client 0 initiates an indefinite full exclusion.",
+  "num_clients": 6,
   "expected_tracks_round_1_to_3": {
     "global": "Global track (all clients collaborate)"
   },

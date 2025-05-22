@@ -1,6 +1,7 @@
 {
   "name": "Simple Inbound and Outbound Exclusions",
   "description": "Scenario where clients 1 and 2 inbound exclude clients 4 and 5, while client 3 outbound excludes client 5. This tests track consolidation for clients with identical exclusion patterns and reusing the global track for outbound-only clients.",
+  "num_clients": 6,
   "expected_tracks": {
     "track_c1_c2_no4_no5": "For clients 1 and 2, excluding clients 4 and 5",
     "track_5_no3": "For client 5, excluding client 3",

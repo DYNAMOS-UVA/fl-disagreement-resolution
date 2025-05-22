@@ -1,6 +1,7 @@
 {
   "name": "Temporary Full Exclusion",
   "description": "A test scenario where client 2 opts for full exclusion but only for rounds 1-3, after which it returns to normal participation.",
+  "num_clients": 6,
   "expected_tracks": {
     "track_0_no1": "For client 0, excluding client 1",
     "track_1_no3": "For client 1, excluding client 3",

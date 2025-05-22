@@ -1,6 +1,7 @@
 {
   "name": "Full Exclusion Scenario",
   "description": "A test scenario where client 3 opts for full exclusion, removing itself completely from all tracks, while clients 0 and 1 have regular disagreements.",
+  "num_clients": 6,
   "expected_tracks": {
     "track_0_no1": "For client 0, excluding client 1",
     "track_1_no4": "For client 1, excluding client 4",

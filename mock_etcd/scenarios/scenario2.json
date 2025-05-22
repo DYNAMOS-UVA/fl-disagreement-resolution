@@ -1,6 +1,7 @@
 {
   "name": "Complex Overlapping Disagreements",
   "description": "Scenario with complex overlapping disagreements involving all clients. Tests the system's ability to create optimal tracks and handle bidirectional disagreements.",
+  "num_clients": 6,
   "expected_tracks": {
     "track_c0_c2_no1_no3": "For clients 0 and 2, excluding clients 1 and 3",
     "track_1_no0_no2_no4": "For client 1, excluding clients 0, 2, and 4",

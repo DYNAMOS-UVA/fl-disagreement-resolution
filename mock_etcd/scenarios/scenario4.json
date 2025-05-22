@@ -1,6 +1,7 @@
 {
   "name": "Comprehensive Mixed Disagreements",
   "description": "A comprehensive test with all types of disagreements (inbound, outbound, bidirectional) and temporary disagreements. Tests the system's ability to handle complex real-world scenarios.",
+  "num_clients": 6,
   "expected_tracks": {
     "track_0_no1_no5": "For client 0, excluding clients 1 and 5",
     "track_c1_c3_no0_no2": "For clients 1 and 3, excluding clients 0 and 2",

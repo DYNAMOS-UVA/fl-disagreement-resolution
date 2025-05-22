@@ -51,6 +51,28 @@ def run_test(scenario_input, experiment="mnist", fl_rounds=3, local_epochs=1):
         fl_rounds: Number of federated learning rounds
         local_epochs: Number of local training epochs
     """
+    # Load scenario to get the number of clients
+    scenario_path = scenario_input
+    if scenario_input.isdigit():
+        scenario_path = f"mock_etcd/scenarios/scenario{scenario_input}.json"
+    elif not os.path.exists(scenario_input) and os.path.exists(f"mock_etcd/scenarios/{scenario_input}"):
+        scenario_path = f"mock_etcd/scenarios/{scenario_input}"
+
+    # Get client count from scenario
+    num_clients = 6  # default
+    try:
+        with open(scenario_path, 'r') as f:
+            scenario = json.load(f)
+            num_clients = scenario.get('num_clients', 6)
+
+            # Validate client count for n_cmapss
+            if experiment == "n_cmapss" and num_clients > 6:
+                raise ValueError(f"N-CMAPSS experiment cannot use more than 6 clients (scenario requests {num_clients})")
+
+    except Exception as e:
+        print(f"Warning: Could not read scenario file {scenario_path}: {e}")
+        print(f"Using default of {num_clients} clients")
+
     # Determine if scenario_input is a path or just a number/name
     if scenario_input.isdigit() or os.path.basename(scenario_input).startswith("scenario"):
         # For built-in scenarios, pass the scenario number/name directly
@@ -62,13 +84,14 @@ def run_test(scenario_input, experiment="mnist", fl_rounds=3, local_epochs=1):
     cmd = [
         "./run_federated_experiment.sh",
         "-e", experiment,
-        "-c", "0 1 2 3 4 5",
+        "-c", str(num_clients),  # Use the simplified client format
         "-r", str(fl_rounds),
         "-l", str(local_epochs),
         "-i",
         "-S", scenario_arg
     ]
 
+    print(f"Running test with {num_clients} clients from scenario")
     print(f"Running test with command: {' '.join(cmd)}")
     result = subprocess.run(cmd, check=True, capture_output=True, text=True)
 
@@ -400,7 +423,7 @@ def run_single_scenario(scenario_path, args):
         args: Command line arguments
 
     Returns:
-        bool: True if the test passed, False otherwise
+        tuple: (status, message) where status is 'passed', 'failed', or 'skipped'
     """
     print(f"\n{'=' * 80}")
     print(f"Testing scenario: {scenario_path}")
@@ -411,21 +434,27 @@ def run_single_scenario(scenario_path, args):
     # Load the scenario
     scenario = load_scenario(scenario_path)
     if not scenario:
-        return False
+        return ('failed', 'Failed to load scenario')
+
+    # Check for compatibility with experiment type
+    num_clients = scenario.get('num_clients', 6)
+    if args.experiment == 'n_cmapss' and num_clients > 6:
+        print(f"⏭️  Skipping scenario: N-CMAPSS experiment cannot use more than 6 clients (scenario requires {num_clients})")
+        return ('skipped', f'N-CMAPSS limited to ≤6 clients (scenario needs {num_clients})')
 
     # Run the test
     results_dir = run_test(scenario_path, args.experiment, args.rounds, args.local_epochs)
     if not results_dir:
         print("❌ Error: Test failed to run correctly")
-        return False
+        return ('failed', 'Test failed to run correctly')
 
     # Verify the results
     if not verify_tracks(results_dir, scenario):
         print("❌ Test failed: Tracks do not match expected configuration")
-        return False
+        return ('failed', 'Tracks do not match expected configuration')
 
     print("✅ Test passed: Tracks match expected configuration")
-    return True
+    return ('passed', 'All checks passed')
 
 def main():
     parser = argparse.ArgumentParser(description='Test disagreement scenarios')
@@ -436,7 +465,7 @@ def main():
                         help='Number of local training epochs (default: 1)')
     parser.add_argument('-e', '--experiment', type=str, default='mnist',
                         choices=['mnist', 'n_cmapss'],
-                        help='Experiment type to use (mnist or n_cmapss)')
+                        help='Experiment type to use (mnist or n_cmapss). N-CMAPSS limited to ≤6 clients - incompatible scenarios will be skipped.')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Enable verbose output')
 
@@ -454,26 +483,39 @@ def main():
         # Track results
         results = {}
         success_count = 0
+        skipped_count = 0
+        failed_count = 0
 
         for scenario_path in scenario_paths:
             scenario_name = os.path.basename(scenario_path).replace(".json", "")
-            success = run_single_scenario(scenario_path, args)
-            results[scenario_name] = "✅ Passed" if success else "❌ Failed"
-            if success:
+            status, message = run_single_scenario(scenario_path, args)
+
+            if status == 'passed':
+                results[scenario_name] = "✅ Passed"
                 success_count += 1
+            elif status == 'skipped':
+                results[scenario_name] = f"⏭️  Skipped: {message}"
+                skipped_count += 1
+            else:  # failed
+                results[scenario_name] = f"❌ Failed: {message}"
+                failed_count += 1
 
         # Print summary
+        total_scenarios = len(scenario_paths)
         print("\n" + "=" * 80)
-        print(f"SCENARIO TEST SUMMARY: {success_count}/{len(scenario_paths)} passed")
+        print(f"SCENARIO TEST SUMMARY: {success_count} passed, {skipped_count} skipped, {failed_count} failed (out of {total_scenarios} total)")
         print("=" * 80)
         for scenario_name, status in results.items():
             print(f"{scenario_name:<20}: {status}")
 
-        if success_count == len(scenario_paths):
-            print("\n✅ All scenarios passed!")
+        if failed_count == 0:
+            if skipped_count > 0:
+                print(f"\n✅ All runnable scenarios passed! ({skipped_count} scenarios skipped due to incompatibility)")
+            else:
+                print("\n✅ All scenarios passed!")
             return 0
         else:
-            print(f"\n❌ {len(scenario_paths) - success_count} scenarios failed")
+            print(f"\n❌ {failed_count} scenarios failed")
             return 1
     else:
         # Determine the scenario path
@@ -488,9 +530,14 @@ def main():
             return 1
 
         # Run single scenario
-        if run_single_scenario(scenario_path, args):
+        status, message = run_single_scenario(scenario_path, args)
+        if status == 'passed':
             return 0
-        else:
+        elif status == 'skipped':
+            print(f"\n⏭️  Scenario skipped: {message}")
+            return 0  # Skipped scenarios should not cause the script to exit with error
+        else:  # failed
+            print(f"\n❌ Scenario failed: {message}")
             return 1
 
 if __name__ == "__main__":

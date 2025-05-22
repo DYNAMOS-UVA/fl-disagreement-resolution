@@ -1,6 +1,7 @@
 {
   "name": "Temporary Disagreements",
   "description": "This scenario focuses specifically on testing how the system handles temporary disagreements, with disagreements that expire after specific rounds.",
+  "num_clients": 6,
   "expected_tracks": {
     "track_0_no1_no2": "For client 0, excluding clients 1 and 2",
     "track_1_no3_no4": "For client 1, excluding clients 3 and 4",
