@@ -36,7 +36,7 @@ def main():
     )
 
     client.load_data(sample_size=args.sample_size)
-    client.train()
+    client.train_with_disagreement_resolution()
 
 if __name__ == "__main__":
     main()

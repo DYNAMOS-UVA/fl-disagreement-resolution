@@ -48,8 +48,10 @@ class FederatedOrchestrator:
         # Initialize clients
         self.clients = self._init_clients()
 
-        print(f"Initialized federated learning orchestrator with {len(self.client_ids_in_experiment)} clients for {self.experiment_type} experiment")
-        print(f"Results directory: {self.results_dir}")
+        print(f"Initialized disagreement-aware federated learning orchestrator")
+        print(f"  - {len(self.client_ids_in_experiment)} clients for {self.experiment_type} experiment")
+        print(f"  - Advanced disagreement resolution with multi-track model training")
+        print(f"  - Results directory: {self.results_dir}")
 
     def _setup_data_if_needed(self):
         """Setup data if needed based on configuration."""
@@ -126,16 +128,23 @@ class FederatedOrchestrator:
         return clients
 
     def run_federated_learning(self):
-        """Execute federated learning process for specified number of rounds.
+        """Execute federated learning with sophisticated disagreement resolution.
 
-        The federated learning process follows these steps:
-        1. Initialize the model (global_model_initial)
+        This process implements a disagreement-aware federated learning system that:
+        1. Analyzes active client disagreements for each round
+        2. Creates separate model tracks for conflicting client groups
+        3. Enables clients to train on multiple tracks (primary + background participation)
+        4. Performs track-based aggregation with optional deep rewind/incremental finetuning
+        5. Evaluates both global and track-specific model performance
+
+        The process follows these steps:
+        1. Initialize the global model (global_model_initial)
         2. For each round:
-           a. Copy the latest aggregated model (or initial model for round 1) to global_model_for_training
-           b. Distribute global_model_for_training to clients for local training
-           c. Clients train on local data and save their models to their directories
-           d. Server aggregates client models into global_model_aggregated
-           e. Server evaluates the aggregated model
+           a. Server analyzes disagreements and prepares track-specific models
+           b. Clients load their assigned primary track model + any background track models
+           c. Clients train on multiple tracks based on disagreement participation
+           d. Server aggregates models using disagreement-aware track algorithm
+           e. Server evaluates global model and individual track performance
         """
         print(f"Starting federated learning with {self.fl_rounds} rounds...")
 
@@ -150,21 +159,21 @@ class FederatedOrchestrator:
         for fl_round in range(1, self.fl_rounds + 1):
             print(f"\n--- Federated Learning Round {fl_round}/{self.fl_rounds} ---")
 
-            # 1. Server prepares the global model for this round
-            print("Preparing global model for training...")
+            # 1. Server analyzes disagreements and prepares track-specific models
+            print("Analyzing disagreements and preparing track-specific models...")
 
-            # Server creates directories and prepares model for this round
+            # Server creates directories and prepares models with disagreement resolution
             if fl_round == 1:
-                # For the first round, use the initial model
+                # For the first round, create initial tracks from global model
                 self.server.prepare_training_model(fl_round, use_initial=True)
-                print("Using global_model_initial for round 1")
+                print("Created initial track models from global_model_initial for round 1")
             else:
-                # For subsequent rounds, use the previous round's aggregated model
+                # For subsequent rounds, update tracks based on disagreement evolution
                 self.server.prepare_training_model(fl_round, use_initial=False)
-                print(f"Using global_model_aggregated from round {fl_round-1}")
+                print(f"Updated track models based on disagreement changes from round {fl_round-1}")
 
-            # 2. Train local models on each client
-            print("Training local models...")
+            # 2. Clients participate in disagreement-aware multi-track training
+            print("Starting disagreement-aware multi-track client training...")
 
             # Get fully excluded clients from the server
             fully_excluded_clients_for_round = self.server.fully_excluded_clients_for_current_round
@@ -174,7 +183,7 @@ class FederatedOrchestrator:
 
             for client_id in self.client_ids_in_experiment:
                 if client_id in fully_excluded_clients_for_round:
-                    print(f"Skipping training for client {client_id} in round {fl_round} due to full exclusion.")
+                    print(f"Skipping training for client {client_id} in round {fl_round} due to full exclusion from all tracks.")
                     continue
 
                 if client_id not in self.clients:
@@ -182,32 +191,32 @@ class FederatedOrchestrator:
                     continue
 
                 client = self.clients[client_id]
-                print(f"Training client {client_id}...")
+                print(f"Client {client_id}: Loading track models and training with disagreement resolution...")
 
-                # Client loads the global model for this round
-                client.load_round_model(fl_round)
+                # Client loads primary track model and any background track models
+                client.load_track_models_for_round(fl_round)
 
-                # Client trains model and saves results to filesystem
-                client.train(epochs=self.train_config.get("local_epochs", 5), round_num=fl_round)
+                # Client trains on primary track + participates in background tracks
+                client.train_with_disagreement_resolution(epochs=self.train_config.get("local_epochs", 5), round_num=fl_round)
 
-                # Client saves trained model to filesystem
-                client.save_round_model(fl_round)
+                # Client saves all trained models (primary + background) to filesystem
+                client.save_trained_track_models(fl_round)
 
-            # 3. Server aggregates models from all clients
-            print("Aggregating client models...")
+            # 3. Server performs disagreement-aware track-based aggregation
+            print("Performing disagreement-aware track-based model aggregation...")
 
-            # Server loads client models and aggregates them
-            self.server.aggregate_client_models(fl_round)
+            # Server aggregates models using sophisticated track algorithm
+            self.server.aggregate_with_disagreement_resolution(fl_round)
 
-            # 4. Server evaluates the aggregated model
-            print("Evaluating aggregated model...")
+            # 4. Server evaluates global model and individual track performance
+            print("Evaluating global model and track-specific performance...")
 
-            # Server evaluates the model and stores metrics
+            # Server evaluates both global and track models, storing comprehensive metrics
             self.server.evaluate_model(fl_round=fl_round)
 
-            print(f"Round {fl_round} completed.")
+            print(f"Round {fl_round} completed with disagreement resolution.")
 
-        print("\nFederated learning completed!")
+        print("\nFederated learning with disagreement resolution completed!")
 
 
 def main():

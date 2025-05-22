@@ -724,8 +724,12 @@ class FederatedServer:
 
         return standard_model_path
 
-    def aggregate_client_models(self, round_num):
-        """Aggregate client models for a specific round.
+    def aggregate_with_disagreement_resolution(self, round_num):
+        """Aggregate client models using disagreement-aware track-based algorithm.
+
+        This method performs sophisticated model aggregation that handles disagreements
+        by creating separate model tracks and aggregating primary/background models
+        according to the disagreement resolution strategy.
 
         Args:
             round_num: The current round number
@@ -759,6 +763,8 @@ class FederatedServer:
         self.save_model(aggregated_model_dir)
 
         return True
+
+
 
     def _get_structure_config(self):
         """Get the directory structure configuration.

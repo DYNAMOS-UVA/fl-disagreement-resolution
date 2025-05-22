@@ -179,14 +179,17 @@ class FederatedClient:
         self.model.load_state_dict(torch.load(model_path, map_location=self.device))
         print(f"Client {self.client_id} loaded model from {model_dir}")
 
-    def load_round_model(self, round_num):
-        """Load the global model for a specific round.
+    def load_track_models_for_round(self, round_num):
+        """Load track-aware models for disagreement resolution in a specific round.
+
+        This method loads the primary track model for this client and any background
+        track models the client should participate in based on active disagreements.
 
         Args:
             round_num: The current round number
 
         Returns:
-            bool: Whether the model was successfully loaded
+            bool: Whether the primary model was successfully loaded
         """
         if not self.results_dir:
             return False
@@ -330,15 +333,18 @@ class FederatedClient:
         print(f"=== END CLIENT {self.client_id} MODEL LOADING ===\n")
         return True
 
-    def train(self, epochs=None, round_num=None):
-        """Train the model on client data.
+    def train_with_disagreement_resolution(self, epochs=None, round_num=None):
+        """Train models with disagreement resolution (primary + background tracks).
+
+        This method trains the client's primary track model and any background track
+        models the client participates in due to active disagreements.
 
         Args:
             epochs: Number of epochs to train (defaults to self.epochs)
             round_num: The current round number
 
         Returns:
-            dict: Dictionary containing training results
+            dict: Dictionary containing training results from primary model
         """
         epochs = epochs or self.epochs
 
@@ -378,7 +384,7 @@ class FederatedClient:
                 # Don't save background training results to avoid confusion
                 # But save the trained background model when saving models later
 
-                # This model will be saved when save_round_model is called
+                # This model will be saved when save_trained_track_models is called
                 bg_track['trained'] = True
 
                 # Fix the formatting error by checking if accuracy is a number before formatting
@@ -394,14 +400,19 @@ class FederatedClient:
         print(f"=== END CLIENT {self.client_id} TRAINING ===\n")
         return training_results
 
-    def save_round_model(self, round_num):
-        """Save the trained model for a specific round.
+
+
+    def save_trained_track_models(self, round_num):
+        """Save all trained track models (primary + background) for a specific round.
+
+        This method saves the client's trained primary model and any trained background
+        track models to their respective directories for server aggregation.
 
         Args:
             round_num: The current round number
 
         Returns:
-            str: Path to the saved model directory
+            str: Path to the saved primary model directory
         """
         if not self.results_dir:
             return None
