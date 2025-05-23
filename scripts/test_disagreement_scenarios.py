@@ -42,7 +42,7 @@ def copy_disagreements_to_etcd(scenario):
         print(f"Error copying disagreements: {e}")
         return False
 
-def run_test(scenario_input, experiment="mnist", fl_rounds=3, local_epochs=1):
+def run_test(scenario_input, experiment="mnist", fl_rounds=5, local_epochs=1, clients_override=None):
     """Run a federated learning test using the specified scenario and dataset.
 
     Args:
@@ -50,6 +50,7 @@ def run_test(scenario_input, experiment="mnist", fl_rounds=3, local_epochs=1):
         experiment: Experiment type (mnist or n_cmapss)
         fl_rounds: Number of federated learning rounds
         local_epochs: Number of local training epochs
+        clients_override: Override the number/list of clients from scenario
     """
     # Load scenario to get the number of clients
     scenario_path = scenario_input
@@ -58,20 +59,29 @@ def run_test(scenario_input, experiment="mnist", fl_rounds=3, local_epochs=1):
     elif not os.path.exists(scenario_input) and os.path.exists(f"mock_etcd/scenarios/{scenario_input}"):
         scenario_path = f"mock_etcd/scenarios/{scenario_input}"
 
-    # Get client count from scenario
-    num_clients = 6  # default
-    try:
-        with open(scenario_path, 'r') as f:
-            scenario = json.load(f)
-            num_clients = scenario.get('num_clients', 6)
+    # Get client count from scenario unless overridden
+    if clients_override:
+        # Use the override value
+        if isinstance(clients_override, int):
+            num_clients = clients_override
+        else:
+            # If it's a string, pass it as-is to the script
+            num_clients = clients_override
+    else:
+        # Get from scenario
+        num_clients = 6  # default
+        try:
+            with open(scenario_path, 'r') as f:
+                scenario = json.load(f)
+                num_clients = scenario.get('num_clients', 6)
 
-            # Validate client count for n_cmapss
-            if experiment == "n_cmapss" and num_clients > 6:
-                raise ValueError(f"N-CMAPSS experiment cannot use more than 6 clients (scenario requests {num_clients})")
+                # Validate client count for n_cmapss
+                if experiment == "n_cmapss" and num_clients > 6:
+                    raise ValueError(f"N-CMAPSS experiment cannot use more than 6 clients (scenario requests {num_clients})")
 
-    except Exception as e:
-        print(f"Warning: Could not read scenario file {scenario_path}: {e}")
-        print(f"Using default of {num_clients} clients")
+        except Exception as e:
+            print(f"Warning: Could not read scenario file {scenario_path}: {e}")
+            print(f"Using default of {num_clients} clients")
 
     # Determine if scenario_input is a path or just a number/name
     if scenario_input.isdigit() or os.path.basename(scenario_input).startswith("scenario"):
@@ -81,18 +91,26 @@ def run_test(scenario_input, experiment="mnist", fl_rounds=3, local_epochs=1):
         # For custom scenario paths, pass the full path
         scenario_arg = scenario_input
 
+    # Get the script directory and find run_fl.py
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    run_fl_script = os.path.join(script_dir, "run_fl.py")
+
     cmd = [
-        "./run_federated_experiment.sh",
+        "python3", run_fl_script,
         "-e", experiment,
-        "-c", str(num_clients),  # Use the simplified client format
+        "-c", str(num_clients),  # Use the determined client count/list
         "-r", str(fl_rounds),
         "-l", str(local_epochs),
         "-i",
         "-S", scenario_arg
     ]
 
-    print(f"Running test with {num_clients} clients from scenario")
+    if clients_override:
+        print(f"Running test with {num_clients} clients (overridden from command line)")
+    else:
+        print(f"Running test with {num_clients} clients from scenario")
     print(f"Running test with command: {' '.join(cmd)}")
+
     result = subprocess.run(cmd, check=True, capture_output=True, text=True)
 
     # Extract the results directory from the output
@@ -430,6 +448,8 @@ def run_single_scenario(scenario_path, args):
     print(f"{'=' * 80}")
     print(f"Using experiment type: {args.experiment}")
     print(f"Running for {args.rounds} rounds with {args.local_epochs} local epochs per round")
+    if hasattr(args, 'clients') and args.clients:
+        print(f"Using client override: {args.clients}")
 
     # Load the scenario
     scenario = load_scenario(scenario_path)
@@ -442,8 +462,11 @@ def run_single_scenario(scenario_path, args):
         print(f"⏭️  Skipping scenario: N-CMAPSS experiment cannot use more than 6 clients (scenario requires {num_clients})")
         return ('skipped', f'N-CMAPSS limited to ≤6 clients (scenario needs {num_clients})')
 
+    # Get clients override if specified
+    clients_override = getattr(args, 'clients', None)
+
     # Run the test
-    results_dir = run_test(scenario_path, args.experiment, args.rounds, args.local_epochs)
+    results_dir = run_test(scenario_path, args.experiment, args.rounds, args.local_epochs, clients_override)
     if not results_dir:
         print("❌ Error: Test failed to run correctly")
         return ('failed', 'Test failed to run correctly')
@@ -459,17 +482,24 @@ def run_single_scenario(scenario_path, args):
 def main():
     parser = argparse.ArgumentParser(description='Test disagreement scenarios')
     parser.add_argument('scenario', help='Scenario name/number or "all" to run all scenarios')
-    parser.add_argument('-r', '--rounds', type=int, default=3,
-                        help='Number of federated learning rounds (default: 3)')
+    parser.add_argument('-r', '--rounds', type=int, default=5,
+                        help='Number of federated learning rounds (default: 5)')
     parser.add_argument('-l', '--local-epochs', type=int, default=1,
                         help='Number of local training epochs (default: 1)')
     parser.add_argument('-e', '--experiment', type=str, default='mnist',
                         choices=['mnist', 'n_cmapss'],
                         help='Experiment type to use (mnist or n_cmapss). N-CMAPSS limited to ≤6 clients - incompatible scenarios will be skipped.')
+    parser.add_argument('-c', '--clients', type=str,
+                        help='Override client count/IDs (e.g., "6" for 6 clients or "0 1 2 3" for specific IDs)')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Enable verbose output')
 
     args = parser.parse_args()
+
+    # Change to the parent directory (project root) to ensure proper paths
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(script_dir)
+    os.chdir(project_root)
 
     # Check if "all" scenarios should be run
     if args.scenario.lower() == "all":

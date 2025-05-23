@@ -70,7 +70,10 @@ A modular, flexible framework for federated learning experiments that supports b
   - `fl_module/n_cmapss/`: N-CMAPSS dataset utilities
   - `fl_module/mnist/`: MNIST dataset utilities
 - `mock_etcd/`: Configuration management
-- `run_federated_experiment.sh`: Convenient shell script to run experiments
+- `scripts/`: Scripts and utilities for running experiments
+  - `scripts/run_fl.py`: Convenient Python script to run experiments
+  - `scripts/test_disagreement_scenarios.py`: Testing script for disagreement scenarios
+  - `scripts/compare_fl_runs.py`: Script to compare multiple experiment runs
 - `results/`: Directory for storing models and outputs during federated learning simulation
 
 ## Features
@@ -123,23 +126,23 @@ Visualizations include:
 
 ### Using the Convenience Script
 
-The easiest way to run experiments is with the provided shell script:
+The easiest way to run experiments is with the provided Python script:
 
 ```bash
 # Run N-CMAPSS experiment
-./run_federated_experiment.sh -e n_cmapss -c "0 1 2 3 4 5" -r 3
+python3 scripts/run_fl.py -e n_cmapss -c "0 1 2 3 4 5" -r 3
 
 # Run MNIST experiment with data setup and IID distribution
-./run_federated_experiment.sh -e mnist -c "0 1 2 3 4 5" -r 3 -s -i
+python3 scripts/run_fl.py -e mnist -c "0 1 2 3 4 5" -r 3 -s -i
 
 # Run with a custom results directory
-./run_federated_experiment.sh -e mnist -c "0 1 2" -r 2 -d "results/my_experiment"
+python3 scripts/run_fl.py -e mnist -c "0 1 2" -r 2 -d "results/my_experiment"
 
 # Force recreate MNIST data with IID distribution
-./run_federated_experiment.sh -e mnist -c "0 1 2 3" -s -f -i
+python3 scripts/run_fl.py -e mnist -c "0 1 2 3" -s -f -i
 
 # Get help for script options
-./run_federated_experiment.sh --help
+python3 scripts/run_fl.py --help
 ```
 
 ### Run Federated Learning with N-CMAPSS
