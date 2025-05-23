@@ -1,5 +1,50 @@
 # Federated Learning with Disagreement Resolution
 
+## Disagreement Resolution Timing Metrics
+
+The federated learning system now includes comprehensive timing metrics to measure the performance of the disagreement resolution algorithm:
+
+### Timing Metrics Collected
+
+- **Time to Resolution**: Time spent analyzing disagreements and creating model tracks
+- **Time to Aggregation**: Time spent performing the actual model aggregation
+- **Disagreement Loading Time**: Time spent loading and parsing disagreement configurations
+- **Track Saving Time**: Time spent saving track models to disk
+- **Total Aggregation Time**: End-to-end time for the entire aggregation process
+
+### Automatic Timing Analysis
+
+The system automatically:
+- Records timing metrics for each round
+- Distinguishes between rounds with and without disagreements
+- Calculates overhead introduced by disagreement resolution
+- Generates comprehensive timing visualizations during each run
+- Saves timing data to JSON files for further analysis
+
+### Timing Visualizations
+
+The framework automatically generates detailed timing plots including:
+- Total aggregation time by round (color-coded by disagreement presence)
+- Resolution time for rounds with disagreements
+- Stacked timing breakdown showing component contributions
+- Time vs client count analysis with trend lines
+- Efficiency metrics showing resolution time as percentage of total time
+- Distribution comparisons between rounds with/without disagreements
+- Summary statistics and overhead calculations
+
+### Timing Data Storage
+
+Timing metrics are automatically saved to:
+- `output/aggregation_timing_metrics.json` - Detailed timing data for each round
+- `output/fl_results.json` - Integrated timing metrics with other experiment results
+- `output/server/plots/` - Comprehensive timing visualization plots
+
+The timing analysis provides:
+- Summary statistics for rounds with/without disagreements
+- Overhead calculation showing performance impact
+- Client scaling analysis
+- Efficiency trends over time
+
 ## Track-Specific Evaluation and Visualization
 
 The federated learning system supports track-specific evaluation, where each separate model track created due to client disagreements is evaluated individually. This provides insights into how the different tracks perform compared to the global model.

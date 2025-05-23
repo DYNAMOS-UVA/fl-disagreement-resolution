@@ -313,6 +313,10 @@ def save_evaluation_results(server, predictions, actual):
     if server.round > 1 and "track_results" in server.training_history:
         plot_track_progress(server, server.round)
 
+    # Plot timing metrics if available
+    if hasattr(server, 'aggregation_timing_history') and len(server.aggregation_timing_history) > 0:
+        plot_timing_metrics(server, server.round)
+
     # We don't need to save the model here as it's already saved in the round-specific directories
     # When the server calls save_model() during aggregation
 
@@ -1212,3 +1216,225 @@ def plot_track_progress(server, round_num):
     plt.close()
 
     print(f"Saved track progress plots for round {round_num}")
+
+def plot_timing_metrics(server, round_num):
+    """Plot timing metrics for disagreement resolution and aggregation.
+
+    Args:
+        server: FederatedServer instance
+        round_num: Current round number
+    """
+    # Check if we have timing metrics
+    if not hasattr(server, 'aggregation_timing_history') or not server.aggregation_timing_history:
+        print("No timing metrics found - cannot create timing plots")
+        return
+
+    # Only proceed if we have at least 2 rounds of timing data
+    if len(server.aggregation_timing_history) < 2:
+        print(f"Only {len(server.aggregation_timing_history)} rounds of timing data found - need at least 2 to create timing plots")
+        return
+
+    print(f"Creating timing plots with data from {len(server.aggregation_timing_history)} rounds")
+
+    # Plot directory
+    plots_dir = os.path.join(server.output_dir, "plots")
+    os.makedirs(plots_dir, exist_ok=True)
+
+    # Extract timing data
+    rounds = [entry["round"] for entry in server.aggregation_timing_history]
+    has_disagreements = [entry["has_disagreements"] for entry in server.aggregation_timing_history]
+    num_clients = [entry["num_clients"] for entry in server.aggregation_timing_history]
+
+    # Timing metrics - convert resolution time to milliseconds for better readability
+    resolution_times_ms = [entry["resolution_time_seconds"] * 1000 for entry in server.aggregation_timing_history]
+    aggregation_times = [entry["aggregation_time_seconds"] for entry in server.aggregation_timing_history]
+    total_times = [entry["total_aggregation_time_seconds"] for entry in server.aggregation_timing_history]
+    disagreement_loading_times = [entry["disagreement_loading_time_seconds"] for entry in server.aggregation_timing_history]
+    track_saving_times = [entry["track_saving_time_seconds"] for entry in server.aggregation_timing_history]
+
+    # Create comprehensive timing plot with 2x3 layout
+    plt.figure(figsize=(18, 10))
+
+    # Plot 1: Total Aggregation Time
+    plt.subplot(2, 3, 1)
+    colors = ['red' if has_disag else 'blue' for has_disag in has_disagreements]
+    bars = plt.bar(rounds, total_times, color=colors, alpha=0.7)
+    plt.xlabel('Round')
+    plt.ylabel('Time (seconds)')
+    plt.title('Total Aggregation Time')
+    plt.grid(True, axis='y')
+
+    # Add legend
+    red_patch = plt.Rectangle((0, 0), 1, 1, fc='red', alpha=0.7, label='With Disagreements')
+    blue_patch = plt.Rectangle((0, 0), 1, 1, fc='blue', alpha=0.7, label='No Disagreements')
+    plt.legend(handles=[red_patch, blue_patch])
+
+    # Add value labels on bars
+    for bar, time_val in zip(bars, total_times):
+        height = bar.get_height()
+        plt.annotate(f'{time_val:.3f}s',
+                     xy=(bar.get_x() + bar.get_width() / 2, height),
+                     xytext=(0, 3),
+                     textcoords="offset points",
+                     ha='center', va='bottom', fontsize=8)
+
+    # Plot 2: Disagreement Resolution Time (only for rounds with disagreements) - in milliseconds
+    plt.subplot(2, 3, 2)
+    disag_rounds = [r for r, has_disag in zip(rounds, has_disagreements) if has_disag]
+    disag_resolution_times_ms = [t for t, has_disag in zip(resolution_times_ms, has_disagreements) if has_disag]
+
+    if disag_rounds:
+        bars = plt.bar(disag_rounds, disag_resolution_times_ms, color='orange', alpha=0.7)
+        plt.xlabel('Round')
+        plt.ylabel('Time (milliseconds)')
+        plt.title('Disagreement Resolution Time')
+        plt.grid(True, axis='y')
+
+        # Add value labels on bars
+        for bar, time_val in zip(bars, disag_resolution_times_ms):
+            height = bar.get_height()
+            plt.annotate(f'{time_val:.1f}ms',
+                         xy=(bar.get_x() + bar.get_width() / 2, height),
+                         xytext=(0, 3),
+                         textcoords="offset points",
+                         ha='center', va='bottom', fontsize=8)
+    else:
+        plt.text(0.5, 0.5, 'No rounds with\ndisagreements',
+                horizontalalignment='center', verticalalignment='center',
+                transform=plt.gca().transAxes, fontsize=12)
+        plt.title('Disagreement Resolution Time')
+
+    # Plot 3: Model Aggregation Time
+    plt.subplot(2, 3, 3)
+    colors = ['red' if has_disag else 'blue' for has_disag in has_disagreements]
+    bars = plt.bar(rounds, aggregation_times, color=colors, alpha=0.7)
+    plt.xlabel('Round')
+    plt.ylabel('Time (seconds)')
+    plt.title('Model Aggregation Time')
+    plt.grid(True, axis='y')
+
+    # Add legend
+    red_patch = plt.Rectangle((0, 0), 1, 1, fc='red', alpha=0.7, label='With Disagreements')
+    blue_patch = plt.Rectangle((0, 0), 1, 1, fc='blue', alpha=0.7, label='No Disagreements')
+    plt.legend(handles=[red_patch, blue_patch])
+
+    # Add value labels on bars
+    for bar, time_val in zip(bars, aggregation_times):
+        height = bar.get_height()
+        plt.annotate(f'{time_val:.3f}s',
+                     xy=(bar.get_x() + bar.get_width() / 2, height),
+                     xytext=(0, 3),
+                     textcoords="offset points",
+                     ha='center', va='bottom', fontsize=8)
+
+    # Plot 4: Time series trends
+    plt.subplot(2, 3, 4)
+    ax1 = plt.gca()
+    line1 = ax1.plot(rounds, aggregation_times, 's-', label='Aggregation Time (s)',
+                     linewidth=2, markersize=4, color='blue')
+
+    # Only plot resolution times for rounds with disagreements - in milliseconds on secondary y-axis
+    lines = line1
+    if disag_rounds:
+        ax2 = ax1.twinx()
+        line2 = ax2.plot(disag_rounds, disag_resolution_times_ms, '^-', label='Resolution Time (ms)',
+                        linewidth=2, markersize=4, color='orange')
+        ax2.set_ylabel('Resolution Time (ms)', color='black')
+        ax2.tick_params(axis='y', labelcolor='black')
+        lines = line1 + line2
+
+    ax1.set_xlabel('Round')
+    ax1.set_ylabel('Aggregation Time (seconds)')
+    ax1.set_title('Timing Trends Across Rounds')
+    ax1.grid(True)
+
+    # Add legend for both lines
+    labels = [l.get_label() for l in lines]
+    ax1.legend(lines, labels, loc='upper left')
+
+    # Plot 5: Resolution time as % of total time
+    plt.subplot(2, 3, 5)
+    disag_rounds_pct = [r for r, has_disag in zip(rounds, has_disagreements) if has_disag]
+    resolution_percentages = []
+    for i, (has_disag, res_time_ms, total_time) in enumerate(zip(has_disagreements, resolution_times_ms, total_times)):
+        if has_disag and total_time > 0:
+            # Convert resolution time back to seconds for percentage calculation
+            res_time_s = res_time_ms / 1000
+            percentage = (res_time_s / total_time) * 100
+            resolution_percentages.append(percentage)
+
+    if disag_rounds_pct and resolution_percentages:
+        bars = plt.bar(disag_rounds_pct, resolution_percentages, color='coral', alpha=0.7)
+        plt.xlabel('Round')
+        plt.ylabel('Resolution Time (%)')
+        plt.title('Resolution Time as % of Total Time')
+        plt.grid(True, axis='y')
+
+        # Add value labels on bars
+        for bar, pct in zip(bars, resolution_percentages):
+            height = bar.get_height()
+            plt.annotate(f'{pct:.1f}%',
+                         xy=(bar.get_x() + bar.get_width() / 2, height),
+                         xytext=(0, 3),
+                         textcoords="offset points",
+                         ha='center', va='bottom', fontsize=8)
+    else:
+        plt.text(0.5, 0.5, 'No rounds with\ndisagreements',
+                horizontalalignment='center', verticalalignment='center',
+                transform=plt.gca().transAxes, fontsize=12)
+        plt.title('Resolution Time as % of Total Time')
+
+    # Plot 6: Summary statistics
+    plt.subplot(2, 3, 6)
+    plt.axis('off')
+
+    # Calculate summary stats
+    avg_total_time = np.mean(total_times)
+    avg_aggregation_time = np.mean(aggregation_times)
+    with_disagreements_times = [t for t, has_disag in zip(total_times, has_disagreements) if has_disag]
+    without_disagreements_times = [t for t, has_disag in zip(total_times, has_disagreements) if not has_disag]
+    avg_with_disag = np.mean(with_disagreements_times) if with_disagreements_times else 0
+    avg_without_disag = np.mean(without_disagreements_times) if without_disagreements_times else 0
+    avg_resolution_time_ms = np.mean([t for t, has_disag in zip(resolution_times_ms, has_disagreements) if has_disag]) if any(has_disagreements) else 0
+    avg_resolution_pct = np.mean(resolution_percentages) if resolution_percentages else 0
+
+    summary_text = f"""
+    TIMING SUMMARY:
+
+    Total Rounds: {len(rounds)}
+    Rounds with Disagreements: {sum(has_disagreements)}
+
+    Average Total Time: {avg_total_time:.3f}s
+    Average Aggregation Time: {avg_aggregation_time:.3f}s
+
+    With Disagreements: {avg_with_disag:.3f}s
+    Without Disagreements: {avg_without_disag:.3f}s
+
+    Average Resolution Time: {avg_resolution_time_ms:.1f}ms
+    Avg Resolution as % of Total: {avg_resolution_pct:.1f}%
+
+    Overhead from Disagreements:
+    {((avg_with_disag - avg_without_disag) / avg_without_disag * 100):.1f}%
+    """ if avg_without_disag > 0 else f"""
+    TIMING SUMMARY:
+
+    Total Rounds: {len(rounds)}
+    Rounds with Disagreements: {sum(has_disagreements)}
+
+    Average Total Time: {avg_total_time:.3f}s
+    Average Aggregation Time: {avg_aggregation_time:.3f}s
+    Average Resolution Time: {avg_resolution_time_ms:.1f}ms
+    Avg Resolution as % of Total: {avg_resolution_pct:.1f}%
+    """
+
+    plt.text(0.1, 0.9, summary_text, transform=plt.gca().transAxes,
+             fontsize=10, verticalalignment='top', fontfamily='monospace',
+             bbox=dict(boxstyle="round,pad=0.3", facecolor="lightgray", alpha=0.5))
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(plots_dir, f'disagreement_resolution_timing_round_{round_num}.png'),
+               bbox_inches='tight', dpi=150)
+    plt.close()
+
+    print(f"Saved timing plots for round {round_num}")
+    print(f"Summary: Avg total time: {avg_total_time:.3f}s, Avg aggregation time: {avg_aggregation_time:.3f}s, Avg resolution time: {avg_resolution_time_ms:.1f}ms")

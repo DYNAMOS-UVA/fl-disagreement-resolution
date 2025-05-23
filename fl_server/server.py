@@ -63,6 +63,9 @@ class FederatedServer:
             "rounds": []
         }
 
+        # Initialize aggregation timing history
+        self.aggregation_timing_history = []
+
         # Load disagreement settings once
         self.disagreement_settings = self._get_disagreement_config()
 
@@ -314,6 +317,10 @@ class FederatedServer:
         output_dir = os.path.join(self.results_dir, "output")
         os.makedirs(output_dir, exist_ok=True)
 
+        # Add timing metrics to results if available
+        if hasattr(self, 'aggregation_timing_history'):
+            self.results["aggregation_timing_metrics"] = self.aggregation_timing_history
+
         # Convert NumPy types to Python native types
         serializable_results = make_json_serializable(self.results)
 
@@ -323,6 +330,14 @@ class FederatedServer:
             json.dump(serializable_results, f, indent=2)
 
         print(f"Saved experiment results to {results_path}")
+
+        # Also save timing metrics separately for easier analysis
+        if hasattr(self, 'aggregation_timing_history') and self.aggregation_timing_history:
+            timing_path = os.path.join(output_dir, "aggregation_timing_metrics.json")
+            serializable_timing = make_json_serializable(self.aggregation_timing_history)
+            with open(timing_path, "w") as f:
+                json.dump(serializable_timing, f, indent=2)
+            print(f"Saved timing metrics to {timing_path}")
 
     def initialize_model(self, round_num=0):
         """Initialize and save the initial model.

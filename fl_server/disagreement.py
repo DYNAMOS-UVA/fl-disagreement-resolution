@@ -2,6 +2,7 @@
 
 import os
 import json
+import time
 from collections import defaultdict
 
 def load_disagreements(etcd_dir):
@@ -103,6 +104,9 @@ def create_model_tracks(active_disagreements, all_client_ids):
     Returns:
         dict: Dictionary mapping track IDs to sets of client IDs
     """
+    # Start timing the disagreement resolution process
+    resolution_start_time = time.time()
+
     print(f"Creating model tracks for active disagreements: {active_disagreements}")
 
     # Initial tracking structures
@@ -379,10 +383,17 @@ def create_model_tracks(active_disagreements, all_client_ids):
         if redundant_track in tracks:
             del tracks[redundant_track]
 
+    # Calculate timing metrics
+    resolution_time = time.time() - resolution_start_time
+    print(f"Disagreement resolution completed in {resolution_time:.4f} seconds")
+
     return {
         "tracks": tracks,
         "client_tracks": string_client_primary_tracks,
-        "client_participations": client_background_participations
+        "client_participations": client_background_participations,
+        "timing_metrics": {
+            "resolution_time_seconds": resolution_time
+        }
     }
 
 def get_track_for_client(client_id, track_info):

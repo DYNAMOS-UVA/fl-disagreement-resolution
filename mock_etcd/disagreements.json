@@ -52,66 +52,6 @@
   "client_5": [
     {
       "type": "inbound",
-      "target": "client_6",
-      "active_rounds": {
-        "start": 1,
-        "end": null
-      }
-    }
-  ],
-  "client_6": [
-    {
-      "type": "inbound",
-      "target": "client_7",
-      "active_rounds": {
-        "start": 1,
-        "end": null
-      }
-    }
-  ],
-  "client_7": [
-    {
-      "type": "inbound",
-      "target": "client_8",
-      "active_rounds": {
-        "start": 1,
-        "end": null
-      }
-    }
-  ],
-  "client_8": [
-    {
-      "type": "inbound",
-      "target": "client_9",
-      "active_rounds": {
-        "start": 1,
-        "end": null
-      }
-    }
-  ],
-  "client_9": [
-    {
-      "type": "inbound",
-      "target": "client_10",
-      "active_rounds": {
-        "start": 1,
-        "end": null
-      }
-    }
-  ],
-  "client_10": [
-    {
-      "type": "inbound",
-      "target": "client_11",
-      "active_rounds": {
-        "start": 1,
-        "end": null
-      }
-    }
-  ],
-  "client_11": [
-    {
-      "type": "inbound",
       "target": "client_0",
       "active_rounds": {
         "start": 1,

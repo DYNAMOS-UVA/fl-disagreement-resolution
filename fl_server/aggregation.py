@@ -4,6 +4,7 @@ import os
 import torch
 import glob
 import json
+import time
 
 from fl_module import create_model
 from fl_server.disagreement import (
@@ -23,6 +24,9 @@ def aggregate_models_from_files(server, clients_dir, aggregation_weights=None):
     Returns:
         list: List of aggregated model parameter tensors
     """
+    # Start timing the entire aggregation process
+    aggregation_start_time = time.time()
+
     server.round += 1
     print(f"Starting file-based aggregation for round {server.round}")
 
@@ -37,20 +41,87 @@ def aggregate_models_from_files(server, clients_dir, aggregation_weights=None):
         n_clients = len(client_dirs)
         aggregation_weights = {client_id: 1.0 / n_clients for client_id in client_ids}
 
+    # Time the disagreement resolution phase
+    disagreement_start_time = time.time()
+
     # Load disagreements
     etcd_dir = "mock_etcd"
     disagreements = load_disagreements(etcd_dir)
     active_disagreements = get_active_disagreements(disagreements, server.round)
 
+    disagreement_loading_time = time.time() - disagreement_start_time
+
+    # Initialize timing metrics
+    timing_metrics = {
+        "disagreement_loading_time_seconds": disagreement_loading_time,
+        "resolution_time_seconds": 0.0,
+        "aggregation_time_seconds": 0.0,
+        "track_saving_time_seconds": 0.0,
+        "total_aggregation_time_seconds": 0.0
+    }
+
     # If there are active disagreements, use robust approach with model tracks
     if active_disagreements:
         print(f"Active disagreements found for round {server.round}: {active_disagreements}")
+
+        # Time the track creation
+        track_creation_start_time = time.time()
         track_info = create_model_tracks(active_disagreements, client_ids)
-        return aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights)
+
+        # Extract resolution time from track_info if available
+        if "timing_metrics" in track_info:
+            timing_metrics["resolution_time_seconds"] = track_info["timing_metrics"]["resolution_time_seconds"]
+        else:
+            timing_metrics["resolution_time_seconds"] = time.time() - track_creation_start_time
+
+        # Time the actual aggregation
+        track_aggregation_start_time = time.time()
+        result = aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights)
+        timing_metrics["aggregation_time_seconds"] = time.time() - track_aggregation_start_time
+
     else:
         # If no disagreements, use standard aggregation
         print(f"No active disagreements for round {server.round}, using standard aggregation")
-        return aggregate_standard(server, clients_dir, aggregation_weights)
+
+        # Time the standard aggregation
+        standard_aggregation_start_time = time.time()
+        result = aggregate_standard(server, clients_dir, aggregation_weights)
+        timing_metrics["aggregation_time_seconds"] = time.time() - standard_aggregation_start_time
+
+    # Calculate total time
+    total_time = time.time() - aggregation_start_time
+    timing_metrics["total_aggregation_time_seconds"] = total_time
+
+    # Store timing metrics in server for tracking
+    if not hasattr(server, 'aggregation_timing_history'):
+        server.aggregation_timing_history = []
+
+    round_timing = {
+        "round": server.round,
+        "has_disagreements": bool(active_disagreements),
+        "num_clients": len(client_dirs),
+        **timing_metrics
+    }
+    server.aggregation_timing_history.append(round_timing)
+
+    # Add timing metrics to training history for plotting
+    for metric_name, metric_value in timing_metrics.items():
+        history_key = f"aggregation_{metric_name}"
+        if history_key not in server.training_history:
+            server.training_history[history_key] = []
+        server.training_history[history_key].append(metric_value)
+
+    # Print timing summary
+    print(f"\n=== AGGREGATION TIMING SUMMARY FOR ROUND {server.round} ===")
+    print(f"  Disagreement loading: {timing_metrics['disagreement_loading_time_seconds']:.4f}s")
+    print(f"  Resolution time: {timing_metrics['resolution_time_seconds']:.4f}s")
+    print(f"  Aggregation time: {timing_metrics['aggregation_time_seconds']:.4f}s")
+    print(f"  Track saving time: {timing_metrics['track_saving_time_seconds']:.4f}s")
+    print(f"  Total time: {timing_metrics['total_aggregation_time_seconds']:.4f}s")
+    print(f"  Has disagreements: {bool(active_disagreements)}")
+    print(f"=== END TIMING SUMMARY ===\n")
+
+    return result
 
 def aggregate_standard(server, clients_dir, aggregation_weights):
     """Standard model aggregation without tracks.
@@ -426,6 +497,9 @@ def save_track_models(server, track_parameters, track_info):
         track_parameters: Dictionary of track parameters
         track_info: Dictionary of track information
     """
+    # Time the track saving process
+    track_saving_start_time = time.time()
+
     structure = get_structure_config(server)
 
     # Get a reference to a clean model to apply parameters
@@ -454,6 +528,15 @@ def save_track_models(server, track_parameters, track_info):
     if not track_info.get("tracks", {}) or (len(track_info.get("tracks", {})) == 1 and "global" in track_info.get("tracks", {})):
         # No active disagreements or only global track, skip creating tracks directory
         print(f"No active disagreements for round {server.round}, skipping track creation")
+
+        # Record the track saving time even if no tracks to save
+        track_saving_time = time.time() - track_saving_start_time
+        # Update the timing metrics in the aggregation history if available
+        if hasattr(server, 'aggregation_timing_history') and server.aggregation_timing_history:
+            server.aggregation_timing_history[-1]["track_saving_time_seconds"] = track_saving_time
+        if "aggregation_track_saving_time_seconds" in server.training_history:
+            server.training_history["aggregation_track_saving_time_seconds"][-1] = track_saving_time
+
         return
 
     # Create "tracks" directory for this round
@@ -503,6 +586,18 @@ def save_track_models(server, track_parameters, track_info):
             json.dump(track_specific_metadata, f, indent=2)
 
         print(f"Saved track model: {track_name}")
+
+    # Record the track saving time
+    track_saving_time = time.time() - track_saving_start_time
+    print(f"Track saving completed in {track_saving_time:.4f} seconds")
+
+    # Update the timing metrics in the aggregation history if available
+    if hasattr(server, 'aggregation_timing_history') and server.aggregation_timing_history:
+        server.aggregation_timing_history[-1]["track_saving_time_seconds"] = track_saving_time
+
+    # Update the training history timing as well
+    if "aggregation_track_saving_time_seconds" in server.training_history:
+        server.training_history["aggregation_track_saving_time_seconds"][-1] = track_saving_time
 
 def get_structure_config(server):
     """Get directory structure configuration.
