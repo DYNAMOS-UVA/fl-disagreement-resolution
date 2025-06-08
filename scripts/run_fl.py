@@ -13,7 +13,6 @@ import subprocess
 import sys
 import glob
 from datetime import datetime
-from pathlib import Path
 
 
 def usage():
@@ -21,32 +20,30 @@ def usage():
     print("""Usage: run_fl.py [options]
 
 Options:
-  -e, --experiment <n>     Experiment type (n_cmapss or mnist)
-  -c, --clients <ids>      Client IDs (e.g., '0 1 2 3 4 5') or number of clients (e.g., 6)
-                           If not specified, uses num_clients from scenario file
-  -r, --rounds <num>       Number of FL rounds (default: 3)
-  -l, --local-epochs <num> Number of local training epochs (default: 5)
-  -b, --batch-size <num>   Batch size (default: 64)
-  -s, --setup-data         Setup data (for MNIST only)
-  -f, --force-setup        Force data setup even if it exists (for MNIST only)
-  -i, --iid                Use IID data distribution (for MNIST only)
-  -d, --results-dir <dir>  Custom results directory (default: auto-generated)
-  -S, --scenario <num>     Scenario number to run (default: 9 - no disagreements)
-                           Use 'all' to run all available scenarios sequentially
-                           Scenarios define num_clients (N-CMAPSS limited to ≤6 clients)
-  -C, --config <file>      Path to configuration file (default: mock_etcd/configuration.json)
-  -h, --help               Display this help and exit
+  -e, --experiment <n>     Experiment type (n_cmapss or mnist).
+  -c, --clients <ids>      Number of clients or a list of IDs (e.g., 6 or '0 1 3 5').
+                           If not specified, uses 'num_clients' from the scenario file.
+  -r, --rounds <num>       Number of FL rounds (default: 3).
+  -l, --local-epochs <num> Number of local training epochs (default: 5).
+  -b, --batch-size <num>   Batch size (default: 64).
+  -s, --setup-data         Setup data (for MNIST only).
+  -f, --force-setup        Force data setup even if it exists (for MNIST only).
+  -i, --iid                Use IID data distribution (for MNIST only).
+  -d, --results-dir <dir>  Custom results directory (default: auto-generated).
+  -S, --scenario <num>     Scenario to run by number or 'all' (default: 0).
+                           Scenarios can define 'num_clients' (N-CMAPSS is limited to <= 6).
+  -C, --config <file>      Path to configuration file (default: mock_etcd/configuration.json).
+  -h, --help               Display this help and exit.
 
 Examples:
-  run_fl.py -e n_cmapss -c '0 1 2' -r 5
-  run_fl.py -e mnist -c 6 -s -i                # Use 6 clients (0-5)
-  run_fl.py -e mnist -c '0 1 2 3 4 5' -s -i    # Explicitly specify client IDs
+  run_fl.py -e n_cmapss -c 3 -r 5
+  run_fl.py -e mnist -c 6 -s -i
   run_fl.py -e mnist -c 4 -d 'results/my_experiment'
-  run_fl.py -e mnist -c '0 1 2 3' -s -f -i     # Force new data setup with IID distribution
-  run_fl.py -e mnist -S 1                      # Run with scenario 1 (uses scenario's num_clients)
-  run_fl.py -e mnist -S 1 -c 4                 # Override scenario's client count
-  run_fl.py -e mnist -S all                    # Run all scenarios sequentially
-  run_fl.py -C custom_config.json              # Use a custom configuration file
+  run_fl.py -e mnist -c 4 -s -f -i
+  run_fl.py -e mnist -S 1
+  run_fl.py -e mnist -S 1 -c 4
+  run_fl.py -e mnist -S all
+  run_fl.py -C custom_config.json
 """)
 
 
@@ -309,8 +306,8 @@ def main():
                        help='Use IID data distribution (for MNIST only)')
     parser.add_argument('-d', '--results-dir', type=str, dest='results_dir',
                        help='Custom results directory (default: auto-generated)')
-    parser.add_argument('-S', '--scenario', type=str, default="9",
-                       help='Scenario number to run (default: 9 - no disagreements) or "all"')
+    parser.add_argument('-S', '--scenario', type=str, default="0",
+                       help='Scenario number to run (default: 0 - no disagreements) or "all"')
     parser.add_argument('-C', '--config', type=str, default="mock_etcd/configuration.json",
                        help='Path to configuration file (default: mock_etcd/configuration.json)')
     parser.add_argument('-h', '--help', action='store_true',

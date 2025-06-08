@@ -11,6 +11,31 @@ import argparse
 import subprocess
 import glob
 
+def usage():
+    """Prints usage information."""
+    print("""Usage: ./scripts/test_disagreement_scenarios.py <scenario> [options]
+
+Arguments:
+  scenario                 Scenario name/number, path to a custom scenario file, or "all" to run all scenarios.
+
+Options:
+  -r, --rounds <num>       Number of federated learning rounds (default: 5).
+  -l, --local-epochs <num> Number of local training epochs (default: 1).
+  -e, --experiment <type>  Experiment type to use (mnist or n_cmapss, default: mnist).
+                           N-CMAPSS is limited to <= 6 clients; incompatible scenarios will be skipped.
+  -c, --clients <ids>      Override client count or provide a list of IDs (e.g., 4 or "0 1 3 5").
+                           If not specified, uses 'num_clients' from the scenario file.
+  -v, --verbose            Enable verbose output.
+  -h, --help               Display this help and exit.
+
+Examples:
+  ./scripts/test_disagreement_scenarios.py 1
+  ./scripts/test_disagreement_scenarios.py all -e n_cmapss
+  ./scripts/test_disagreement_scenarios.py 3 -r 10 -l 2
+  ./scripts/test_disagreement_scenarios.py 5 -c 4
+  ./scripts/test_disagreement_scenarios.py path/to/my/custom_scenario.json
+""")
+
 def load_scenario(scenario_path):
     """Load a disagreement scenario from a file."""
     try:
@@ -480,8 +505,9 @@ def run_single_scenario(scenario_path, args):
     return ('passed', 'All checks passed')
 
 def main():
-    parser = argparse.ArgumentParser(description='Test disagreement scenarios')
-    parser.add_argument('scenario', help='Scenario name/number or "all" to run all scenarios')
+    parser = argparse.ArgumentParser(description='Test disagreement scenarios', add_help=False)
+    parser.add_argument('scenario', nargs='?', default=None,
+                        help='Scenario name/number, path to a custom scenario file, or "all" to run all scenarios')
     parser.add_argument('-r', '--rounds', type=int, default=5,
                         help='Number of federated learning rounds (default: 5)')
     parser.add_argument('-l', '--local-epochs', type=int, default=1,
@@ -490,11 +516,17 @@ def main():
                         choices=['mnist', 'n_cmapss'],
                         help='Experiment type to use (mnist or n_cmapss). N-CMAPSS limited to ≤6 clients - incompatible scenarios will be skipped.')
     parser.add_argument('-c', '--clients', type=str,
-                        help='Override client count/IDs (e.g., "6" for 6 clients or "0 1 2 3" for specific IDs)')
+                        help='Override client count or provide a list of IDs (e.g., 4 or "0 1 3 5"). If not specified, uses \'num_clients\' from the scenario file.')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Enable verbose output')
+    parser.add_argument('-h', '--help', action='store_true',
+                        help='Display this help and exit')
 
     args = parser.parse_args()
+
+    if args.help or not args.scenario:
+        usage()
+        sys.exit(0)
 
     # Change to the parent directory (project root) to ensure proper paths
     script_dir = os.path.dirname(os.path.abspath(__file__))
