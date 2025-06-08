@@ -1,107 +1,96 @@
 {
-  "name": "Incremental Finetune - Client 1 Full Exclusion (R2-R4) and Rejoin (R5)",
-  "description": "Tests deep_incr_finetune. Client 1 is fully excluded from round 2 to 4. Client 1 rejoins main aggregation in Round 5 and finetunes for 2 rounds. Other clients (C0,C2,C3,C4,C5) remain on global model.",
-  "num_clients": 6,
-  "expected_tracks_round_1": {},
-  "expected_tracks_round_2": {
-    "global": "Default track for active clients (0,2,3,4,5) while C1 is fully excluded."
-  },
-  "expected_tracks_round_3": {
-    "global": "Default track for active clients (0,2,3,4,5) while C1 is fully excluded."
-  },
-  "expected_tracks_round_4": {
-    "global": "Default track for active clients (0,2,3,4,5) while C1 is fully excluded."
-  },
-  "expected_tracks_round_5": {},
-  "expected_tracks_round_6": {},
-  "validation_rules": {
-    "round_1_rules": [
-      {
-        "type": "all_clients_on_global_implicitly",
-        "clients": [0, 1, 2, 3, 4, 5],
-        "description": "All clients (0-5) on main global model."
-      }
-    ],
-    "round_2_rules": [
-      {
-        "type": "clients_on_track",
-        "track_name": "global",
-        "clients": [0, 2, 3, 4, 5],
-        "description": "Clients 0,2,3,4,5 are primary on the global track."
-      },
-      {
-        "type": "track_includes_only",
-        "track_name": "global",
-        "clients": [0, 2, 3, 4, 5],
-        "description": "Global track should only contain clients 0,2,3,4,5."
-      },
-      {
-        "type": "client_fully_excluded",
-        "client": 1,
-        "description": "Client 1 should be fully excluded in Round 2."
-      }
-    ],
-    "round_3_rules": [
-      {
-        "type": "clients_on_track",
-        "track_name": "global",
-        "clients": [0, 2, 3, 4, 5],
-        "description": "Clients 0,2,3,4,5 are primary on the global track."
-      },
-      {
-        "type": "track_includes_only",
-        "track_name": "global",
-        "clients": [0, 2, 3, 4, 5],
-        "description": "Global track should only contain clients 0,2,3,4,5."
-      },
-      {
-        "type": "client_fully_excluded",
-        "client": 1,
-        "description": "Client 1 should be fully excluded in Round 3."
-      }
-    ],
-    "round_4_rules": [
-      {
-        "type": "clients_on_track",
-        "track_name": "global",
-        "clients": [0, 2, 3, 4, 5],
-        "description": "Clients 0,2,3,4,5 are primary on the global track."
-      },
-      {
-        "type": "track_includes_only",
-        "track_name": "global",
-        "clients": [0, 2, 3, 4, 5],
-        "description": "Global track should only contain clients 0,2,3,4,5."
-      },
-      {
-        "type": "client_fully_excluded",
-        "client": 1,
-        "description": "Client 1 should be fully excluded in Round 4."
-      }
-    ],
-    "round_5_rules": [
-      {
-        "type": "all_clients_on_global_implicitly",
-        "clients": [0, 1, 2, 3, 4, 5],
-        "description": "All clients (0-5) on main global model. Client 1 rejoining and finetuning 1/2 (verify by server logs and global_finetuning_status.json)."
-      }
-    ],
-    "round_6_rules": [
-      {
-        "type": "all_clients_on_global_implicitly",
-        "clients": [0, 1, 2, 3, 4, 5],
-        "description": "All clients (0-5) on main global model. Client 1 finetuning 2/2 (verify by server logs and global_finetuning_status.json)."
-      }
-    ]
+  "name": "Ring Size Scalability - 10 Clients (8 Client Ring)",
+  "description": "Ring size scalability test with 10 clients where only clients 0-7 form a disagreement ring. Each client excludes the next client in the sequence, while clients 8-9 have no disagreements.",
+  "num_clients": 10,
+  "expected_tracks": {
+    "track_0_no1": "For client 0, excluding client 1",
+    "track_1_no2": "For client 1, excluding client 2",
+    "track_2_no3": "For client 2, excluding client 3",
+    "track_3_no4": "For client 3, excluding client 4",
+    "track_4_no5": "For client 4, excluding client 5",
+    "track_5_no6": "For client 5, excluding client 6",
+    "track_6_no7": "For client 6, excluding client 7",
+    "track_7_no0": "For client 7, excluding client 0",
+    "global": "Global track (for clients 8-9 without specific disagreements)"
   },
   "disagreements": {
-    "1": [
+    "client_0": [
       {
-        "type": "full",
-        "description": "Client 1 fully excludes itself.",
+        "type": "inbound",
+        "target": "client_1",
         "active_rounds": {
-          "start": 2,
-          "end": 4
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_1": [
+      {
+        "type": "inbound",
+        "target": "client_2",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_2": [
+      {
+        "type": "inbound",
+        "target": "client_3",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_3": [
+      {
+        "type": "inbound",
+        "target": "client_4",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_4": [
+      {
+        "type": "inbound",
+        "target": "client_5",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_5": [
+      {
+        "type": "inbound",
+        "target": "client_6",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_6": [
+      {
+        "type": "inbound",
+        "target": "client_7",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_7": [
+      {
+        "type": "inbound",
+        "target": "client_0",
+        "active_rounds": {
+          "start": 1,
+          "end": null
         }
       }
     ]

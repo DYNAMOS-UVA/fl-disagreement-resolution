@@ -1,19 +1,15 @@
 {
-  "name": "Client Scalability Ring - 50 Clients (10 Disagreements)",
-  "description": "Scalability test with 50 clients where only the first 10 clients form a ring of disagreements. Each client (0-9) excludes the next client in the sequence, while clients 10-49 have no disagreements.",
-  "num_clients": 50,
+  "name": "Disagreement Ring",
+  "description": "Scenario where clients form a ring of disagreements. Client 0 disagrees with 1, client 1 with 2, and so on, forming a complete circle. Tests the system's ability to handle circular dependencies.",
+  "num_clients": 6,
   "expected_tracks": {
     "track_0_no1": "For client 0, excluding client 1",
     "track_1_no2": "For client 1, excluding client 2",
     "track_2_no3": "For client 2, excluding client 3",
     "track_3_no4": "For client 3, excluding client 4",
     "track_4_no5": "For client 4, excluding client 5",
-    "track_5_no6": "For client 5, excluding client 6",
-    "track_6_no7": "For client 6, excluding client 7",
-    "track_7_no8": "For client 7, excluding client 8",
-    "track_8_no9": "For client 8, excluding client 9",
-    "track_9_no0": "For client 9, excluding client 0",
-    "global": "Global track (for clients 10-49 without specific disagreements)"
+    "track_5_no0": "For client 5, excluding client 0",
+    "global": "Global track (reference only)"
   },
   "disagreements": {
     "client_0": [
@@ -67,46 +63,6 @@
       }
     ],
     "client_5": [
-      {
-        "type": "inbound",
-        "target": "client_6",
-        "active_rounds": {
-          "start": 1,
-          "end": null
-        }
-      }
-    ],
-    "client_6": [
-      {
-        "type": "inbound",
-        "target": "client_7",
-        "active_rounds": {
-          "start": 1,
-          "end": null
-        }
-      }
-    ],
-    "client_7": [
-      {
-        "type": "inbound",
-        "target": "client_8",
-        "active_rounds": {
-          "start": 1,
-          "end": null
-        }
-      }
-    ],
-    "client_8": [
-      {
-        "type": "inbound",
-        "target": "client_9",
-        "active_rounds": {
-          "start": 1,
-          "end": null
-        }
-      }
-    ],
-    "client_9": [
       {
         "type": "inbound",
         "target": "client_0",

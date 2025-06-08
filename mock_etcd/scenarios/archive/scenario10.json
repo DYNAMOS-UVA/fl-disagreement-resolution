@@ -1,0 +1,49 @@
+{
+  "name": "Full Exclusion Multiple Clients",
+  "description": "A test scenario where multiple clients (3, 4, and 5) opt for full exclusion, removing themselves completely from federation.",
+  "num_clients": 6,
+  "expected_tracks": {
+    "global": "For clients 0, 1, and 2, excluding fully excluded clients 3, 4, and 5"
+  },
+  "validation_rules": {
+    "round_1_rules": [
+      {
+        "type": "clients_share_track",
+        "clients": [0, 1, 2],
+        "description": "Clients 0, 1, and 2 should share the same track"
+      },
+      {
+        "type": "client_excludes",
+        "client": 0,
+        "excludes": [3, 4, 5],
+        "description": "Client 0's track should exclude clients 3, 4, and 5 (fully excluded)"
+      },
+      {
+        "type": "clients_on_track",
+        "track_name": "global",
+        "clients": [0, 1, 2],
+        "description": "Clients 0, 1, 2 should be on the 'global' track"
+      }
+    ]
+  },
+  "disagreements": {
+    "3": [
+      {
+        "type": "full",
+        "description": "Client 3 opts for full exclusion"
+      }
+    ],
+    "4": [
+      {
+        "type": "full",
+        "description": "Client 4 opts for full exclusion"
+      }
+    ],
+    "5": [
+      {
+        "type": "full",
+        "description": "Client 5 opts for full exclusion"
+      }
+    ]
+  }
+}

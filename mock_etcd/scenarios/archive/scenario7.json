@@ -1,0 +1,75 @@
+{
+  "name": "Full Exclusion Scenario",
+  "description": "A test scenario where client 3 opts for full exclusion, removing itself completely from all tracks, while clients 0 and 1 have regular disagreements.",
+  "num_clients": 6,
+  "expected_tracks": {
+    "track_0_no1": "For client 0, excluding client 1",
+    "track_1_no4": "For client 1, excluding client 4",
+    "global": "Global track (for clients 2, 4, 5 without specific disagreements)"
+  },
+  "validation_rules": {
+    "round_1_rules": [
+      {
+        "type": "client_excludes",
+        "client": 0,
+        "excludes": [1, 3],
+        "description": "Client 0's track should exclude clients 1 and 3 (3 is fully excluded)"
+      },
+      {
+        "type": "client_excludes",
+        "client": 1,
+        "excludes": [3, 4],
+        "description": "Client 1's track should exclude clients 3 and 4 (3 is fully excluded)"
+      },
+      {
+        "type": "client_excludes",
+        "client": 2,
+        "excludes": [3],
+        "description": "Client 2's track should exclude client 3 (fully excluded)"
+      },
+      {
+        "type": "client_excludes",
+        "client": 4,
+        "excludes": [3],
+        "description": "Client 4's track should exclude client 3 (fully excluded)"
+      },
+      {
+        "type": "client_excludes",
+        "client": 5,
+        "excludes": [3],
+        "description": "Client 5's track should exclude client 3 (fully excluded)"
+      }
+    ]
+  },
+  "disagreements": {
+    "client_0": [
+      {
+        "type": "inbound",
+        "target": "client_1",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_1": [
+      {
+        "type": "inbound",
+        "target": "client_4",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_3": [
+      {
+        "type": "full",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 {
   "experiment": {
-    "type": "n_cmapss",
+    "type": "mnist",
     "fl_rounds": 5,
     "client_ids": [
       0,
@@ -37,8 +37,8 @@
     "learning_rate": 0.001
   },
   "disagreement": {
-    "initiation_mechanism": "deep_rewind",
-    "lifting_mechanism": "shallow",
+    "initiation_mechanism": "shallow",
+    "lifting_mechanism": "deep_incr_finetune",
     "deep_lifting_finetune_rounds": 2
   },
   "results": {
@@ -52,8 +52,7 @@
       "global_model": "global_model_for_training",
       "global_model_aggregated": "global_model_aggregated",
       "output_dir": "output",
-      "client_prefix": "client_",
-      "models_dir": "global_models"
+      "client_prefix": "client_"
     }
   }
 }

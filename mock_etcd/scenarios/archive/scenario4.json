@@ -1,19 +1,23 @@
 {
-  "name": "Disagreement Scalability - 5 Clients Ring (2 Disagreements Each)",
-  "description": "Disagreement scalability test with 5 clients where each client excludes the next 2 clients in sequence (with wraparound).",
-  "num_clients": 5,
+  "name": "Comprehensive Mixed Disagreements",
+  "description": "A comprehensive test with all types of disagreements (inbound, outbound, bidirectional) and temporary disagreements. Tests the system's ability to handle complex real-world scenarios.",
+  "num_clients": 6,
   "expected_tracks": {
-    "track_0_no1_no2": "For client 0, excluding clients 1 and 2",
-    "track_1_no2_no3": "For client 1, excluding clients 2 and 3",
+    "track_0_no1_no5": "For client 0, excluding clients 1 and 5",
+    "track_c1_c3_no0_no2": "For clients 1 and 3, excluding clients 0 and 2",
     "track_2_no3_no4": "For client 2, excluding clients 3 and 4",
-    "track_3_no0_no4": "For client 3, excluding clients 4 and 0",
-    "track_4_no0_no1": "For client 4, excluding clients 0 and 1",
-    "global": "Global track (reference only)"
+    "global": "Global track (used by clients 4 and 5)"
+  },
+  "expected_tracks_round_3": {
+    "track_0_no1_no5": "For client 0, excluding clients 1 and 5 (track name remains despite expiry of client 5 exclusion)",
+    "track_c1_c3_no0_no2": "For clients 1 and 3, excluding clients 0 and 2",
+    "track_2_no3_no4": "For client 2, excluding clients 3 and 4 (track name remains despite expiry of client 4 exclusion)",
+    "global": "Global track (used by clients 4 and 5)"
   },
   "disagreements": {
     "client_0": [
       {
-        "type": "inbound",
+        "type": "bidirectional",
         "target": "client_1",
         "active_rounds": {
           "start": 1,
@@ -22,10 +26,10 @@
       },
       {
         "type": "inbound",
-        "target": "client_2",
+        "target": "client_5",
         "active_rounds": {
           "start": 1,
-          "end": null
+          "end": 2
         }
       }
     ],
@@ -37,19 +41,11 @@
           "start": 1,
           "end": null
         }
-      },
-      {
-        "type": "inbound",
-        "target": "client_3",
-        "active_rounds": {
-          "start": 1,
-          "end": null
-        }
       }
     ],
     "client_2": [
       {
-        "type": "inbound",
+        "type": "bidirectional",
         "target": "client_3",
         "active_rounds": {
           "start": 1,
@@ -61,19 +57,11 @@
         "target": "client_4",
         "active_rounds": {
           "start": 1,
-          "end": null
+          "end": 2
         }
       }
     ],
     "client_3": [
-      {
-        "type": "inbound",
-        "target": "client_4",
-        "active_rounds": {
-          "start": 1,
-          "end": null
-        }
-      },
       {
         "type": "inbound",
         "target": "client_0",
@@ -85,16 +73,18 @@
     ],
     "client_4": [
       {
-        "type": "inbound",
-        "target": "client_0",
+        "type": "outbound",
+        "target": "client_2",
         "active_rounds": {
           "start": 1,
           "end": null
         }
-      },
+      }
+    ],
+    "client_5": [
       {
-        "type": "inbound",
-        "target": "client_1",
+        "type": "outbound",
+        "target": "client_0",
         "active_rounds": {
           "start": 1,
           "end": null

@@ -1,0 +1,51 @@
+{
+  "name": "Temporary Full Exclusion",
+  "description": "A test scenario where client 3 opts for full exclusion but only for rounds 1-2, after which it returns to normal participation.",
+  "num_clients": 6,
+  "expected_tracks": {
+    "global": "Global track for clients 0, 1, 2, 4, 5 (excluding client 3)"
+  },
+  "expected_tracks_round_3": {
+    "global": "Global track for all clients (client 3 has returned)"
+  },
+  "validation_rules": {
+    "round_1_rules": [
+      {
+        "type": "clients_share_track",
+        "clients": [0, 1, 2, 4, 5],
+        "description": "Clients 0, 1, 2, 4, 5 should share the global track"
+      },
+      {
+        "type": "client_excludes",
+        "client": 0,
+        "excludes": [3],
+        "description": "Client 0's track should exclude client 3 (fully excluded)"
+      }
+    ],
+    "round_3_rules": [
+      {
+        "type": "clients_share_track",
+        "clients": [0, 1, 2, 3, 4, 5],
+        "description": "All clients should share the global track (client 3 has returned)"
+      },
+      {
+        "type": "clients_on_track",
+        "track_name": "global",
+        "clients": [0, 1, 2, 3, 4, 5],
+        "description": "All clients should be on the global track"
+      }
+    ]
+  },
+  "disagreements": {
+    "3": [
+      {
+        "type": "full",
+        "description": "Client 3 opts for full exclusion in rounds 1-2",
+        "active_rounds": {
+          "start": 1,
+          "end": 2
+        }
+      }
+    ]
+  }
+}

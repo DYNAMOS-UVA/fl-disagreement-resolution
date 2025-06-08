@@ -1,54 +1,45 @@
 {
-  "name": "Complex Overlapping Disagreements",
-  "description": "Scenario with complex overlapping disagreements involving all clients. Tests the system's ability to create optimal tracks and handle bidirectional disagreements.",
+  "name": "Mixed Disagreement Types",
+  "description": "Scenario demonstrating all disagreement types: client 0 has inbound exclusion with client 1, client 2 has outbound exclusion with client 3, client 4 has bidirectional exclusion with client 5, and client 1 opts for full exclusion.",
   "num_clients": 6,
   "expected_tracks": {
-    "track_c0_c2_no1_no3": "For clients 0 and 2, excluding clients 1 and 3",
-    "track_1_no0_no2_no4": "For client 1, excluding clients 0, 2, and 4",
-    "track_3_no0": "For client 3, excluding client 0",
-    "track_4_no1": "For client 4, excluding client 1",
-    "track_5_no0_no4": "For client 5, excluding clients 0 and 4",
-    "global": "Empty global track (reference only)"
+    "track_4_no5": "For client 4, excluding client 5",
+    "track_5_no4": "For client 5, excluding client 4",
+    "track_3_no2": "For client 3, excluding client 2 (due to client 2's outbound disagreement)",
+    "global": "Global track for client 2 (reference only)"
+  },
+  "validation_rules": {
+    "round_1_rules": [
+      {
+        "type": "client_excludes",
+        "client": 3,
+        "excludes": [2],
+        "description": "Client 3's track should exclude client 2 (due to client 2's outbound disagreement)"
+      },
+      {
+        "type": "client_excludes",
+        "client": 4,
+        "excludes": [5],
+        "description": "Client 4's track should exclude client 5"
+      },
+      {
+        "type": "client_excludes",
+        "client": 5,
+        "excludes": [4],
+        "description": "Client 5's track should exclude client 4"
+      },
+      {
+        "type": "client_fully_excluded",
+        "client": 1,
+        "description": "Client 1 should be fully excluded from all tracks"
+      }
+    ]
   },
   "disagreements": {
     "client_0": [
       {
-        "type": "bidirectional",
+        "type": "inbound",
         "target": "client_1",
-        "active_rounds": {
-          "start": 1,
-          "end": null
-        }
-      },
-      {
-        "type": "bidirectional",
-        "target": "client_3",
-        "active_rounds": {
-          "start": 1,
-          "end": null
-        }
-      },
-      {
-        "type": "outbound",
-        "target": "client_5",
-        "active_rounds": {
-          "start": 1,
-          "end": null
-        }
-      }
-    ],
-    "client_1": [
-      {
-        "type": "bidirectional",
-        "target": "client_2",
-        "active_rounds": {
-          "start": 1,
-          "end": null
-        }
-      },
-      {
-        "type": "bidirectional",
-        "target": "client_4",
         "active_rounds": {
           "start": 1,
           "end": null
@@ -57,7 +48,7 @@
     ],
     "client_2": [
       {
-        "type": "inbound",
+        "type": "outbound",
         "target": "client_3",
         "active_rounds": {
           "start": 1,
@@ -67,8 +58,17 @@
     ],
     "client_4": [
       {
-        "type": "outbound",
+        "type": "bidirectional",
         "target": "client_5",
+        "active_rounds": {
+          "start": 1,
+          "end": null
+        }
+      }
+    ],
+    "client_1": [
+      {
+        "type": "full",
         "active_rounds": {
           "start": 1,
           "end": null

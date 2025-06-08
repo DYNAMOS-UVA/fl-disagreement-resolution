@@ -1,53 +1,32 @@
 {
-  "name": "Simple Inbound and Outbound Exclusions",
-  "description": "Scenario where clients 1 and 2 inbound exclude clients 4 and 5, while client 3 outbound excludes client 5. This tests track consolidation for clients with identical exclusion patterns and reusing the global track for outbound-only clients.",
+  "name": "Simple Inbound Exclusion",
+  "description": "Basic scenario with one client having a single inbound exclusion. Client 0 excludes client 1 from round 1 onwards indefinitely.",
   "num_clients": 6,
   "expected_tracks": {
-    "track_c1_c2_no4_no5": "For clients 1 and 2, excluding clients 4 and 5",
-    "track_5_no3": "For client 5, excluding client 3",
-    "global": "For clients 0, 3, and 4 (including client 3 with outbound-only exclusion)"
+    "track_0_no1": "For client 0, excluding client 1",
+    "global": "Global track (for clients 1, 2, 3, 4, 5 without specific disagreements)"
+  },
+  "validation_rules": {
+    "round_1_rules": [
+      {
+        "type": "client_excludes",
+        "client": 0,
+        "excludes": [1],
+        "description": "Client 0's track should exclude client 1"
+      },
+      {
+        "type": "clients_on_track",
+        "track_name": "global",
+        "clients": [1, 2, 3, 4, 5],
+        "description": "Clients 1, 2, 3, 4, 5 should be on the global track"
+      }
+    ]
   },
   "disagreements": {
-    "client_1": [
+    "client_0": [
       {
         "type": "inbound",
-        "target": "client_4",
-        "active_rounds": {
-          "start": 1,
-          "end": null
-        }
-      },
-      {
-        "type": "inbound",
-        "target": "client_5",
-        "active_rounds": {
-          "start": 1,
-          "end": null
-        }
-      }
-    ],
-    "client_2": [
-      {
-        "type": "inbound",
-        "target": "client_4",
-        "active_rounds": {
-          "start": 1,
-          "end": 5
-        }
-      },
-      {
-        "type": "inbound",
-        "target": "client_5",
-        "active_rounds": {
-          "start": 1,
-          "end": null
-        }
-      }
-    ],
-    "client_3": [
-      {
-        "type": "outbound",
-        "target": "client_5",
+        "target": "client_1",
         "active_rounds": {
           "start": 1,
           "end": null

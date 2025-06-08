@@ -1,11 +1,40 @@
 {
-  "1": [
+  "client_0": [
+    {
+      "type": "inbound",
+      "target": "client_1",
+      "active_rounds": {
+        "start": 1,
+        "end": null
+      }
+    }
+  ],
+  "client_2": [
+    {
+      "type": "outbound",
+      "target": "client_3",
+      "active_rounds": {
+        "start": 1,
+        "end": 2
+      }
+    }
+  ],
+  "client_4": [
+    {
+      "type": "bidirectional",
+      "target": "client_5",
+      "active_rounds": {
+        "start": 1,
+        "end": null
+      }
+    }
+  ],
+  "client_1": [
     {
       "type": "full",
-      "description": "Client 1 fully excludes itself.",
       "active_rounds": {
-        "start": 2,
-        "end": 4
+        "start": 1,
+        "end": 3
       }
     }
   ]
