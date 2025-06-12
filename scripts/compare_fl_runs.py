@@ -168,7 +168,8 @@ class FLRunComparator:
 
             if values:
                 bars = plt.bar(range(len(values)), values, color=colors, alpha=0.7)
-                plt.xticks(range(len(values)), labels, rotation=45, ha='right')
+                plt.xticks(range(len(values)), labels, rotation=45, ha='center')
+                plt.tick_params(axis='x', pad=1)
                 plt.ylabel(title)
                 plt.title(f'{title} Comparison')
                 plt.grid(True, axis='y', alpha=0.3)
@@ -225,7 +226,8 @@ class FLRunComparator:
             if values:
                 # Use blue colors for all bars
                 bars = plt.bar(range(len(values)), values, color='steelblue', alpha=0.7, edgecolor='navy', linewidth=1)
-                plt.xticks(range(len(values)), labels, rotation=45, ha='right')
+                plt.xticks(range(len(values)), labels, rotation=45, ha='center')
+                plt.tick_params(axis='x', pad=1)
                 plt.ylabel(title)
                 plt.title(f'{title} Comparison')
                 plt.grid(True, axis='y', alpha=0.3)
@@ -234,7 +236,7 @@ class FLRunComparator:
                 for bar, value in zip(bars, values):
                     height = bar.get_height()
                     if metric == 'avg_resolution_time_ms':
-                        plt.annotate(f'{value:.1f}ms',
+                        plt.annotate(f'{value:.3f}ms',
                                     xy=(bar.get_x() + bar.get_width() / 2, height),
                                     xytext=(0, 3),
                                     textcoords="offset points",
@@ -294,6 +296,110 @@ class FLRunComparator:
             print(f"✓ Saved accuracy progression to {output_dir}/accuracy_progression.png")
         plt.show()
 
+    def compare_combined_metrics(self, save_plots=True, output_dir=None):
+        """Create a combined plot with accuracy progression, resolution time, and aggregation time."""
+        if len(self.runs) < 2:
+            print("Need at least 2 runs to compare")
+            return
+
+        if output_dir is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_dir = f'results/comparisons/comparison_{timestamp}'
+
+        if save_plots:
+            os.makedirs(output_dir, exist_ok=True)
+
+        plt.figure(figsize=(18, 6))
+
+        # Subplot 1: Accuracy Progression
+        plt.subplot(1, 3, 1)
+        for run_name, run_data in self.runs.items():
+            fl_results = run_data.get("fl_results", {})
+            rounds_data = fl_results.get("rounds", [])
+
+            if rounds_data:
+                rounds = [r["round"] for r in rounds_data if r["round"] > 0]
+                accuracies = [r["test_accuracy"] for r in rounds_data if r["round"] > 0]
+
+                scenario = run_data.get('scenario', 'Unknown')
+                clients = run_data.get('num_clients', 'Unknown')
+                label = f"S{scenario} ({clients} clients)"
+
+                plt.plot(rounds, accuracies, marker='o', linewidth=2, markersize=6, label=label)
+
+        plt.xlabel('Round')
+        plt.ylabel('Test Accuracy')
+        plt.title('Accuracy Progression')
+        plt.grid(True, alpha=0.3)
+        plt.legend()
+
+        # Subplot 2: Average Resolution Time (ms)
+        plt.subplot(1, 3, 2)
+        values = []
+        labels = []
+
+        for run_name, run_data in self.runs.items():
+            value = run_data.get('avg_resolution_time_ms')
+            if value is not None:
+                values.append(value)
+                scenario = run_data.get('scenario', 'Unknown')
+                clients = run_data.get('num_clients', 'Unknown')
+                labels.append(f"S{scenario}\n({clients} clients)")
+
+        if values:
+            bars = plt.bar(range(len(values)), values, color='steelblue', alpha=0.7, edgecolor='navy', linewidth=1)
+            plt.xticks(range(len(values)), labels, rotation=45, ha='center')
+            plt.tick_params(axis='x', pad=1)
+            plt.ylabel('Avg Resolution Time (ms)')
+            plt.title('Avg Resolution Time Comparison')
+            plt.grid(True, axis='y', alpha=0.3)
+
+            # Add value labels on bars
+            for bar, value in zip(bars, values):
+                height = bar.get_height()
+                plt.annotate(f'{value:.3f}ms',
+                            xy=(bar.get_x() + bar.get_width() / 2, height),
+                            xytext=(0, 3),
+                            textcoords="offset points",
+                            ha='center', va='bottom', fontsize=9)
+
+        # Subplot 3: Average Aggregation Time (s)
+        plt.subplot(1, 3, 3)
+        values = []
+        labels = []
+
+        for run_name, run_data in self.runs.items():
+            value = run_data.get('avg_aggregation_time')
+            if value is not None:
+                values.append(value)
+                scenario = run_data.get('scenario', 'Unknown')
+                clients = run_data.get('num_clients', 'Unknown')
+                labels.append(f"S{scenario}\n({clients} clients)")
+
+        if values:
+            bars = plt.bar(range(len(values)), values, color='steelblue', alpha=0.7, edgecolor='navy', linewidth=1)
+            plt.xticks(range(len(values)), labels, rotation=45, ha='center')
+            plt.tick_params(axis='x', pad=1)
+            plt.ylabel('Avg Aggregation Time (s)')
+            plt.title('Avg Aggregation Time Comparison')
+            plt.grid(True, axis='y', alpha=0.3)
+
+            # Add value labels on bars
+            for bar, value in zip(bars, values):
+                height = bar.get_height()
+                plt.annotate(f'{value:.3f}s',
+                            xy=(bar.get_x() + bar.get_width() / 2, height),
+                            xytext=(0, 3),
+                            textcoords="offset points",
+                            ha='center', va='bottom', fontsize=9)
+
+        plt.tight_layout()
+        if save_plots:
+            plt.savefig(os.path.join(output_dir, 'combined_metrics_comparison.png'),
+                       bbox_inches='tight', dpi=150)
+            print(f"✓ Saved combined metrics comparison to {output_dir}/combined_metrics_comparison.png")
+        plt.show()
+
     def print_summary(self):
         """Print a summary comparison of all loaded runs."""
         if not self.runs:
@@ -324,7 +430,7 @@ class FLRunComparator:
             if total_time:
                 print(f"   Avg Total Time: {total_time:.3f}s")
             if resolution_time:
-                print(f"   Avg Resolution Time: {resolution_time:.1f}ms")
+                print(f"   Avg Resolution Time: {resolution_time:.3f}ms")
             if overhead is not None:
                 print(f"   Disagreement Overhead: {overhead:.1f}%")
 
@@ -369,6 +475,7 @@ def main():
         comparator.compare_performance(save_plots=True, output_dir=args.output_dir)
         comparator.compare_timing(save_plots=True, output_dir=args.output_dir)
         comparator.compare_round_progression(save_plots=True, output_dir=args.output_dir)
+        comparator.compare_combined_metrics(save_plots=True, output_dir=args.output_dir)
 
         print(f"\n✅ All plots saved to {args.output_dir}/")
 

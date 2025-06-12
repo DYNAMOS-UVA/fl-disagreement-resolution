@@ -13,6 +13,7 @@ import subprocess
 import sys
 import glob
 from datetime import datetime
+from pathlib import Path
 
 
 def usage():
@@ -33,6 +34,7 @@ Options:
   -S, --scenario <num>     Scenario to run by number or 'all' (default: 0).
                            Scenarios can define 'num_clients' (N-CMAPSS is limited to <= 6).
   -C, --config <file>      Path to configuration file (default: mock_etcd/configuration.json).
+  --no-viz                 Skip automatic track visualization generation.
   -h, --help               Display this help and exit.
 
 Examples:
@@ -44,6 +46,10 @@ Examples:
   run_fl.py -e mnist -S 1 -c 4
   run_fl.py -e mnist -S all
   run_fl.py -C custom_config.json
+  run_fl.py -e mnist -S 1 --no-viz
+
+Note: Track contributions visualization is automatically generated after each
+      experiment completion and saved to the simulation's output/ directory.
 """)
 
 
@@ -166,6 +172,83 @@ def restore_config(config_file, scenario, results_dir):
             print(f"Warning: Could not restore config file: {e}")
 
 
+def find_latest_simulation_dir(experiment_type=None, scenario=None):
+    """Find the most recent FL simulation directory."""
+    results_dir = Path("results")
+    if not results_dir.exists():
+        return None
+
+    # Build pattern to match simulation directories
+    if experiment_type and scenario and scenario != "0":
+        pattern = f"fl_simulation_*_{experiment_type}_s{scenario}"
+    elif experiment_type:
+        pattern = f"fl_simulation_*_{experiment_type}*"
+    else:
+        pattern = "fl_simulation_*"
+
+    # Find all matching directories
+    sim_dirs = list(results_dir.glob(pattern))
+
+    if not sim_dirs:
+        # Try without scenario suffix
+        sim_dirs = list(results_dir.glob("fl_simulation_*"))
+
+    if not sim_dirs:
+        return None
+
+    # Return the most recent one (based on directory name timestamp)
+    return str(max(sim_dirs, key=lambda x: x.stat().st_mtime))
+
+
+def run_track_visualization(simulation_path, fl_rounds=None):
+    """Run the track contributions visualization for a completed experiment."""
+    if not simulation_path or not os.path.exists(simulation_path):
+        print("Warning: No valid simulation directory found for visualization")
+        return
+
+    # Check if the simulation has track metadata
+    model_storage = Path(simulation_path) / "model_storage"
+    if not model_storage.exists():
+        print("Warning: No model_storage directory found, skipping visualization")
+        return
+
+    # Check for track metadata in any round
+    track_files = list(model_storage.glob("round_*/tracks/track_metadata.json"))
+    if not track_files:
+        print("Warning: No track metadata found, skipping visualization")
+        return
+
+    print("\n" + "="*50)
+    print("Generating track contributions visualization...")
+    print("="*50)
+
+    try:
+        # Run the visualization script
+        viz_script = "scripts/visualize_track_contributions.py"
+        cmd = ["python", viz_script, simulation_path]
+
+        # Add rounds parameter if available
+        if fl_rounds:
+            cmd.extend(["--rounds", str(fl_rounds)])
+
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+
+        if result.returncode == 0:
+            print("Track visualization completed successfully!")
+            # Print the last line which should contain the save path
+            lines = result.stdout.strip().split('\n')
+            for line in lines:
+                if "Visualization saved to:" in line:
+                    print(line)
+        else:
+            print(f"Warning: Visualization failed with error: {result.stderr}")
+
+    except subprocess.TimeoutExpired:
+        print("Warning: Visualization timed out")
+    except Exception as e:
+        print(f"Warning: Could not run visualization: {e}")
+
+
 def run_experiment(args):
     """Run a federated learning experiment with the given arguments."""
     # Process clients parameter
@@ -280,6 +363,14 @@ def run_experiment(args):
         # Restore the configuration file
         restore_config(args.config, args.scenario, args.results_dir)
 
+    # Generate track visualization for completed experiment
+    if not args.no_viz:
+        simulation_dir = find_latest_simulation_dir(args.experiment, args.scenario)
+        if simulation_dir:
+            run_track_visualization(simulation_dir, args.rounds)
+    else:
+        print("Skipping track visualization (--no-viz specified)")
+
     print("Experiment completed.")
 
 
@@ -310,6 +401,8 @@ def main():
                        help='Scenario number to run (default: 0 - no disagreements) or "all"')
     parser.add_argument('-C', '--config', type=str, default="mock_etcd/configuration.json",
                        help='Path to configuration file (default: mock_etcd/configuration.json)')
+    parser.add_argument('--no-viz', action='store_true', dest='no_viz',
+                       help='Skip automatic track visualization generation')
     parser.add_argument('-h', '--help', action='store_true',
                        help='Display this help and exit')
 

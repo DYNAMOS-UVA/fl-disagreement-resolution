@@ -2,26 +2,6 @@
   "client_0": [
     {
       "type": "inbound",
-      "target": "client_1",
-      "active_rounds": {
-        "start": 1,
-        "end": null
-      }
-    }
-  ],
-  "client_2": [
-    {
-      "type": "outbound",
-      "target": "client_3",
-      "active_rounds": {
-        "start": 1,
-        "end": 2
-      }
-    }
-  ],
-  "client_4": [
-    {
-      "type": "bidirectional",
       "target": "client_5",
       "active_rounds": {
         "start": 1,
@@ -31,10 +11,41 @@
   ],
   "client_1": [
     {
-      "type": "full",
+      "type": "inbound",
+      "target": "client_5",
       "active_rounds": {
         "start": 1,
-        "end": 3
+        "end": null
+      }
+    }
+  ],
+  "client_2": [
+    {
+      "type": "inbound",
+      "target": "client_5",
+      "active_rounds": {
+        "start": 1,
+        "end": null
+      }
+    }
+  ],
+  "client_3": [
+    {
+      "type": "inbound",
+      "target": "client_5",
+      "active_rounds": {
+        "start": 1,
+        "end": null
+      }
+    }
+  ],
+  "client_4": [
+    {
+      "type": "inbound",
+      "target": "client_5",
+      "active_rounds": {
+        "start": 1,
+        "end": null
       }
     }
   ]

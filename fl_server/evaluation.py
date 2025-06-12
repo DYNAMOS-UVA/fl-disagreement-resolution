@@ -389,7 +389,7 @@ def plot_ncmapss_results(server, predictions, actual, pred_plot_path, metric_plo
     if len(server.training_history["rounds"]) >= 2:
         plt.figure(figsize=(15, 10))
 
-        # Create a 2x2 grid of subplots
+                # Create a 2x2 grid of subplots
         plt.subplot(2, 2, 1)
         plt.plot(server.training_history["rounds"], server.training_history["global_test_loss"], marker='o')
         plt.xlabel('Federated Learning Round')
@@ -474,7 +474,7 @@ def plot_mnist_results(server, predictions, actual, cm_plot_path, acc_plot_path,
         # Create a 2x2 subplot for accuracy, precision, recall, and F1 score
         plt.figure(figsize=(15, 10))
 
-        # Accuracy
+                # Accuracy
         plt.subplot(2, 2, 1)
         plt.plot(server.training_history["rounds"], server.training_history["global_test_accuracy"],
                  marker='o', color='blue')
@@ -1122,7 +1122,12 @@ def plot_track_progress(server, round_num):
                     valid_rounds.append(round_num)
                     track_values.append(track_values[-1])
 
-                plt.plot(valid_rounds, track_values, marker='o', markersize=4, label=track)
+                # Add 1 to round numbers for display only for MNIST metrics
+                if server.experiment_type == "mnist" and metric in ["accuracy", "precision", "recall", "f1"]:
+                    display_valid_rounds = [r + 1 for r in valid_rounds]
+                    plt.plot(display_valid_rounds, track_values, marker='o', markersize=4, label=track)
+                else:
+                    plt.plot(valid_rounds, track_values, marker='o', markersize=4, label=track)
 
         # Add global model metric if available
         if server.experiment_type == "mnist" and metric == "accuracy" and len(server.training_history.get("global_test_accuracy", [])) > 0:
@@ -1135,7 +1140,9 @@ def plot_track_progress(server, round_num):
                         global_values.append(server.training_history["global_test_accuracy"][i])
 
                 if global_values:
-                    plt.plot(rounds[:len(global_values)], global_values, marker='s', linestyle='--',
+                    # Add 1 to round numbers for display only for MNIST accuracy
+                    display_rounds = [r + 1 for r in rounds[:len(global_values)]]
+                    plt.plot(display_rounds, global_values, marker='s', linestyle='--',
                              color='black', linewidth=2, label='Global Model')
 
         elif server.experiment_type == "n_cmapss" and metric == "rmse" and len(server.training_history.get("global_test_loss", [])) > 0:
@@ -1148,6 +1155,7 @@ def plot_track_progress(server, round_num):
                         global_values.append(server.training_history["global_test_loss"][i])
 
                 if global_values:
+                    # No +1 adjustment for N-CMAPSS metrics
                     plt.plot(rounds[:len(global_values)], global_values, marker='s', linestyle='--',
                              color='black', linewidth=2, label='Global Model')
 
@@ -1156,6 +1164,17 @@ def plot_track_progress(server, round_num):
         plt.ylabel(title)
         plt.grid(True)
         plt.legend(loc='best')
+
+        # Set x-axis to show only whole numbers
+        if server.experiment_type == "mnist" and metric in ["accuracy", "precision", "recall", "f1"]:
+            # For MNIST metrics with +1 adjustment, use the display rounds
+            if valid_rounds:
+                display_rounds_for_ticks = [r + 1 for r in rounds if r <= max(valid_rounds)]
+                plt.xticks(display_rounds_for_ticks)
+        else:
+            # For other metrics, use original rounds
+            if rounds:
+                plt.xticks(rounds)
 
         # Save figure
         plt.savefig(os.path.join(plots_dir, f'track_progress_{metric}_round_{round_num}.png'),
@@ -1199,12 +1218,28 @@ def plot_track_progress(server, round_num):
                     valid_rounds.append(round_num)
                     track_values.append(track_values[-1])
 
-                plt.plot(valid_rounds, track_values, marker='o', markersize=4, label=track)
+                # Add 1 to round numbers for display only for MNIST metrics
+                if server.experiment_type == "mnist" and metric in ["accuracy", "precision", "recall", "f1"]:
+                    display_valid_rounds = [r + 1 for r in valid_rounds]
+                    plt.plot(display_valid_rounds, track_values, marker='o', markersize=4, label=track)
+                else:
+                    plt.plot(valid_rounds, track_values, marker='o', markersize=4, label=track)
 
         plt.title(title)
         plt.xlabel('Round')
         plt.ylabel(title)
         plt.grid(True)
+
+        # Set x-axis to show only whole numbers
+        if server.experiment_type == "mnist" and metric in ["accuracy", "precision", "recall", "f1"]:
+            # For MNIST metrics with +1 adjustment, use the display rounds
+            if rounds:
+                display_rounds_for_ticks = [r + 1 for r in rounds]
+                plt.xticks(display_rounds_for_ticks)
+        else:
+            # For other metrics, use original rounds
+            if rounds:
+                plt.xticks(rounds)
 
         # Only add legend to the first subplot to save space
         if i == 0:
@@ -1255,7 +1290,7 @@ def plot_timing_metrics(server, round_num):
     # Create comprehensive timing plot with 2x3 layout
     plt.figure(figsize=(18, 10))
 
-    # Plot 1: Total Aggregation Time
+        # Plot 1: Total Aggregation Time
     plt.subplot(2, 3, 1)
     colors = ['red' if has_disag else 'blue' for has_disag in has_disagreements]
     bars = plt.bar(rounds, total_times, color=colors, alpha=0.7)
@@ -1293,7 +1328,7 @@ def plot_timing_metrics(server, round_num):
         # Add value labels on bars
         for bar, time_val in zip(bars, disag_resolution_times_ms):
             height = bar.get_height()
-            plt.annotate(f'{time_val:.1f}ms',
+            plt.annotate(f'{time_val:.3f}ms',
                          xy=(bar.get_x() + bar.get_width() / 2, height),
                          xytext=(0, 3),
                          textcoords="offset points",
@@ -1410,7 +1445,7 @@ def plot_timing_metrics(server, round_num):
     With Disagreements: {avg_with_disag:.3f}s
     Without Disagreements: {avg_without_disag:.3f}s
 
-    Average Resolution Time: {avg_resolution_time_ms:.1f}ms
+    Average Resolution Time: {avg_resolution_time_ms:.3f}ms
     Avg Resolution as % of Total: {avg_resolution_pct:.1f}%
 
     Overhead from Disagreements:
@@ -1423,7 +1458,7 @@ def plot_timing_metrics(server, round_num):
 
     Average Total Time: {avg_total_time:.3f}s
     Average Aggregation Time: {avg_aggregation_time:.3f}s
-    Average Resolution Time: {avg_resolution_time_ms:.1f}ms
+    Average Resolution Time: {avg_resolution_time_ms:.3f}ms
     Avg Resolution as % of Total: {avg_resolution_pct:.1f}%
     """
 
@@ -1437,4 +1472,4 @@ def plot_timing_metrics(server, round_num):
     plt.close()
 
     print(f"Saved timing plots for round {round_num}")
-    print(f"Summary: Avg total time: {avg_total_time:.3f}s, Avg aggregation time: {avg_aggregation_time:.3f}s, Avg resolution time: {avg_resolution_time_ms:.1f}ms")
+    print(f"Summary: Avg total time: {avg_total_time:.3f}s, Avg aggregation time: {avg_aggregation_time:.3f}s, Avg resolution time: {avg_resolution_time_ms:.3f}ms")
