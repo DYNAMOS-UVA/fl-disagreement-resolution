@@ -197,10 +197,12 @@ def create_visualization(matrix: np.ndarray, col_info: List[Tuple[int, str]],
     # Remove default grid
     ax.grid(False)
 
-    # Separator lines: dotted black between tracks, solid black between rounds
+    # Separator lines: dotted black between tracks, prominent solid black between rounds
     for sep in np.arange(0.5, total_cols, 1):
         if (sep + 0.5) % n_tracks == 0:
-            ax.axvline(sep, color='black', linewidth=2, linestyle='-')  # round separator
+            # Round separator: thicker line that extends beyond the plot area
+            ax.axvline(sep, color='black', linewidth=3, linestyle='-',
+                      ymin=-0.18, ymax=1.18, clip_on=False)  # round separator
         else:
             ax.axvline(sep, color='black', linewidth=0.8, linestyle=':')  # track separator
 
