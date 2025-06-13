@@ -1,7 +1,7 @@
 {
-  "name": "Client Scalability Ring - 50 Clients (10 Disagreements)",
-  "description": "Scalability test with 50 clients where only the first 10 clients form a ring of disagreements. Each client (0-9) excludes the next client in the sequence, while clients 10-49 have no disagreements.",
-  "num_clients": 50,
+  "name": "Client Scalability - 20 Clients (10 Disagreements Ring)",
+  "description": "Client scalability test with 20 clients where only the first 10 clients form a ring of disagreements. Each client (0-9) excludes the next client in the sequence, while clients 10-19 have no disagreements.",
+  "num_clients": 20,
   "expected_tracks": {
     "track_0_no1": "For client 0, excluding client 1",
     "track_1_no2": "For client 1, excluding client 2",
@@ -13,7 +13,7 @@
     "track_7_no8": "For client 7, excluding client 8",
     "track_8_no9": "For client 8, excluding client 9",
     "track_9_no0": "For client 9, excluding client 0",
-    "global": "Global track (for clients 10-49 without specific disagreements)"
+    "global": "Global track (for clients 10-19 without specific disagreements)"
   },
   "disagreements": {
     "client_0": [

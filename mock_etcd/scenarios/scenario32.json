@@ -1,6 +1,6 @@
 {
-  "name": "Disagreement Scalability - 6 Clients Ring (1 Disagreement Each)",
-  "description": "Disagreement scalability test with 6 clients forming a complete ring. Each client excludes exactly one other client (the next in sequence).",
+  "name": "Submodel Reuse Demonstration - 6 Clients Ring",
+  "description": "Demonstrates submodel reuse with 6 clients forming a complete ring of disagreements. Each client excludes exactly one other client (the next in sequence). This scenario is identical to archive/scenario3 and serves as a baseline for comparing submodel reuse efficiency.",
   "num_clients": 6,
   "expected_tracks": {
     "track_0_no1": "For client 0, excluding client 1",

@@ -1,16 +1,20 @@
 {
-  "name": "Submodel Reuse Demonstration - Track Consolidation",
-  "description": "Demonstration of submodel reuse through track consolidation. 6 clients where 5 clients (0-4) all exclude the same specific client (client 5), which should create only 1 consolidated track for those 5 clients.",
-  "num_clients": 6,
+  "name": "Disagreement Scalability - 20 Clients (5 Client Ring)",
+  "description": "Disagreement scalability test with 20 clients where only the first 5 clients form a ring of disagreements. Each client (0-4) excludes the next client in the sequence, while clients 5-19 have no disagreements.",
+  "num_clients": 20,
   "expected_tracks": {
-    "track_c0_c1_c2_c3_c4_no5": "For clients 0, 1, 2, 3, and 4, all excluding client 5",
-    "global": "Global track (for client 5 without specific disagreements)"
+    "track_0_no1": "For client 0, excluding client 1",
+    "track_1_no2": "For client 1, excluding client 2",
+    "track_2_no3": "For client 2, excluding client 3",
+    "track_3_no4": "For client 3, excluding client 4",
+    "track_4_no0": "For client 4, excluding client 0",
+    "global": "Global track (for clients 5-19 without specific disagreements)"
   },
   "disagreements": {
     "client_0": [
       {
         "type": "inbound",
-        "target": "client_5",
+        "target": "client_1",
         "active_rounds": {
           "start": 1,
           "end": null
@@ -20,7 +24,7 @@
     "client_1": [
       {
         "type": "inbound",
-        "target": "client_5",
+        "target": "client_2",
         "active_rounds": {
           "start": 1,
           "end": null
@@ -30,7 +34,7 @@
     "client_2": [
       {
         "type": "inbound",
-        "target": "client_5",
+        "target": "client_3",
         "active_rounds": {
           "start": 1,
           "end": null
@@ -40,7 +44,7 @@
     "client_3": [
       {
         "type": "inbound",
-        "target": "client_5",
+        "target": "client_4",
         "active_rounds": {
           "start": 1,
           "end": null
@@ -50,7 +54,7 @@
     "client_4": [
       {
         "type": "inbound",
-        "target": "client_5",
+        "target": "client_0",
         "active_rounds": {
           "start": 1,
           "end": null

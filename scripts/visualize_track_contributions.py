@@ -202,7 +202,7 @@ def create_visualization(matrix: np.ndarray, col_info: List[Tuple[int, str]],
         if (sep + 0.5) % n_tracks == 0:
             # Round separator: thicker line that extends beyond the plot area
             ax.axvline(sep, color='black', linewidth=3, linestyle='-',
-                      ymin=-0.18, ymax=1.18, clip_on=False)  # round separator
+                      ymin=-1, ymax=2, clip_on=False)  # round separator
         else:
             ax.axvline(sep, color='black', linewidth=0.8, linestyle=':')  # track separator
 
