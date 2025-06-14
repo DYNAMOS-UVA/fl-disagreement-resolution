@@ -540,7 +540,10 @@ def main():
             print("Error: No scenarios found in mock_etcd/scenarios/")
             return 1
 
-        print(f"Running all {len(scenario_paths)} scenarios...")
+        # Skip scenario 0
+        scenario_paths = [path for path in scenario_paths if not os.path.basename(path) == "scenario0.json"]
+
+        print(f"Running all {len(scenario_paths)} scenarios (skipping scenario0)...")
 
         # Track results
         results = {}

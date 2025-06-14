@@ -18,6 +18,45 @@ class FLRunComparator:
     def __init__(self):
         self.runs = {}
 
+    def _get_scenario_description(self, scenario, clients):
+        """Generate descriptive scenario labels based on scenario number."""
+        if scenario is None or scenario == 'Unknown':
+            return f"({clients} clients)"
+
+        scenario_num = int(scenario) if isinstance(scenario, (int, str)) and str(scenario).isdigit() else scenario
+
+        # Handle scenarios 13-19 (6 clients with different exclusion patterns)
+        if 13 <= scenario_num <= 19:
+            if scenario_num == 13:
+                return "(no excl.)"
+            else:
+                # S14 = next 1, S15 = next 2, etc.
+                next_count = scenario_num - 13
+                return f"(next {next_count})"
+
+        # Handle scenarios 20-24 (20 clients with ring patterns)
+        elif 20 <= scenario_num <= 24:
+            if scenario_num == 20:
+                return "(no excl.)"
+            else:
+                # S21 = ring of 5, S22 = ring of 10, S23 = ring of 15, S24 = ring of 20
+                ring_size = (scenario_num - 20) * 5
+                return f"(ring of {ring_size})"
+
+        # Fallback for other scenarios
+        else:
+            return f"({clients} clients)"
+
+    def _generate_chart_label(self, scenario, clients):
+        """Generate a label for charts (with newline)."""
+        desc = self._get_scenario_description(scenario, clients)
+        return f"S{scenario}\n{desc}"
+
+    def _generate_legend_label(self, scenario, clients):
+        """Generate a label for legends (without newline)."""
+        desc = self._get_scenario_description(scenario, clients)
+        return f"S{scenario} {desc}"
+
     def load_run(self, run_path, run_name=None):
         """Load a federated learning run from results directory."""
         run_path = Path(run_path)
@@ -100,6 +139,46 @@ class FLRunComparator:
             run_data["final_f1"] = final_round.get("mean_f1")
             run_data["total_rounds"] = len([r for r in rounds_data if r["round"] > 0])
 
+            # Calculate average track performance for each round
+            run_data["avg_track_performance"] = self._calculate_average_track_performance(rounds_data)
+
+            # Calculate final average track performance metrics
+            if run_data["avg_track_performance"]:
+                final_round_num = max(run_data["avg_track_performance"].keys())
+                run_data["final_avg_track_accuracy"] = run_data["avg_track_performance"][final_round_num]
+
+                # Also calculate average track metrics from the final round's track results
+                final_round = rounds_data[-1]
+                track_results = final_round.get("track_results", {})
+
+                if track_results:
+                    # Collect all track metrics (including global)
+                    track_precisions = []
+                    track_recalls = []
+                    track_f1s = []
+
+                    # Add global metrics
+                    if final_round.get("mean_precision") is not None:
+                        track_precisions.append(final_round.get("mean_precision"))
+                    if final_round.get("mean_recall") is not None:
+                        track_recalls.append(final_round.get("mean_recall"))
+                    if final_round.get("mean_f1") is not None:
+                        track_f1s.append(final_round.get("mean_f1"))
+
+                    # Add track-specific metrics
+                    for track_name, track_data in track_results.items():
+                        if track_data.get("precision") is not None:
+                            track_precisions.append(track_data.get("precision"))
+                        if track_data.get("recall") is not None:
+                            track_recalls.append(track_data.get("recall"))
+                        if track_data.get("f1") is not None:
+                            track_f1s.append(track_data.get("f1"))
+
+                    # Calculate averages
+                    run_data["final_avg_track_precision"] = np.mean(track_precisions) if track_precisions else None
+                    run_data["final_avg_track_recall"] = np.mean(track_recalls) if track_recalls else None
+                    run_data["final_avg_track_f1"] = np.mean(track_f1s) if track_f1s else None
+
         # Timing metrics summary
         if timing_metrics:
             total_times = [entry["total_aggregation_time_seconds"] for entry in timing_metrics]
@@ -124,6 +203,47 @@ class FLRunComparator:
             else:
                 run_data["disagreement_overhead_pct"] = None
 
+    def _calculate_average_track_performance(self, rounds_data):
+        """Calculate average performance across all tracks (including global) for each round.
+
+        Args:
+            rounds_data: List of round data from fl_results
+
+        Returns:
+            dict: Dictionary with round numbers as keys and average performance as values
+        """
+        avg_performance = {}
+
+        for round_data in rounds_data:
+            if round_data["round"] <= 0:
+                continue
+
+            round_num = round_data["round"]
+            track_results = round_data.get("track_results", {})
+
+            # Collect all track performances (including global)
+            performances = []
+
+            # Add global model performance
+            global_accuracy = round_data.get("test_accuracy")
+            if global_accuracy is not None:
+                performances.append(global_accuracy)
+
+            # Add track-specific performances
+            for track_name, track_data in track_results.items():
+                track_accuracy = track_data.get("accuracy")
+                if track_accuracy is not None:
+                    performances.append(track_accuracy)
+
+            # Calculate average if we have any performances
+            if performances:
+                avg_performance[round_num] = np.mean(performances)
+            else:
+                # Fallback to global performance if no track results
+                avg_performance[round_num] = global_accuracy
+
+        return avg_performance
+
     def compare_performance(self, save_plots=True, output_dir=None):
         """Compare performance metrics across runs."""
         if len(self.runs) < 2:
@@ -142,10 +262,11 @@ class FLRunComparator:
 
         # Prepare data for comparison
         run_names = list(self.runs.keys())
-        metrics = ['final_accuracy', 'final_precision', 'final_recall', 'final_f1']
-        metric_titles = ['Final Accuracy', 'Final Precision', 'Final Recall', 'Final F1 Score']
+        metrics = ['final_avg_track_accuracy', 'final_avg_track_precision', 'final_avg_track_recall', 'final_avg_track_f1']
+        metric_titles = ['Final Avg Track Accuracy', 'Final Avg Track Precision', 'Final Avg Track Recall', 'Final Avg Track F1 Score']
+        fallback_metrics = ['final_accuracy', 'final_precision', 'final_recall', 'final_f1']
 
-        for i, (metric, title) in enumerate(zip(metrics, metric_titles)):
+        for i, (metric, title, fallback) in enumerate(zip(metrics, metric_titles, fallback_metrics)):
             plt.subplot(2, 2, i+1)
 
             values = []
@@ -153,12 +274,16 @@ class FLRunComparator:
             colors = []
 
             for run_name, run_data in self.runs.items():
+                # Try to get average track metric first, fallback to global metric
                 value = run_data.get(metric)
+                if value is None:
+                    value = run_data.get(fallback)
+
                 if value is not None:
                     values.append(value)
                     scenario = run_data.get('scenario', 'Unknown')
                     clients = run_data.get('num_clients', 'Unknown')
-                    labels.append(f"S{scenario}\n({clients} clients)")
+                    labels.append(self._generate_chart_label(scenario, clients))
 
                     # Color by scenario
                     if scenario is not None:
@@ -221,7 +346,7 @@ class FLRunComparator:
                     values.append(value)
                     scenario = run_data.get('scenario', 'Unknown')
                     clients = run_data.get('num_clients', 'Unknown')
-                    labels.append(f"S{scenario}\n({clients} clients)")
+                    labels.append(self._generate_chart_label(scenario, clients))
 
             if values:
                 # Use blue colors for all bars
@@ -256,7 +381,7 @@ class FLRunComparator:
         plt.show()
 
     def compare_round_progression(self, save_plots=True, output_dir=None):
-        """Compare accuracy progression across rounds."""
+        """Compare average track accuracy progression across rounds."""
         if len(self.runs) < 2:
             print("Need at least 2 runs to compare")
             return
@@ -271,22 +396,21 @@ class FLRunComparator:
         plt.figure(figsize=(12, 8))
 
         for run_name, run_data in self.runs.items():
-            fl_results = run_data.get("fl_results", {})
-            rounds_data = fl_results.get("rounds", [])
+            avg_track_performance = run_data.get("avg_track_performance", {})
 
-            if rounds_data:
-                rounds = [r["round"] for r in rounds_data if r["round"] > 0]
-                accuracies = [r["test_accuracy"] for r in rounds_data if r["round"] > 0]
+            if avg_track_performance:
+                rounds = list(avg_track_performance.keys())
+                accuracies = list(avg_track_performance.values())
 
                 scenario = run_data.get('scenario', 'Unknown')
                 clients = run_data.get('num_clients', 'Unknown')
-                label = f"S{scenario} ({clients} clients)"
+                label = self._generate_legend_label(scenario, clients)
 
                 plt.plot(rounds, accuracies, marker='o', linewidth=2, markersize=6, label=label)
 
         plt.xlabel('Round')
-        plt.ylabel('Test Accuracy')
-        plt.title('Accuracy Progression Across Rounds')
+        plt.ylabel('Average Track Accuracy')
+        plt.title('Average Track Accuracy Progression Across Rounds')
         plt.grid(True, alpha=0.3)
         plt.legend()
 
@@ -297,7 +421,7 @@ class FLRunComparator:
         plt.show()
 
     def compare_combined_metrics(self, save_plots=True, output_dir=None):
-        """Create a combined plot with accuracy progression, resolution time, and aggregation time."""
+        """Create a combined plot with resolution time, aggregation time, and accuracy progression."""
         if len(self.runs) < 2:
             print("Need at least 2 runs to compare")
             return
@@ -311,30 +435,8 @@ class FLRunComparator:
 
         plt.figure(figsize=(18, 6))
 
-        # Subplot 1: Accuracy Progression
+        # Subplot 1: Average Resolution Time (ms)
         plt.subplot(1, 3, 1)
-        for run_name, run_data in self.runs.items():
-            fl_results = run_data.get("fl_results", {})
-            rounds_data = fl_results.get("rounds", [])
-
-            if rounds_data:
-                rounds = [r["round"] for r in rounds_data if r["round"] > 0]
-                accuracies = [r["test_accuracy"] for r in rounds_data if r["round"] > 0]
-
-                scenario = run_data.get('scenario', 'Unknown')
-                clients = run_data.get('num_clients', 'Unknown')
-                label = f"S{scenario} ({clients} clients)"
-
-                plt.plot(rounds, accuracies, marker='o', linewidth=2, markersize=6, label=label)
-
-        plt.xlabel('Round')
-        plt.ylabel('Test Accuracy')
-        plt.title('Accuracy Progression')
-        plt.grid(True, alpha=0.3)
-        plt.legend()
-
-        # Subplot 2: Average Resolution Time (ms)
-        plt.subplot(1, 3, 2)
         values = []
         labels = []
 
@@ -344,14 +446,14 @@ class FLRunComparator:
                 values.append(value)
                 scenario = run_data.get('scenario', 'Unknown')
                 clients = run_data.get('num_clients', 'Unknown')
-                labels.append(f"S{scenario}\n({clients} clients)")
+                labels.append(self._generate_chart_label(scenario, clients))
 
         if values:
             bars = plt.bar(range(len(values)), values, color='steelblue', alpha=0.7, edgecolor='navy', linewidth=1)
             plt.xticks(range(len(values)), labels, rotation=45, ha='center')
             plt.tick_params(axis='x', pad=1)
-            plt.ylabel('Avg Resolution Time (ms)')
-            plt.title('Avg Resolution Time Comparison')
+            plt.ylabel('Average Resolution Time (ms)')
+            plt.title('Average Resolution Time Comparison')
             plt.grid(True, axis='y', alpha=0.3)
 
             # Add value labels on bars
@@ -363,8 +465,8 @@ class FLRunComparator:
                             textcoords="offset points",
                             ha='center', va='bottom', fontsize=9)
 
-        # Subplot 3: Average Aggregation Time (s)
-        plt.subplot(1, 3, 3)
+        # Subplot 2: Average Aggregation Time (s)
+        plt.subplot(1, 3, 2)
         values = []
         labels = []
 
@@ -374,14 +476,14 @@ class FLRunComparator:
                 values.append(value)
                 scenario = run_data.get('scenario', 'Unknown')
                 clients = run_data.get('num_clients', 'Unknown')
-                labels.append(f"S{scenario}\n({clients} clients)")
+                labels.append(self._generate_chart_label(scenario, clients))
 
         if values:
             bars = plt.bar(range(len(values)), values, color='steelblue', alpha=0.7, edgecolor='navy', linewidth=1)
             plt.xticks(range(len(values)), labels, rotation=45, ha='center')
             plt.tick_params(axis='x', pad=1)
-            plt.ylabel('Avg Aggregation Time (s)')
-            plt.title('Avg Aggregation Time Comparison')
+            plt.ylabel('Average Aggregation Time (s)')
+            plt.title('Average Aggregation Time Comparison')
             plt.grid(True, axis='y', alpha=0.3)
 
             # Add value labels on bars
@@ -392,6 +494,27 @@ class FLRunComparator:
                             xytext=(0, 3),
                             textcoords="offset points",
                             ha='center', va='bottom', fontsize=9)
+
+        # Subplot 3: Accuracy Progression
+        plt.subplot(1, 3, 3)
+        for run_name, run_data in self.runs.items():
+            avg_track_performance = run_data.get("avg_track_performance", {})
+
+            if avg_track_performance:
+                rounds = list(avg_track_performance.keys())
+                accuracies = list(avg_track_performance.values())
+
+                scenario = run_data.get('scenario', 'Unknown')
+                clients = run_data.get('num_clients', 'Unknown')
+                label = self._generate_legend_label(scenario, clients)
+
+                plt.plot(rounds, accuracies, marker='o', linewidth=2, markersize=6, label=label)
+
+        plt.xlabel('Round')
+        plt.ylabel('Average Track Accuracy')
+        plt.title('Average Track Accuracy Progression')
+        plt.grid(True, alpha=0.3)
+        plt.legend()
 
         plt.tight_layout()
         if save_plots:
@@ -419,8 +542,14 @@ class FLRunComparator:
 
             # Performance
             accuracy = run_data.get('final_accuracy')
+            avg_track_accuracy = run_data.get('final_avg_track_accuracy')
+
             if accuracy:
-                print(f"   Final Accuracy: {accuracy:.4f}")
+                print(f"   Final Global Accuracy: {accuracy:.4f}")
+            if avg_track_accuracy and avg_track_accuracy != accuracy:
+                print(f"   Final Avg Track Accuracy: {avg_track_accuracy:.4f}")
+            elif avg_track_accuracy:
+                print(f"   Final Accuracy: {avg_track_accuracy:.4f}")
 
             # Timing
             total_time = run_data.get('avg_total_time')

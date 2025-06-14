@@ -1155,8 +1155,9 @@ def plot_track_progress(server, round_num):
                         global_values.append(server.training_history["global_test_loss"][i])
 
                 if global_values:
-                    # No +1 adjustment for N-CMAPSS metrics
-                    plt.plot(rounds[:len(global_values)], global_values, marker='s', linestyle='--',
+                    # Add 1 to round numbers for display only for n_cmapss rmse metric to match track metrics
+                    display_rounds = [r + 1 for r in rounds[:len(global_values)]]
+                    plt.plot(display_rounds, global_values, marker='s', linestyle='--',
                              color='black', linewidth=2, label='Global Model')
 
         plt.title(f'Track {title} Over Rounds')
@@ -1218,8 +1219,9 @@ def plot_track_progress(server, round_num):
                     valid_rounds.append(round_num)
                     track_values.append(track_values[-1])
 
-                # Add 1 to round numbers for display only for MNIST metrics
-                if server.experiment_type == "mnist" and metric in ["accuracy", "precision", "recall", "f1"]:
+                # Add 1 to round numbers for display only for MNIST and n_cmapss metrics
+                if (server.experiment_type == "mnist" and metric in ["accuracy", "precision", "recall", "f1"]) or \
+                   (server.experiment_type == "n_cmapss" and metric in ["rmse", "mae", "r_squared", "within_10_cycles", "within_20_cycles"]):
                     display_valid_rounds = [r + 1 for r in valid_rounds]
                     plt.plot(display_valid_rounds, track_values, marker='o', markersize=4, label=track)
                 else:
@@ -1231,8 +1233,9 @@ def plot_track_progress(server, round_num):
         plt.grid(True)
 
         # Set x-axis to show only whole numbers
-        if server.experiment_type == "mnist" and metric in ["accuracy", "precision", "recall", "f1"]:
-            # For MNIST metrics with +1 adjustment, use the display rounds
+        if (server.experiment_type == "mnist" and metric in ["accuracy", "precision", "recall", "f1"]) or \
+           (server.experiment_type == "n_cmapss" and metric in ["rmse", "mae", "r_squared", "within_10_cycles", "within_20_cycles"]):
+            # For MNIST and n_cmapss metrics with +1 adjustment, use the display rounds
             if rounds:
                 display_rounds_for_ticks = [r + 1 for r in rounds]
                 plt.xticks(display_rounds_for_ticks)
