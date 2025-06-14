@@ -1,14 +1,9 @@
 {
   "name": "Disagreement Scalability - 6 Clients Ring (6 Disagreements Each - Self-Exclusion)",
-  "description": "Disagreement scalability test with 6 clients where each client excludes all 6 clients including themselves (complete self-exclusion scenario).",
+  "description": "Disagreement scalability test with 6 clients where each client excludes all 6 clients including themselves (complete self-exclusion scenario). With submodel reuse, all clients share the same track since they have identical exclusion patterns.",
   "num_clients": 6,
   "expected_tracks": {
-    "track_0_no0_no1_no2_no3_no4_no5": "For client 0, excluding all clients (0, 1, 2, 3, 4, 5)",
-    "track_1_no0_no1_no2_no3_no4_no5": "For client 1, excluding all clients (0, 1, 2, 3, 4, 5)",
-    "track_2_no0_no1_no2_no3_no4_no5": "For client 2, excluding all clients (0, 1, 2, 3, 4, 5)",
-    "track_3_no0_no1_no2_no3_no4_no5": "For client 3, excluding all clients (0, 1, 2, 3, 4, 5)",
-    "track_4_no0_no1_no2_no3_no4_no5": "For client 4, excluding all clients (0, 1, 2, 3, 4, 5)",
-    "track_5_no0_no1_no2_no3_no4_no5": "For client 5, excluding all clients (0, 1, 2, 3, 4, 5)",
+    "track_c0_c1_c2_c3_c4_c5_no0_no1_no2_no3_no4_no5": "Shared track for all clients 0-5, excluding all clients (0, 1, 2, 3, 4, 5) - demonstrates submodel reuse efficiency",
     "global": "Global track (reference only)"
   },
   "validation_rules": {

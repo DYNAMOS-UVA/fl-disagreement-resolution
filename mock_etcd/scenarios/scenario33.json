@@ -3,9 +3,8 @@
   "description": "Demonstrates efficient submodel reuse where 5 clients (clients 0-4) all exclude the same target client (client 5). This should result in only one shared track for the 5 excluding clients, showcasing how the system can reuse submodels when multiple clients have identical disagreement patterns.",
   "num_clients": 6,
   "expected_tracks": {
-    "track_shared_no5": "Shared track for clients 0, 1, 2, 3, 4 - all excluding client 5",
-    "track_5_global": "For client 5, using global track (no exclusions)",
-    "global": "Global track (reference only)"
+    "track_c0_c1_c2_c3_c4_no5": "Shared track for clients 0, 1, 2, 3, 4 - all excluding client 5",
+    "global": "Global track (includes all clients, primary for client 5 who has no exclusions)"
   },
   "disagreements": {
     "client_0": [
