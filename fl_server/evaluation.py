@@ -891,15 +891,15 @@ def plot_track_comparison(server, track_results, round_num):
 
     # Plot based on experiment type
     if server.experiment_type == "n_cmapss":
-        # RUL prediction metrics comparison
-        metrics = ['rmse', 'mae', 'r_squared', 'within_10_cycles', 'within_20_cycles']
-        titles = ['RMSE (lower is better)', 'MAE (lower is better)',
-                 'R² (higher is better)', 'Within ±10 cycles %', 'Within ±20 cycles %']
+        # RUL prediction metrics comparison (MAE removed, 2x2 layout)
+        metrics = ['rmse', 'r_squared', 'within_10_cycles', 'within_20_cycles']
+        titles = ['RMSE (lower is better)', 'R² (higher is better)',
+                 'Within ±10 cycles %', 'Within ±20 cycles %']
 
-        plt.figure(figsize=(15, 12))
+        plt.figure(figsize=(12, 10))
 
         for i, (metric, title) in enumerate(zip(metrics, titles)):
-            plt.subplot(3, 2, i+1)
+            plt.subplot(2, 2, i+1)
 
             # Extract metric values for each track
             track_names = list(track_results.keys())
@@ -1081,7 +1081,6 @@ def plot_track_progress(server, round_num):
     elif server.experiment_type == "n_cmapss":
         metrics = [
             {"name": "rmse", "title": "RMSE"},
-            {"name": "mae", "title": "MAE"},
             {"name": "r_squared", "title": "R²"},
             {"name": "within_10_cycles", "title": "Within ±10 cycles %"},
             {"name": "within_20_cycles", "title": "Within ±20 cycles %"}
@@ -1227,9 +1226,9 @@ def plot_track_progress(server, round_num):
                 else:
                     plt.plot(valid_rounds, track_values, marker='o', markersize=4, label=track)
 
-        plt.title(title)
-        plt.xlabel('Round')
-        plt.ylabel(title)
+        plt.title(title, fontsize=21)
+        plt.xlabel('Round', fontsize=18)
+        plt.ylabel(title, fontsize=18)
         plt.grid(True)
 
         # Set x-axis to show only whole numbers
@@ -1238,15 +1237,18 @@ def plot_track_progress(server, round_num):
             # For MNIST and n_cmapss metrics with +1 adjustment, use the display rounds
             if rounds:
                 display_rounds_for_ticks = [r + 1 for r in rounds]
-                plt.xticks(display_rounds_for_ticks)
+                plt.xticks(display_rounds_for_ticks, fontsize=16)
         else:
             # For other metrics, use original rounds
             if rounds:
-                plt.xticks(rounds)
+                plt.xticks(rounds, fontsize=16)
+
+        # Set y-axis tick font size
+        plt.yticks(fontsize=16)
 
         # Only add legend to the first subplot to save space
         if i == 0:
-            plt.legend(loc='best')
+            plt.legend(loc='best', fontsize=14)
 
     plt.tight_layout()
     plt.savefig(os.path.join(plots_dir, f'track_metrics_comparison_round_{round_num}.png'),
