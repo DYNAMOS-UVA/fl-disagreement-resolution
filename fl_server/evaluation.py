@@ -1279,10 +1279,10 @@ def plot_track_progress(server, round_num, should_plot_all=True):
                 bax.grid(True)
 
                 # Set tick font sizes and customize x-axis ticks
-                for i, ax in enumerate(bax.axs):
+                for ax_idx, ax in enumerate(bax.axs):
                     ax.tick_params(axis='both', which='major', labelsize=16)
                     # For the first (left) axis, show "0" to indicate the skipped round
-                    if i == 0:
+                    if ax_idx == 0:
                         ax.set_xticks([0])
                         ax.set_xticklabels(['0'])
                         # Format y-axis based on experiment type and metric
@@ -1294,7 +1294,7 @@ def plot_track_progress(server, round_num, should_plot_all=True):
                             elif metric == "r_squared":
                                 ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.1f}'))
                     # For the second (right) axis, show the actual track rounds
-                    elif i == 1 and rounds:
+                    elif ax_idx == 1 and rounds:
                         ax.set_xticks(rounds)
                         ax.set_xticklabels([str(r) for r in rounds])
                         # Format y-axis based on experiment type and metric
@@ -1308,7 +1308,12 @@ def plot_track_progress(server, round_num, should_plot_all=True):
 
                 # Only add legend to the first subplot to save space
                 if i == 0:
-                    bax.legend(loc='best', fontsize=14)
+                    if server.experiment_type == "mnist":
+                        bax.legend(loc='lower right', fontsize=14)
+                    elif server.experiment_type == "n_cmapss":
+                        bax.legend(loc='upper right', fontsize=14)
+                    else:
+                        bax.legend(loc='best', fontsize=14)
 
             plt.tight_layout()
             plt.savefig(os.path.join(plots_dir, f'track_metrics_comparison_round_{round_num}.png'),
@@ -1362,7 +1367,12 @@ def plot_track_progress(server, round_num, should_plot_all=True):
 
                 # Only add legend to the first subplot to save space
                 if i == 0:
-                    plt.legend(loc='best', fontsize=14)
+                    if server.experiment_type == "mnist":
+                        plt.legend(loc='lower right', fontsize=14)
+                    elif server.experiment_type == "n_cmapss":
+                        plt.legend(loc='upper right', fontsize=14)
+                    else:
+                        plt.legend(loc='best', fontsize=14)
 
             plt.tight_layout()
             plt.savefig(os.path.join(plots_dir, f'track_metrics_comparison_round_{round_num}.png'),

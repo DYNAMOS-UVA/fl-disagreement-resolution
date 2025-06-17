@@ -1,6 +1,6 @@
 {
   "experiment": {
-    "type": "n_cmapss",
+    "type": "mnist",
     "fl_rounds": 6,
     "client_ids": [
       0,
@@ -33,7 +33,7 @@
   },
   "training": {
     "batch_size": 64,
-    "local_epochs": 10,
+    "local_epochs": 1,
     "learning_rate": 0.001
   },
   "disagreement": {
