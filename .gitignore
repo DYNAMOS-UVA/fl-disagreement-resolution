@@ -1,4 +1,5 @@
-results/
+results/*
+!results/collected_outputs/
 output/
 data/
 
@@ -176,3 +177,5 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+!results/collected_outputs
