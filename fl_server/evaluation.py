@@ -1265,13 +1265,13 @@ def plot_track_progress(server, round_num, should_plot_all=True):
                 # Set different y-label padding based on metric and experiment type
                 if server.experiment_type == "n_cmapss":
                     if metric == "rmse":
-                        ylabel_pad = 20
+                        ylabel_pad = 30
                     elif metric == "within_10_cycles":
-                        ylabel_pad = 80
+                        ylabel_pad = 30
                     elif metric == "within_20_cycles":
-                        ylabel_pad = 80
+                        ylabel_pad = 30
                     else:  # r_squared
-                        ylabel_pad = 50
+                        ylabel_pad = 45
                 else:  # mnist
                     ylabel_pad = 50
 
@@ -1285,16 +1285,26 @@ def plot_track_progress(server, round_num, should_plot_all=True):
                     if i == 0:
                         ax.set_xticks([0])
                         ax.set_xticklabels(['0'])
-                        # Format y-axis to show 2 decimal places for MNIST
+                        # Format y-axis based on experiment type and metric
                         if server.experiment_type == "mnist":
                             ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.2f}'))
+                        elif server.experiment_type == "n_cmapss":
+                            if metric in ["rmse", "within_10_cycles", "within_20_cycles"]:
+                                ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.0f}'))
+                            elif metric == "r_squared":
+                                ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.1f}'))
                     # For the second (right) axis, show the actual track rounds
                     elif i == 1 and rounds:
                         ax.set_xticks(rounds)
                         ax.set_xticklabels([str(r) for r in rounds])
-                        # Format y-axis to show 2 decimal places for MNIST
+                        # Format y-axis based on experiment type and metric
                         if server.experiment_type == "mnist":
                             ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.2f}'))
+                        elif server.experiment_type == "n_cmapss":
+                            if metric in ["rmse", "within_10_cycles", "within_20_cycles"]:
+                                ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.0f}'))
+                            elif metric == "r_squared":
+                                ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.1f}'))
 
                 # Only add legend to the first subplot to save space
                 if i == 0:
