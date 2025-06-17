@@ -1261,7 +1261,21 @@ def plot_track_progress(server, round_num, should_plot_all=True):
 
                 bax.set_title(title, fontsize=21)
                 bax.set_xlabel('Round', fontsize=18, labelpad=25)
-                bax.set_ylabel(title, fontsize=18, labelpad=50)
+
+                # Set different y-label padding based on metric and experiment type
+                if server.experiment_type == "n_cmapss":
+                    if metric == "rmse":
+                        ylabel_pad = 20
+                    elif metric == "within_10_cycles":
+                        ylabel_pad = 80
+                    elif metric == "within_20_cycles":
+                        ylabel_pad = 80
+                    else:  # r_squared
+                        ylabel_pad = 50
+                else:  # mnist
+                    ylabel_pad = 50
+
+                bax.set_ylabel(title, fontsize=18, labelpad=ylabel_pad)
                 bax.grid(True)
 
                 # Set tick font sizes and customize x-axis ticks
@@ -1271,10 +1285,16 @@ def plot_track_progress(server, round_num, should_plot_all=True):
                     if i == 0:
                         ax.set_xticks([0])
                         ax.set_xticklabels(['0'])
+                        # Format y-axis to show 2 decimal places for MNIST
+                        if server.experiment_type == "mnist":
+                            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.2f}'))
                     # For the second (right) axis, show the actual track rounds
                     elif i == 1 and rounds:
                         ax.set_xticks(rounds)
                         ax.set_xticklabels([str(r) for r in rounds])
+                        # Format y-axis to show 2 decimal places for MNIST
+                        if server.experiment_type == "mnist":
+                            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.2f}'))
 
                 # Only add legend to the first subplot to save space
                 if i == 0:

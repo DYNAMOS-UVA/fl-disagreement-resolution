@@ -7,6 +7,7 @@ and organize them by scenario.
 import os
 import shutil
 import re
+import argparse
 from pathlib import Path
 from collections import defaultdict
 
@@ -53,7 +54,62 @@ def find_last_round_file(directory, pattern):
 
     return max_file
 
+def collect_track_contributions(sim_dir, scenario_num, dataset, output_dir, copied_files):
+    """Collect track contributions files."""
+    track_contrib_file = sim_dir / "output" / f"track_contributions_{sim_dir.name}.png"
+    if track_contrib_file.exists():
+        new_filename = f"s{scenario_num}_{dataset}_track_contributions.png"
+        destination = output_dir / new_filename
+        shutil.copy2(track_contrib_file, destination)
+        copied_files.append(new_filename)
+        print(f"  Copied track contributions: {new_filename}")
+        return True
+    else:
+        print(f"  Track contributions file not found: {track_contrib_file}")
+        return False
+
+def collect_model_performance(sim_dir, scenario_num, dataset, output_dir, copied_files):
+    """Collect model performance (track metrics comparison) files."""
+    plots_dir = sim_dir / "output" / "server" / "plots"
+    if plots_dir.exists():
+        track_metrics_file = find_last_round_file(plots_dir, "track_metrics_comparison_round_*.png")
+        if track_metrics_file:
+            new_filename = f"s{scenario_num}_{dataset}_track_metrics_comparison.png"
+            destination = output_dir / new_filename
+            shutil.copy2(track_metrics_file, destination)
+            copied_files.append(new_filename)
+            print(f"  Copied track metrics comparison: {new_filename}")
+            return True
+        else:
+            print(f"  Track metrics comparison file not found in: {plots_dir}")
+            return False
+    else:
+        print(f"  Plots directory not found: {plots_dir}")
+        return False
+
 def main():
+    parser = argparse.ArgumentParser(
+        description="Gather output files from FL simulation results folder and organize them by scenario.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python gather_simulation_outputs.py --collect track_contributions
+  python gather_simulation_outputs.py --collect model_performance
+  python gather_simulation_outputs.py --collect both
+  python gather_simulation_outputs.py  # defaults to both
+        """
+    )
+
+    parser.add_argument(
+        "--collect",
+        choices=["track_contributions", "model_performance", "both"],
+        default="both",
+        help="Specify what to collect: 'track_contributions' for track contributions plots, "
+             "'model_performance' for model performance plots, or 'both' for everything (default: both)"
+    )
+
+    args = parser.parse_args()
+
     # Define paths
     results_dir = Path("results")
     output_dir = Path("results/collected_outputs")
@@ -61,8 +117,17 @@ def main():
     # Create output directory if it doesn't exist
     output_dir.mkdir(exist_ok=True)
 
+    # Determine what to collect based on arguments
+    collect_contributions = args.collect in ["track_contributions", "both"]
+    collect_performance = args.collect in ["model_performance", "both"]
+
     # Find all simulation directories
-    print("Scanning for simulation output files...")
+    print(f"Scanning for simulation output files...")
+    print(f"Collection mode: {args.collect}")
+    if collect_contributions:
+        print("  - Will collect track contributions plots")
+    if collect_performance:
+        print("  - Will collect model performance plots")
 
     copied_files = []
 
@@ -74,31 +139,12 @@ def main():
             if scenario_num is not None:
                 print(f"\nProcessing scenario {scenario_num} ({dataset}):")
 
-                # 1. Collect track contributions PNG
-                track_contrib_file = sim_dir / "output" / f"track_contributions_{sim_dir.name}.png"
-                if track_contrib_file.exists():
-                    new_filename = f"s{scenario_num}_{dataset}_track_contributions.png"
-                    destination = output_dir / new_filename
-                    shutil.copy2(track_contrib_file, destination)
-                    copied_files.append(new_filename)
-                    print(f"  Copied track contributions: {new_filename}")
-                else:
-                    print(f"  Track contributions file not found: {track_contrib_file}")
+                # Collect files based on user selection
+                if collect_contributions:
+                    collect_track_contributions(sim_dir, scenario_num, dataset, output_dir, copied_files)
 
-                # 2. Collect track metrics comparison PNG from last round
-                plots_dir = sim_dir / "output" / "server" / "plots"
-                if plots_dir.exists():
-                    track_metrics_file = find_last_round_file(plots_dir, "track_metrics_comparison_round_*.png")
-                    if track_metrics_file:
-                        new_filename = f"s{scenario_num}_{dataset}_track_metrics_comparison.png"
-                        destination = output_dir / new_filename
-                        shutil.copy2(track_metrics_file, destination)
-                        copied_files.append(new_filename)
-                        print(f"  Copied track metrics comparison: {new_filename}")
-                    else:
-                        print(f"  Track metrics comparison file not found in: {plots_dir}")
-                else:
-                    print(f"  Plots directory not found: {plots_dir}")
+                if collect_performance:
+                    collect_model_performance(sim_dir, scenario_num, dataset, output_dir, copied_files)
 
     print(f"\nDone! All collected files are in: {output_dir}")
     print(f"Total files copied: {len(copied_files)}")
@@ -108,8 +154,10 @@ def main():
     contrib_files = [f for f in copied_files if "track_contributions" in f]
     metrics_files = [f for f in copied_files if "track_metrics_comparison" in f]
 
-    print(f"  Track contributions files: {len(contrib_files)}")
-    print(f"  Track metrics comparison files: {len(metrics_files)}")
+    if contrib_files:
+        print(f"  Track contributions files: {len(contrib_files)}")
+    if metrics_files:
+        print(f"  Track metrics comparison files: {len(metrics_files)}")
 
     # Print summary by dataset
     mnist_files = [f for f in copied_files if "mnist" in f]
