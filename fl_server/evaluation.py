@@ -10,6 +10,7 @@ from datetime import datetime
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 import seaborn as sns
 import copy
+from brokenaxes import brokenaxes
 
 from fl_server.utils import make_json_serializable, read_client_results_from_files
 
@@ -399,7 +400,7 @@ def plot_ncmapss_results(server, predictions, actual, pred_plot_path, metric_plo
     if len(server.training_history["rounds"]) >= 2:
         plt.figure(figsize=(15, 10))
 
-                # Create a 2x2 grid of subplots
+        # Create a 2x2 grid of subplots
         plt.subplot(2, 2, 1)
         plt.plot(server.training_history["rounds"], server.training_history["global_test_loss"], marker='o')
         plt.xlabel('Federated Learning Round')
@@ -487,7 +488,7 @@ def plot_mnist_results(server, predictions, actual, cm_plot_path, acc_plot_path,
         # Create a 2x2 subplot for accuracy, precision, recall, and F1 score
         plt.figure(figsize=(15, 10))
 
-                # Accuracy
+        # Accuracy
         plt.subplot(2, 2, 1)
         plt.plot(server.training_history["rounds"], server.training_history["global_test_accuracy"],
                  marker='o', color='blue')
@@ -1179,57 +1180,164 @@ def plot_track_progress(server, round_num, should_plot_all=True):
     # Only generate this plot if in verbose mode or if this is the last round
     is_last_round = hasattr(server, 'fl_rounds') and round_num == server.fl_rounds
     if should_plot_all or is_last_round:
-        plt.figure(figsize=(15, 10))
 
-        # Different subplot layout based on number of metrics
-        rows = 2 if len(metrics) <= 4 else 3
-        cols = 2 if len(metrics) <= 4 else (3 if len(metrics) <= 9 else 4)
+        # Determine if we need broken axes (track data starts from round 1, not 0)
+        # We want to show a visual break to indicate round 0 was skipped
+        use_broken_axes = len(rounds) > 0 and min(rounds) > 0
 
-        for i, metric_info in enumerate(metrics[:rows*cols]):  # Limit to fit subplot grid
-            plt.subplot(rows, cols, i+1)
+        if use_broken_axes:
+            # Create figure with broken axes
+            fig = plt.figure(figsize=(15, 10))
 
-            metric = metric_info["name"]
-            title = metric_info["title"]
+            # Different subplot layout based on number of metrics
+            rows = 2 if len(metrics) <= 4 else 3
+            cols = 2 if len(metrics) <= 4 else (3 if len(metrics) <= 9 else 4)
 
-            # For each track, plot its metric over time
-            for track in all_tracks:
-                track_values = []
-                valid_rounds = []
+                                    # Define x-axis limits: narrow round 0 section, then gap, then track rounds
+            min_track_round = min(rounds) if rounds else 1
+            max_track_round = max(rounds) if rounds else 1
 
-                # Collect metric values across rounds for this track
-                for r in rounds:
-                    r_str = str(r)
-                    if r_str in track_history and track in track_history[r_str]:
-                        try:
-                            track_values.append(track_history[r_str][track][metric])
-                            valid_rounds.append(r)
-                        except KeyError:
-                            continue
+            # Create broken x-axis limits: (-0.1, 0.1) for narrow round 0 section, then (min_track_round-0.1, max_track_round+0.1) for tracks
+            xlims = ((-0.1, 0.1), (min_track_round - 0.1, max_track_round + 0.1))
 
-                # Only plot if we have data
-                if valid_rounds and track_values:
-                    plt.plot(valid_rounds, track_values, marker='o', markersize=4, label=track)
+            # Create a GridSpec for proper subplot management
+            from matplotlib import gridspec
+            gs = gridspec.GridSpec(rows, cols, figure=fig)
 
-            plt.title(title, fontsize=21)
-            plt.xlabel('Round', fontsize=18)
-            plt.ylabel(title, fontsize=18)
-            plt.grid(True)
+            for i, metric_info in enumerate(metrics[:rows*cols]):  # Limit to fit subplot grid
+                metric = metric_info["name"]
+                title = metric_info["title"]
 
-            # Set x-axis to show only whole numbers
-            if rounds:
-                plt.xticks(rounds, fontsize=16)
+                # Collect all y-values to determine y-axis limits
+                all_y_values = []
 
-            # Set y-axis tick font size
-            plt.yticks(fontsize=16)
+                # Collect track values
+                track_data = {}
+                for track in all_tracks:
+                    track_values = []
+                    valid_rounds = []
 
-            # Only add legend to the first subplot to save space
-            if i == 0:
-                plt.legend(loc='best', fontsize=14)
+                    for r in rounds:
+                        r_str = str(r)
+                        if r_str in track_history and track in track_history[r_str]:
+                            try:
+                                value = track_history[r_str][track][metric]
+                                track_values.append(value)
+                                valid_rounds.append(r)
+                                all_y_values.append(value)
+                            except KeyError:
+                                continue
 
-        plt.tight_layout()
-        plt.savefig(os.path.join(plots_dir, f'track_metrics_comparison_round_{round_num}.png'),
-                   bbox_inches='tight')
-        plt.close()
+                    if valid_rounds and track_values:
+                        track_data[track] = (valid_rounds, track_values)
+
+                # Determine y-axis limits with some padding
+                if all_y_values:
+                    y_min = min(all_y_values)
+                    y_max = max(all_y_values)
+                    y_padding = (y_max - y_min) * 0.1
+                    ylims = (y_min - y_padding, y_max + y_padding)
+                else:
+                    ylims = (0, 1)
+
+                # Calculate subplot position
+                row = i // cols
+                col = i % cols
+
+                # Create broken axes subplot
+                bax = brokenaxes(
+                    xlims=xlims,
+                    ylims=(ylims,),  # Single y-axis range
+                    hspace=0.05,
+                    subplot_spec=gs[row, col],
+                    fig=fig,
+                    despine=False,
+                    diag_color='none'  # Remove the diagonal slashes
+                )
+
+                # Plot track data
+                for track, (valid_rounds, track_values) in track_data.items():
+                    bax.plot(valid_rounds, track_values, marker='o', markersize=4, label=track)
+
+                bax.set_title(title, fontsize=21)
+                bax.set_xlabel('Round', fontsize=18, labelpad=25)
+                bax.set_ylabel(title, fontsize=18, labelpad=50)
+                bax.grid(True)
+
+                # Set tick font sizes and customize x-axis ticks
+                for i, ax in enumerate(bax.axs):
+                    ax.tick_params(axis='both', which='major', labelsize=16)
+                    # For the first (left) axis, show "0" to indicate the skipped round
+                    if i == 0:
+                        ax.set_xticks([0])
+                        ax.set_xticklabels(['0'])
+                    # For the second (right) axis, show the actual track rounds
+                    elif i == 1 and rounds:
+                        ax.set_xticks(rounds)
+                        ax.set_xticklabels([str(r) for r in rounds])
+
+                # Only add legend to the first subplot to save space
+                if i == 0:
+                    bax.legend(loc='best', fontsize=14)
+
+            plt.tight_layout()
+            plt.savefig(os.path.join(plots_dir, f'track_metrics_comparison_round_{round_num}.png'),
+                       bbox_inches='tight')
+            plt.close()
+
+        else:
+            # Use regular matplotlib subplots (original behavior)
+            plt.figure(figsize=(15, 10))
+
+            # Different subplot layout based on number of metrics
+            rows = 2 if len(metrics) <= 4 else 3
+            cols = 2 if len(metrics) <= 4 else (3 if len(metrics) <= 9 else 4)
+
+            for i, metric_info in enumerate(metrics[:rows*cols]):  # Limit to fit subplot grid
+                plt.subplot(rows, cols, i+1)
+
+                metric = metric_info["name"]
+                title = metric_info["title"]
+
+                # For each track, plot its metric over time
+                for track in all_tracks:
+                    track_values = []
+                    valid_rounds = []
+
+                    # Collect metric values across rounds for this track
+                    for r in rounds:
+                        r_str = str(r)
+                        if r_str in track_history and track in track_history[r_str]:
+                            try:
+                                track_values.append(track_history[r_str][track][metric])
+                                valid_rounds.append(r)
+                            except KeyError:
+                                continue
+
+                    # Only plot if we have data
+                    if valid_rounds and track_values:
+                        plt.plot(valid_rounds, track_values, marker='o', markersize=4, label=track)
+
+                plt.title(title, fontsize=21)
+                plt.xlabel('Round', fontsize=18)
+                plt.ylabel(title, fontsize=18)
+                plt.grid(True)
+
+                # Set x-axis to show only whole numbers
+                if rounds:
+                    plt.xticks(rounds, fontsize=16)
+
+                # Set y-axis tick font size
+                plt.yticks(fontsize=16)
+
+                # Only add legend to the first subplot to save space
+                if i == 0:
+                    plt.legend(loc='best', fontsize=14)
+
+            plt.tight_layout()
+            plt.savefig(os.path.join(plots_dir, f'track_metrics_comparison_round_{round_num}.png'),
+                       bbox_inches='tight')
+            plt.close()
 
     plot_count_individual = len(metrics) if should_plot_all else 0
     plot_count_comparison = 1 if (should_plot_all or is_last_round) else 0
@@ -1274,7 +1382,7 @@ def plot_timing_metrics(server, round_num):
     # Create comprehensive timing plot with 2x3 layout
     plt.figure(figsize=(18, 10))
 
-        # Plot 1: Total Aggregation Time
+    # Plot 1: Total Aggregation Time
     plt.subplot(2, 3, 1)
     colors = ['red' if has_disag else 'blue' for has_disag in has_disagreements]
     bars = plt.bar(rounds, total_times, color=colors, alpha=0.7)

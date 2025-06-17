@@ -5,6 +5,7 @@ description = "Proof of Concept for my thesis on \"Resolution Strategies for Cli
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "brokenaxes>=0.6.2",
     "matplotlib>=3.10.3",
     "numpy>=2.2.5",
     "scikit-learn>=1.6.1",
