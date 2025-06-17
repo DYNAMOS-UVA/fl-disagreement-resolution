@@ -35,6 +35,7 @@ Options:
                            Scenarios can define 'num_clients' (N-CMAPSS is limited to <= 6).
   -C, --config <file>      Path to configuration file (default: mock_etcd/configuration.json).
   --no-viz                 Skip automatic track visualization generation.
+  --verbose-plots          Generate all plots (default: only last round track metrics + track contributions).
   -h, --help               Display this help and exit.
 
 Examples:
@@ -47,8 +48,11 @@ Examples:
   run_fl.py -e mnist -S all
   run_fl.py -C custom_config.json
   run_fl.py -e mnist -S 1 --no-viz
+  run_fl.py -e n_cmapss -c 3 -r 5 --verbose-plots
 
-Note: Track contributions visualization is automatically generated after each
+Note: By default, only track metrics comparison plots for the last round are generated
+      to improve performance. Use --verbose-plots to generate all plots for all rounds.
+      Track contributions visualization is automatically generated after each
       experiment completion and saved to the simulation's output/ directory.
 """)
 
@@ -280,7 +284,7 @@ def run_experiment(args):
 
     # Add override flag if any parameters are specified
     if any([args.experiment, clients, args.rounds, args.local_epochs, args.batch_size,
-            args.setup_data, args.force_setup, args.iid, args.results_dir]):
+            args.setup_data, args.force_setup, args.iid, args.results_dir, args.verbose_plots]):
         cmd.append("--override")
 
     # Add override arguments
@@ -312,6 +316,9 @@ def run_experiment(args):
 
     if args.results_dir:
         cmd.extend(["--results_dir", args.results_dir])
+
+    if args.verbose_plots:
+        cmd.append("--verbose_plots")
 
     # Print experiment details
     if args.experiment:
@@ -403,6 +410,8 @@ def main():
                        help='Path to configuration file (default: mock_etcd/configuration.json)')
     parser.add_argument('--no-viz', action='store_true', dest='no_viz',
                        help='Skip automatic track visualization generation')
+    parser.add_argument('--verbose-plots', action='store_true', dest='verbose_plots',
+                       help='Generate all plots (default: only last round track metrics + track contributions)')
     parser.add_argument('-h', '--help', action='store_true',
                        help='Display this help and exit')
 

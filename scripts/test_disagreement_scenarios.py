@@ -26,6 +26,7 @@ Options:
   -c, --clients <ids>      Override client count or provide a list of IDs (e.g., 4 or "0 1 3 5").
                            If not specified, uses 'num_clients' from the scenario file.
   -v, --verbose            Enable verbose output.
+  --verbose-plots          Generate all plots (default: only last round track metrics + track contributions).
   -h, --help               Display this help and exit.
 
 Examples:
@@ -34,6 +35,7 @@ Examples:
   ./scripts/test_disagreement_scenarios.py 3 -r 10 -l 2
   ./scripts/test_disagreement_scenarios.py 5 -c 4
   ./scripts/test_disagreement_scenarios.py path/to/my/custom_scenario.json
+  ./scripts/test_disagreement_scenarios.py 1 --verbose-plots
 """)
 
 def load_scenario(scenario_path):
@@ -67,7 +69,7 @@ def copy_disagreements_to_etcd(scenario):
         print(f"Error copying disagreements: {e}")
         return False
 
-def run_test(scenario_input, experiment="mnist", fl_rounds=5, local_epochs=1, clients_override=None):
+def run_test(scenario_input, experiment="mnist", fl_rounds=5, local_epochs=1, clients_override=None, verbose_plots=False):
     """Run a federated learning test using the specified scenario and dataset.
 
     Args:
@@ -76,6 +78,7 @@ def run_test(scenario_input, experiment="mnist", fl_rounds=5, local_epochs=1, cl
         fl_rounds: Number of federated learning rounds
         local_epochs: Number of local training epochs
         clients_override: Override the number/list of clients from scenario
+        verbose_plots: Whether to generate all plots or only minimal plots
     """
     # Load scenario to get the number of clients
     scenario_path = scenario_input
@@ -129,6 +132,9 @@ def run_test(scenario_input, experiment="mnist", fl_rounds=5, local_epochs=1, cl
         "-i",
         "-S", scenario_arg
     ]
+
+    if verbose_plots:
+        cmd.append("--verbose-plots")
 
     if clients_override:
         print(f"Running test with {num_clients} clients (overridden from command line)")
@@ -491,7 +497,7 @@ def run_single_scenario(scenario_path, args):
     clients_override = getattr(args, 'clients', None)
 
     # Run the test
-    results_dir = run_test(scenario_path, args.experiment, args.rounds, args.local_epochs, clients_override)
+    results_dir = run_test(scenario_path, args.experiment, args.rounds, args.local_epochs, clients_override, args.verbose_plots)
     if not results_dir:
         print("❌ Error: Test failed to run correctly")
         return ('failed', 'Test failed to run correctly')
@@ -519,6 +525,8 @@ def main():
                         help='Override client count or provide a list of IDs (e.g., 4 or "0 1 3 5"). If not specified, uses \'num_clients\' from the scenario file.')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Enable verbose output')
+    parser.add_argument('--verbose-plots', action='store_true',
+                        help='Generate all plots (default: only last round track metrics + track contributions)')
     parser.add_argument('-h', '--help', action='store_true',
                         help='Display this help and exit')
 

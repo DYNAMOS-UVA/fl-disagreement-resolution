@@ -263,6 +263,9 @@ def save_evaluation_results(server, predictions, actual):
     """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
+    # Determine if this is the last round
+    is_last_round = hasattr(server, 'fl_rounds') and server.round == server.fl_rounds
+
     # Determine output paths based on results_dir
     if server.results_dir:
         history_path = os.path.join(server.output_dir, f"training_history_round_{server.round}.json")
@@ -292,37 +295,41 @@ def save_evaluation_results(server, predictions, actual):
     with open(history_path, "w") as f:
         json.dump(history_for_json, f)
 
-    # Plot and save loss history
-    plt.figure(figsize=(10, 6))
-    plt.plot(server.training_history["rounds"], server.training_history["global_test_loss"], marker='o')
-    plt.xlabel('Federated Learning Round')
-    plt.ylabel('Test Loss')
-    plt.title(f'Global Model Performance ({server.experiment_type})')
-    plt.grid(True)
-    plt.savefig(loss_plot_path)
-    plt.close()
+    # Generate plots based on verbose_plots setting
+    if server.verbose_plots or is_last_round:
+        # Plot and save loss history
+        plt.figure(figsize=(10, 6))
+        plt.plot(server.training_history["rounds"], server.training_history["global_test_loss"], marker='o')
+        plt.xlabel('Federated Learning Round')
+        plt.ylabel('Test Loss')
+        plt.title(f'Global Model Performance ({server.experiment_type})')
+        plt.grid(True)
+        plt.savefig(loss_plot_path)
+        plt.close()
 
-    # For RUL prediction, plot predictions vs actual
-    if server.experiment_type == "n_cmapss":
-        plot_ncmapss_results(server, predictions, actual, pred_plot_path, metric_plot_path)
-    # For MNIST, plot confusion matrix and accuracy
-    elif server.experiment_type == "mnist":
-        plot_mnist_results(server, predictions, actual, cm_plot_path, acc_plot_path, timestamp)
+        # For RUL prediction, plot predictions vs actual
+        if server.experiment_type == "n_cmapss":
+            plot_ncmapss_results(server, predictions, actual, pred_plot_path, metric_plot_path, server.verbose_plots or is_last_round)
+        # For MNIST, plot confusion matrix and accuracy
+        elif server.experiment_type == "mnist":
+            plot_mnist_results(server, predictions, actual, cm_plot_path, acc_plot_path, timestamp, server.verbose_plots or is_last_round)
 
     # Plot track progress if we have more than one round
+    # Always generate track_metrics_comparison for last round, only other track plots if verbose
     if server.round > 1 and "track_results" in server.training_history:
-        plot_track_progress(server, server.round)
+        plot_track_progress(server, server.round, server.verbose_plots or is_last_round)
 
-    # Plot timing metrics if available
-    if hasattr(server, 'aggregation_timing_history') and len(server.aggregation_timing_history) > 0:
+    # Plot timing metrics if available (only in verbose mode or last round)
+    if (server.verbose_plots or is_last_round) and hasattr(server, 'aggregation_timing_history') and len(server.aggregation_timing_history) > 0:
         plot_timing_metrics(server, server.round)
 
     # We don't need to save the model here as it's already saved in the round-specific directories
     # When the server calls save_model() during aggregation
 
-    print(f"Saved results for round {server.round}")
+    plot_mode = "verbose" if server.verbose_plots else ("last round" if is_last_round else "minimal")
+    print(f"Saved results for round {server.round} (plot mode: {plot_mode})")
 
-def plot_ncmapss_results(server, predictions, actual, pred_plot_path, metric_plot_path):
+def plot_ncmapss_results(server, predictions, actual, pred_plot_path, metric_plot_path, should_plot=True):
     """Generate and save plots for N-CMAPSS results.
 
     Args:
@@ -331,7 +338,10 @@ def plot_ncmapss_results(server, predictions, actual, pred_plot_path, metric_plo
         actual: Numpy array of actual values
         pred_plot_path: Path to save prediction plot
         metric_plot_path: Path to save metrics plot
+        should_plot: Whether to generate the plots
     """
+    if not should_plot:
+        return
     predictions = np.array(predictions)
     actual = np.array(actual)
 
@@ -422,7 +432,7 @@ def plot_ncmapss_results(server, predictions, actual, pred_plot_path, metric_plo
         plt.savefig(metric_plot_path)
         plt.close()
 
-def plot_mnist_results(server, predictions, actual, cm_plot_path, acc_plot_path, timestamp):
+def plot_mnist_results(server, predictions, actual, cm_plot_path, acc_plot_path, timestamp, should_plot=True):
     """Generate and save plots for MNIST results.
 
     Args:
@@ -432,7 +442,10 @@ def plot_mnist_results(server, predictions, actual, cm_plot_path, acc_plot_path,
         cm_plot_path: Path to save confusion matrix plot
         acc_plot_path: Path to save accuracy plot
         timestamp: Timestamp string for naming files
+        should_plot: Whether to generate the plots
     """
+    if not should_plot:
+        return
     predictions = np.array(predictions)
     actual = np.array(actual)
 
@@ -845,8 +858,10 @@ def evaluate_track_models(server, round_num):
             with open(results_path, 'w') as f:
                 json.dump(make_json_serializable(track_results), f, indent=2)
 
-            # Plot track comparisons
-            plot_track_comparison(server, track_results, round_num)
+            # Plot track comparisons (only in verbose mode or last round)
+            is_last_round = hasattr(server, 'fl_rounds') and round_num == server.fl_rounds
+            if server.verbose_plots or is_last_round:
+                plot_track_comparison(server, track_results, round_num)
 
         return track_results
 
@@ -1018,12 +1033,13 @@ def plot_track_comparison(server, track_results, round_num):
                        bbox_inches='tight')
             plt.close()
 
-def plot_track_progress(server, round_num):
+def plot_track_progress(server, round_num, should_plot_all=True):
     """Plot track performance across rounds.
 
     Args:
         server: FederatedServer instance
         round_num: Current round number
+        should_plot_all: Whether to plot all track progress charts (True) or only the comparison chart (False)
     """
     # Check if we have track results
     if "track_results" not in server.training_history or not server.training_history["track_results"]:
@@ -1089,173 +1105,136 @@ def plot_track_progress(server, round_num):
         print(f"Unknown experiment type: {server.experiment_type}")
         return
 
-    # Create a figure for each metric
-    for metric_info in metrics:
-        plt.figure(figsize=(12, 6))
+    # Create a figure for each metric (only in verbose mode)
+    if should_plot_all:
+        for metric_info in metrics:
+            plt.figure(figsize=(12, 6))
 
-        metric = metric_info["name"]
-        title = metric_info["title"]
+            metric = metric_info["name"]
+            title = metric_info["title"]
 
-        # For each track, plot its metric over time
-        for track in all_tracks:
-            track_values = []
-            valid_rounds = []
+            # For each track, plot its metric over time
+            for track in all_tracks:
+                track_values = []
+                valid_rounds = []
 
-            # Collect metric values across rounds for this track
-            for r in rounds:
-                r_str = str(r)
-                if r_str in track_history and track in track_history[r_str]:
-                    try:
-                        # Some tracks might be missing in certain rounds
-                        track_values.append(track_history[r_str][track][metric])
-                        valid_rounds.append(r)
-                    except KeyError:
-                        continue
+                # Collect metric values across rounds for this track
+                for r in rounds:
+                    r_str = str(r)
+                    if r_str in track_history and track in track_history[r_str]:
+                        try:
+                            # Some tracks might be missing in certain rounds
+                            track_values.append(track_history[r_str][track][metric])
+                            valid_rounds.append(r)
+                        except KeyError:
+                            continue
 
-            # Only plot if we have data
-            if valid_rounds and track_values:
-                # If disagreements expired, extend the last value to the current round
-                # But only for tracks that were active in the last round with tracks
-                if disagreements_expired and valid_rounds and valid_rounds[-1] < round_num and track == 'global':
-                    # Add a point for the current round with the same value as the last round
-                    valid_rounds.append(round_num)
-                    track_values.append(track_values[-1])
-
-                # Add 1 to round numbers for display only for MNIST metrics
-                if server.experiment_type == "mnist" and metric in ["accuracy", "precision", "recall", "f1"]:
-                    display_valid_rounds = [r + 1 for r in valid_rounds]
-                    plt.plot(display_valid_rounds, track_values, marker='o', markersize=4, label=track)
-                else:
+                # Only plot if we have data
+                if valid_rounds and track_values:
                     plt.plot(valid_rounds, track_values, marker='o', markersize=4, label=track)
 
-        # Add global model metric if available
-        if server.experiment_type == "mnist" and metric == "accuracy" and len(server.training_history.get("global_test_accuracy", [])) > 0:
-            # Only add Global Model line if 'global' track doesn't already exist in all_tracks
-            if 'global' not in all_tracks:
-                # Filter only rounds that match track rounds
-                global_values = []
-                for i, r in enumerate(server.training_history["rounds"]):
-                    if r in rounds:
-                        global_values.append(server.training_history["global_test_accuracy"][i])
+            # Add global model metric if available
+            if server.experiment_type == "mnist" and metric == "accuracy" and len(server.training_history.get("global_test_accuracy", [])) > 0:
+                # Only add Global Model line if 'global' track doesn't already exist in all_tracks
+                if 'global' not in all_tracks:
+                    # Filter only rounds that match track rounds
+                    global_values = []
+                    for i, r in enumerate(server.training_history["rounds"]):
+                        if r in rounds:
+                            global_values.append(server.training_history["global_test_accuracy"][i])
 
-                if global_values:
-                    # Add 1 to round numbers for display only for MNIST accuracy
-                    display_rounds = [r + 1 for r in rounds[:len(global_values)]]
-                    plt.plot(display_rounds, global_values, marker='s', linestyle='--',
-                             color='black', linewidth=2, label='Global Model')
+                    if global_values:
+                        plt.plot(rounds[:len(global_values)], global_values, marker='s', linestyle='--',
+                                 color='black', linewidth=2, label='Global Model')
 
-        elif server.experiment_type == "n_cmapss" and metric == "rmse" and len(server.training_history.get("global_test_loss", [])) > 0:
-            # Only add Global Model line if 'global' track doesn't already exist in all_tracks
-            if 'global' not in all_tracks:
-                # Filter only rounds that match track rounds
-                global_values = []
-                for i, r in enumerate(server.training_history["rounds"]):
-                    if r in rounds:
-                        global_values.append(server.training_history["global_test_loss"][i])
+            elif server.experiment_type == "n_cmapss" and metric == "rmse" and len(server.training_history.get("global_test_loss", [])) > 0:
+                # Only add Global Model line if 'global' track doesn't already exist in all_tracks
+                if 'global' not in all_tracks:
+                    # Filter only rounds that match track rounds
+                    global_values = []
+                    for i, r in enumerate(server.training_history["rounds"]):
+                        if r in rounds:
+                            global_values.append(server.training_history["global_test_loss"][i])
 
-                if global_values:
-                    # Add 1 to round numbers for display only for n_cmapss rmse metric to match track metrics
-                    display_rounds = [r + 1 for r in rounds[:len(global_values)]]
-                    plt.plot(display_rounds, global_values, marker='s', linestyle='--',
-                             color='black', linewidth=2, label='Global Model')
+                    if global_values:
+                        plt.plot(rounds[:len(global_values)], global_values, marker='s', linestyle='--',
+                                 color='black', linewidth=2, label='Global Model')
 
-        plt.title(f'Track {title} Over Rounds')
-        plt.xlabel('Round')
-        plt.ylabel(title)
-        plt.grid(True)
-        plt.legend(loc='best')
+            plt.title(f'Track {title} Over Rounds')
+            plt.xlabel('Round')
+            plt.ylabel(title)
+            plt.grid(True)
+            plt.legend(loc='best')
 
-        # Set x-axis to show only whole numbers
-        if server.experiment_type == "mnist" and metric in ["accuracy", "precision", "recall", "f1"]:
-            # For MNIST metrics with +1 adjustment, use the display rounds
-            if valid_rounds:
-                display_rounds_for_ticks = [r + 1 for r in rounds if r <= max(valid_rounds)]
-                plt.xticks(display_rounds_for_ticks)
-        else:
-            # For other metrics, use original rounds
+            # Set x-axis to show only whole numbers
             if rounds:
                 plt.xticks(rounds)
 
-        # Save figure
-        plt.savefig(os.path.join(plots_dir, f'track_progress_{metric}_round_{round_num}.png'),
-                   bbox_inches='tight')
-        plt.close()
+            # Save figure
+            plt.savefig(os.path.join(plots_dir, f'track_progress_{metric}_round_{round_num}.png'),
+                       bbox_inches='tight')
+            plt.close()
 
     # Create a comprehensive multi-metric plot for comparison
-    plt.figure(figsize=(15, 10))
+    # Only generate this plot if in verbose mode or if this is the last round
+    is_last_round = hasattr(server, 'fl_rounds') and round_num == server.fl_rounds
+    if should_plot_all or is_last_round:
+        plt.figure(figsize=(15, 10))
 
-    # Different subplot layout based on number of metrics
-    rows = 2 if len(metrics) <= 4 else 3
-    cols = 2 if len(metrics) <= 4 else (3 if len(metrics) <= 9 else 4)
+        # Different subplot layout based on number of metrics
+        rows = 2 if len(metrics) <= 4 else 3
+        cols = 2 if len(metrics) <= 4 else (3 if len(metrics) <= 9 else 4)
 
-    for i, metric_info in enumerate(metrics[:rows*cols]):  # Limit to fit subplot grid
-        plt.subplot(rows, cols, i+1)
+        for i, metric_info in enumerate(metrics[:rows*cols]):  # Limit to fit subplot grid
+            plt.subplot(rows, cols, i+1)
 
-        metric = metric_info["name"]
-        title = metric_info["title"]
+            metric = metric_info["name"]
+            title = metric_info["title"]
 
-        # For each track, plot its metric over time
-        for track in all_tracks:
-            track_values = []
-            valid_rounds = []
+            # For each track, plot its metric over time
+            for track in all_tracks:
+                track_values = []
+                valid_rounds = []
 
-            # Collect metric values across rounds for this track
-            for r in rounds:
-                r_str = str(r)
-                if r_str in track_history and track in track_history[r_str]:
-                    try:
-                        track_values.append(track_history[r_str][track][metric])
-                        valid_rounds.append(r)
-                    except KeyError:
-                        continue
+                # Collect metric values across rounds for this track
+                for r in rounds:
+                    r_str = str(r)
+                    if r_str in track_history and track in track_history[r_str]:
+                        try:
+                            track_values.append(track_history[r_str][track][metric])
+                            valid_rounds.append(r)
+                        except KeyError:
+                            continue
 
-            # Only plot if we have data
-            if valid_rounds and track_values:
-                # If disagreements expired, extend the last value to the current round
-                # But only for tracks that were active in the last round with tracks
-                if disagreements_expired and valid_rounds and valid_rounds[-1] < round_num and track == 'global':
-                    # Add a point for the current round with the same value as the last round
-                    valid_rounds.append(round_num)
-                    track_values.append(track_values[-1])
-
-                # Add 1 to round numbers for display only for MNIST and n_cmapss metrics
-                if (server.experiment_type == "mnist" and metric in ["accuracy", "precision", "recall", "f1"]) or \
-                   (server.experiment_type == "n_cmapss" and metric in ["rmse", "mae", "r_squared", "within_10_cycles", "within_20_cycles"]):
-                    display_valid_rounds = [r + 1 for r in valid_rounds]
-                    plt.plot(display_valid_rounds, track_values, marker='o', markersize=4, label=track)
-                else:
+                # Only plot if we have data
+                if valid_rounds and track_values:
                     plt.plot(valid_rounds, track_values, marker='o', markersize=4, label=track)
 
-        plt.title(title, fontsize=21)
-        plt.xlabel('Round', fontsize=18)
-        plt.ylabel(title, fontsize=18)
-        plt.grid(True)
+            plt.title(title, fontsize=21)
+            plt.xlabel('Round', fontsize=18)
+            plt.ylabel(title, fontsize=18)
+            plt.grid(True)
 
-        # Set x-axis to show only whole numbers
-        if (server.experiment_type == "mnist" and metric in ["accuracy", "precision", "recall", "f1"]) or \
-           (server.experiment_type == "n_cmapss" and metric in ["rmse", "mae", "r_squared", "within_10_cycles", "within_20_cycles"]):
-            # For MNIST and n_cmapss metrics with +1 adjustment, use the display rounds
-            if rounds:
-                display_rounds_for_ticks = [r + 1 for r in rounds]
-                plt.xticks(display_rounds_for_ticks, fontsize=16)
-        else:
-            # For other metrics, use original rounds
+            # Set x-axis to show only whole numbers
             if rounds:
                 plt.xticks(rounds, fontsize=16)
 
-        # Set y-axis tick font size
-        plt.yticks(fontsize=16)
+            # Set y-axis tick font size
+            plt.yticks(fontsize=16)
 
-        # Only add legend to the first subplot to save space
-        if i == 0:
-            plt.legend(loc='best', fontsize=14)
+            # Only add legend to the first subplot to save space
+            if i == 0:
+                plt.legend(loc='best', fontsize=14)
 
-    plt.tight_layout()
-    plt.savefig(os.path.join(plots_dir, f'track_metrics_comparison_round_{round_num}.png'),
-               bbox_inches='tight')
-    plt.close()
+        plt.tight_layout()
+        plt.savefig(os.path.join(plots_dir, f'track_metrics_comparison_round_{round_num}.png'),
+                   bbox_inches='tight')
+        plt.close()
 
-    print(f"Saved track progress plots for round {round_num}")
+    plot_count_individual = len(metrics) if should_plot_all else 0
+    plot_count_comparison = 1 if (should_plot_all or is_last_round) else 0
+    total_plot_count = plot_count_individual + plot_count_comparison
+    print(f"Saved {total_plot_count} track progress plot{'s' if total_plot_count != 1 else ''} for round {round_num}")
 
 def plot_timing_metrics(server, round_num):
     """Plot timing metrics for disagreement resolution and aggregation.

@@ -87,7 +87,8 @@ class FederatedOrchestrator:
             experiment_type=self.experiment_type,
             test_dir=self.config.get_test_dir(),
             test_units=self.data_config.get("test_units"),
-            results_dir=self.results_dir
+            results_dir=self.results_dir,
+            verbose_plots=self.results_config.get("verbose_plots", False)
         )
 
         # Load test data for evaluation
@@ -244,6 +245,8 @@ def main():
                         help="Use IID data distribution (for MNIST)")
     parser.add_argument("--results_dir", type=str,
                         help="Results directory for models and outputs")
+    parser.add_argument("--verbose_plots", action="store_true",
+                        help="Generate all plots (default: only last round track metrics + track contributions)")
 
     args = parser.parse_args()
 
@@ -270,6 +273,8 @@ def main():
                 config["experiment"]["iid"] = True
             if args.results_dir:
                 config["results"]["custom_dir"] = args.results_dir
+            if args.verbose_plots:
+                config["results"]["verbose_plots"] = True
 
             # Write updated configuration back to file
             with open(args.config, 'w') as f:

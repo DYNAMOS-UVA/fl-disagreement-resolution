@@ -29,8 +29,16 @@ class FLRunComparator:
 
         scenario_num = int(scenario) if isinstance(scenario, (int, str)) and str(scenario).isdigit() else scenario
 
+        # Handle scenario 7 (10 clients, no exclusion)
+        if scenario_num == 7:
+            return f"({clients} clients,\nno excl.)"
+
+        # Handle scenarios 8-12 (ring of 10)
+        elif 8 <= scenario_num <= 12:
+            return f"({clients} clients,\nring of 10)"
+
         # Handle scenarios 13-19 (6 clients with different exclusion patterns)
-        if 13 <= scenario_num <= 19:
+        elif 13 <= scenario_num <= 19:
             if scenario_num == 13:
                 return "(no excl.)"
             else:
@@ -42,10 +50,32 @@ class FLRunComparator:
         elif 20 <= scenario_num <= 24:
             if scenario_num == 20:
                 return "(no excl.)"
+            elif scenario_num == 24:
+                return f"({clients} clients,\nring of 20)"
             else:
-                # S21 = ring of 5, S22 = ring of 10, S23 = ring of 15, S24 = ring of 20
+                # S21 = ring of 5, S22 = ring of 10, S23 = ring of 15
                 ring_size = (scenario_num - 20) * 5
                 return f"(ring of {ring_size})"
+
+        # Handle scenarios 25-28 (5 clients with ring patterns)
+        elif 25 <= scenario_num <= 28:
+            if scenario_num == 25:
+                return f"({clients} clients,\nno excl.)"
+            elif scenario_num == 26:
+                return f"(ring of 5,\nnext 1)"
+            else:
+                # S27 = ring of 10, S28 = ring of 15
+                ring_size = (scenario_num - 25) * 5
+                return f"({clients} clients,\nring of {ring_size})"
+
+        # Handle scenarios 29-31 (ring patterns with next exclusions)
+        elif 29 <= scenario_num <= 31:
+            if scenario_num == 29:
+                return f"(ring of 10,\nnext 2)"
+            elif scenario_num == 30:
+                return f"(ring of 10,\nnext 3)"
+            elif scenario_num == 31:
+                return f"(ring of 10,\nnext 4)"
 
         # Fallback for other scenarios
         else:
@@ -150,7 +180,8 @@ class FLRunComparator:
             run_data["total_rounds"] = len([r for r in rounds_data if r["round"] > 0])
 
             # Calculate average track performance for each round
-            run_data["avg_track_performance"] = self._calculate_average_track_performance(rounds_data)
+            experiment_type = run_data.get("experiment_type", "mnist")
+            run_data["avg_track_performance"] = self._calculate_average_track_performance(rounds_data, experiment_type)
 
             # Calculate final average track performance metrics
             if run_data["avg_track_performance"]:
@@ -213,11 +244,12 @@ class FLRunComparator:
             else:
                 run_data["disagreement_overhead_pct"] = None
 
-    def _calculate_average_track_performance(self, rounds_data):
+    def _calculate_average_track_performance(self, rounds_data, experiment_type=None):
         """Calculate average performance across all tracks (including global) for each round.
 
         Args:
             rounds_data: List of round data from fl_results
+            experiment_type: Type of experiment ('mnist' or 'n_cmapss')
 
         Returns:
             dict: Dictionary with round numbers as keys and average performance as values
@@ -234,23 +266,43 @@ class FLRunComparator:
             # Collect all track performances (including global)
             performances = []
 
-            # Add global model performance
-            global_accuracy = round_data.get("test_accuracy")
-            if global_accuracy is not None:
-                performances.append(global_accuracy)
+            # Handle different experiment types
+            if experiment_type == "n_cmapss":
+                # For N-CMAPSS, use test_loss (RMSE) instead of accuracy
+                global_rmse = round_data.get("test_loss")
+                if global_rmse is not None:
+                    performances.append(global_rmse)
 
-            # Add track-specific performances
-            for track_name, track_data in track_results.items():
-                track_accuracy = track_data.get("accuracy")
-                if track_accuracy is not None:
-                    performances.append(track_accuracy)
+                # Add track-specific RMSE
+                for track_name, track_data in track_results.items():
+                    track_rmse = track_data.get("rmse")
+                    if track_rmse is not None:
+                        performances.append(track_rmse)
 
-            # Calculate average if we have any performances
-            if performances:
-                avg_performance[round_num] = np.mean(performances)
+                # Calculate average if we have any performances
+                if performances:
+                    avg_performance[round_num] = np.mean(performances)
+                else:
+                    # Fallback to global performance if no track results
+                    avg_performance[round_num] = global_rmse
             else:
-                # Fallback to global performance if no track results
-                avg_performance[round_num] = global_accuracy
+                # Default to MNIST behavior (accuracy)
+                global_accuracy = round_data.get("test_accuracy")
+                if global_accuracy is not None:
+                    performances.append(global_accuracy)
+
+                # Add track-specific performances
+                for track_name, track_data in track_results.items():
+                    track_accuracy = track_data.get("accuracy")
+                    if track_accuracy is not None:
+                        performances.append(track_accuracy)
+
+                # Calculate average if we have any performances
+                if performances:
+                    avg_performance[round_num] = np.mean(performances)
+                else:
+                    # Fallback to global performance if no track results
+                    avg_performance[round_num] = global_accuracy
 
         return avg_performance
 
@@ -412,6 +464,10 @@ class FLRunComparator:
         averaged_data = self.get_averaged_scenario_data()
         max_runs = max(self.num_runs_per_scenario.values()) if self.num_runs_per_scenario else 0
 
+        # Detect experiment type from the first scenario
+        first_scenario_data = next(iter(averaged_data.values())) if averaged_data else {}
+        experiment_type = first_scenario_data.get("experiment_type", "mnist")
+
         plt.figure(figsize=(12, 8))
 
         for scenario, run_data in averaged_data.items():
@@ -419,18 +475,28 @@ class FLRunComparator:
 
             if avg_track_performance:
                 rounds = list(avg_track_performance.keys())
-                accuracies = list(avg_track_performance.values())
+                values = list(avg_track_performance.values())
 
                 clients = run_data.get('num_clients', 'Unknown')
                 label = self._generate_legend_label(scenario, clients)
 
-                plt.plot(rounds, accuracies, marker='o', linewidth=2, markersize=6, label=label)
+                plt.plot(rounds, values, marker='o', linewidth=2, markersize=6, label=label)
 
         plt.xlabel('Round')
-        plt.ylabel('Average Track Accuracy')
-        plt.title(f'Average Track Accuracy Progression Across Rounds\n(across {max_runs} runs)')
+
+        if experiment_type == "n_cmapss":
+            plt.ylabel('Average Track RMSE')
+            plt.title(f'Average Track RMSE Progression Across Rounds\n(across {max_runs} runs)')
+        else:
+            plt.ylabel('Average Track Accuracy')
+            plt.title(f'Average Track Accuracy Progression Across Rounds\n(across {max_runs} runs)')
+
         plt.grid(True, alpha=0.3)
         plt.legend()
+
+        # Set x-axis to show only whole numbers
+        ax = plt.gca()
+        ax.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
 
         if save_plots:
             plt.savefig(os.path.join(output_dir, 'accuracy_progression.png'),
@@ -518,25 +584,40 @@ class FLRunComparator:
                             textcoords="offset points",
                             ha='center', va='bottom', fontsize=9)
 
-        # Subplot 3: Accuracy Progression
+        # Subplot 3: Accuracy Progression or RMSE Progression
         plt.subplot(1, 3, 3)
+
+        # Detect experiment type from the first scenario
+        first_scenario_data = next(iter(averaged_data.values())) if averaged_data else {}
+        experiment_type = first_scenario_data.get("experiment_type", "mnist")
+
         for scenario, run_data in averaged_data.items():
             avg_track_performance = run_data.get("avg_track_performance", {})
 
             if avg_track_performance:
                 rounds = list(avg_track_performance.keys())
-                accuracies = list(avg_track_performance.values())
+                values = list(avg_track_performance.values())
 
                 clients = run_data.get('num_clients', 'Unknown')
                 label = self._generate_legend_label(scenario, clients)
 
-                plt.plot(rounds, accuracies, marker='o', linewidth=2, markersize=6, label=label)
+                plt.plot(rounds, values, marker='o', linewidth=2, markersize=6, label=label)
 
         plt.xlabel('Round')
-        plt.ylabel('Average Track Accuracy')
-        plt.title('Average Track Accuracy Progression')
+
+        if experiment_type == "n_cmapss":
+            plt.ylabel('Average Track RMSE')
+            plt.title(f'Average Track RMSE Progression\n(across {max_runs} runs)')
+        else:
+            plt.ylabel('Average Track Accuracy')
+            plt.title(f'Average Track Accuracy Progression\n(across {max_runs} runs)')
+
         plt.grid(True, alpha=0.3)
         plt.legend()
+
+        # Set x-axis to show only whole numbers
+        ax = plt.gca()
+        ax.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
 
         plt.tight_layout()
         if save_plots:
@@ -635,11 +716,12 @@ class FLRunComparator:
                 avg_data[metric] = int(np.mean(values))
 
         # Average track performance across rounds
-        avg_data["avg_track_performance"] = self._average_track_performance_across_runs(scenario_runs)
+        experiment_type = first_run.get("experiment_type", "mnist")
+        avg_data["avg_track_performance"] = self._average_track_performance_across_runs(scenario_runs, experiment_type)
 
         return avg_data
 
-    def _average_track_performance_across_runs(self, scenario_runs):
+    def _average_track_performance_across_runs(self, scenario_runs, experiment_type="mnist"):
         """Average track performance across multiple runs for each round."""
         if not scenario_runs:
             return {}

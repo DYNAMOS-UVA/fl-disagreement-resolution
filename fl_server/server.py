@@ -26,7 +26,8 @@ class FederatedServer:
         test_dir=None,
         test_units=None,
         device=None,
-        results_dir=None
+        results_dir=None,
+        verbose_plots=False
     ):
         """Initialize the federated learning server.
 
@@ -36,12 +37,14 @@ class FederatedServer:
             test_units: List of unit IDs to use for testing (for N-CMAPSS)
             device: Device to run the model on ('cuda' or 'cpu')
             results_dir: Directory for storing models and results
+            verbose_plots: Whether to generate all plots (True) or only minimal plots (False)
         """
         self.experiment_type = experiment_type
         self.test_dir = test_dir
         self.test_units = test_units
         self.device = device if device else torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.results_dir = results_dir
+        self.verbose_plots = verbose_plots
         self.round = 0
         self.global_model = None
         self.client_models = {}
