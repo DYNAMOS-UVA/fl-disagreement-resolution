@@ -9,12 +9,35 @@ visualization showing which clients contributed to which tracks in each round.
 import json
 import os
 import argparse
+import sys
 import glob
 from pathlib import Path
 from typing import Dict, List, Tuple, Set
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import ListedColormap
+
+
+def usage():
+    """Print usage information."""
+    print("""Usage: visualize_track_contributions.py <simulation_path> [options]
+
+Arguments:
+  simulation_path          Path to the FL simulation folder.
+
+Options:
+  --save <filename>        Custom filename to save the plot (saved in simulation/output/ directory).
+  --display                Display the plot instead of saving it.
+  --dpi <num>              DPI for saved figures (default: 300).
+  --rounds <num>           Total number of rounds (used to fill missing rounds with global track).
+  -h, --help               Display this help and exit.
+
+Examples:
+  visualize_track_contributions.py results/fl_simulation_20250608_203202_mnist_s1
+  visualize_track_contributions.py results/fl_simulation_20250608_203202_mnist_s1 --save custom_name.png
+  visualize_track_contributions.py results/fl_simulation_20250608_203202_mnist_s1 --display
+  visualize_track_contributions.py results/fl_simulation_20250608_203202_mnist_s1 --rounds 10
+""")
 
 
 def load_track_metadata(simulation_path: str, total_rounds: int = None) -> Dict[int, Dict]:
@@ -228,16 +251,15 @@ def create_visualization(matrix: np.ndarray, col_info: List[Tuple[int, str]],
 
 def main():
     """Main function to parse arguments and create visualization."""
+    # Check for help flag before parsing to avoid required argument errors
+    if '-h' in sys.argv or '--help' in sys.argv:
+        usage()
+        return 0
+
     parser = argparse.ArgumentParser(
         description='Visualize track contributions for FL simulations',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  python visualize_track_contributions.py results/fl_simulation_20250608_203202_mnist_s1
-  python visualize_track_contributions.py results/fl_simulation_20250608_203202_mnist_s1 --save custom_name.png
-  python visualize_track_contributions.py results/fl_simulation_20250608_203202_mnist_s1 --display
-        """
-    )
+        add_help=False)  # We'll handle help manually
+
     parser.add_argument('simulation_path',
                        help='Path to the FL simulation folder')
     parser.add_argument('--save',
@@ -248,8 +270,14 @@ Examples:
                        help='DPI for saved figures (default: 300)')
     parser.add_argument('--rounds', type=int,
                        help='Total number of rounds (used to fill missing rounds with global track)')
+    parser.add_argument('-h', '--help', action='store_true',
+                       help='Display this help and exit')
 
     args = parser.parse_args()
+
+    if args.help:
+        usage()
+        return 0
 
     # Validate simulation path
     if not os.path.exists(args.simulation_path):

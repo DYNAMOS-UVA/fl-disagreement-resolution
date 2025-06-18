@@ -10,11 +10,37 @@ Can handle multiple runs per scenario and average the results.
 import json
 import os
 import argparse
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
+
+
+def usage():
+    """Print usage information."""
+    print("""Usage: compare_fl_runs.py <runs...> [options]
+
+Arguments:
+  runs                     Paths to FL simulation result directories (multiple runs of the same scenario will be averaged).
+
+Options:
+  -o, --output-dir <dir>   Output directory for plots (default: auto-generated timestamped directory).
+  --no-plots               Skip generating plots, only show summary.
+  --names <names...>       Custom names for the runs (optional).
+  -h, --help               Display this help and exit.
+
+Examples:
+  compare_fl_runs.py results/fl_simulation_mnist_s1 results/fl_simulation_mnist_s2
+  compare_fl_runs.py results/fl_simulation_mnist_s1 results/fl_simulation_mnist_s2 --output-dir comparison_s1_s2
+  compare_fl_runs.py results/fl_simulation_mnist_s1 results/fl_simulation_mnist_s2 --no-plots
+  compare_fl_runs.py results/fl_simulation_mnist_s1 results/fl_simulation_mnist_s2 --names "Scenario 1" "Scenario 2"
+
+Note: The script automatically groups runs by scenario and averages their metrics.
+      If you have multiple runs of the same scenario, they will be averaged together in the comparison charts.
+""")
+
 
 class FLRunComparator:
     def __init__(self):
@@ -760,10 +786,15 @@ class FLRunComparator:
         return averaged_data
 
 def main():
+    # Check for help flag before parsing to avoid required argument errors
+    if '-h' in sys.argv or '--help' in sys.argv:
+        usage()
+        return
+
     parser = argparse.ArgumentParser(
         description='Compare Federated Learning Runs - Automatically averages multiple runs of the same scenario',
-        epilog='The script automatically groups runs by scenario and averages their metrics. '
-               'If you have multiple runs of the same scenario, they will be averaged together in the comparison charts.')
+        add_help=False)  # We'll handle help manually
+
     parser.add_argument('runs', nargs='+', help='Paths to FL simulation result directories (multiple runs of the same scenario will be averaged)')
 
     # Generate timestamped default directory
@@ -776,8 +807,14 @@ def main():
                        help='Skip generating plots, only show summary')
     parser.add_argument('--names', nargs='+',
                        help='Custom names for the runs (optional)')
+    parser.add_argument('-h', '--help', action='store_true',
+                       help='Display this help and exit')
 
     args = parser.parse_args()
+
+    if args.help:
+        usage()
+        return
 
     # Initialize comparator
     comparator = FLRunComparator()

@@ -8,8 +8,28 @@ import os
 import shutil
 import re
 import argparse
+import sys
 from pathlib import Path
 from collections import defaultdict
+
+
+def usage():
+    """Print usage information."""
+    print("""Usage: gather_simulation_outputs.py [options]
+
+Options:
+  --collect <type>         Specify what to collect: 'track_contributions' for track contributions plots,
+                           'model_performance' for model performance plots, or 'both' for everything (default: both).
+  -h, --help               Display this help and exit.
+
+Examples:
+  gather_simulation_outputs.py
+  gather_simulation_outputs.py --collect track_contributions
+  gather_simulation_outputs.py --collect model_performance
+  gather_simulation_outputs.py --collect both
+
+Note: All collected files are saved to results/collected_outputs/ and organized by scenario.
+""")
 
 def extract_scenario_from_path(path):
     """Extract scenario number from the simulation directory name."""
@@ -88,17 +108,14 @@ def collect_model_performance(sim_dir, scenario_num, dataset, output_dir, copied
         return False
 
 def main():
+    # Check for help flag before parsing to avoid required argument errors
+    if '-h' in sys.argv or '--help' in sys.argv:
+        usage()
+        return
+
     parser = argparse.ArgumentParser(
         description="Gather output files from FL simulation results folder and organize them by scenario.",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  python gather_simulation_outputs.py --collect track_contributions
-  python gather_simulation_outputs.py --collect model_performance
-  python gather_simulation_outputs.py --collect both
-  python gather_simulation_outputs.py  # defaults to both
-        """
-    )
+        add_help=False)  # We'll handle help manually
 
     parser.add_argument(
         "--collect",
@@ -107,8 +124,14 @@ Examples:
         help="Specify what to collect: 'track_contributions' for track contributions plots, "
              "'model_performance' for model performance plots, or 'both' for everything (default: both)"
     )
+    parser.add_argument('-h', '--help', action='store_true',
+                       help='Display this help and exit')
 
     args = parser.parse_args()
+
+    if args.help:
+        usage()
+        return
 
     # Define paths
     results_dir = Path("results")
