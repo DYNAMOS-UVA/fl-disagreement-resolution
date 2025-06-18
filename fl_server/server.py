@@ -493,38 +493,77 @@ class FederatedServer:
 
                     current_track_finetuning_status = {}
                     if lifting_mechanism == "deep_incr_finetune":
+                        print(f"    Deep incremental finetuning analysis for track '{track_name}':")
+                        print(f"      Total finetuning rounds: {finetune_total_rounds}")
+                        print(f"      Clients in track: {sorted(clients_in_this_track_list)}")
+
                         prev_finetune_status_path = os.path.join(prev_specific_track_dir, "finetuning_status.json")
                         prev_track_finetuning_status_loaded = {}
                         if os.path.exists(prev_finetune_status_path):
                             try:
                                 with open(prev_finetune_status_path, 'r') as f_fs:
                                     prev_track_finetuning_status_loaded = json.load(f_fs)
+                                print(f"      Previous finetuning status: {prev_track_finetuning_status_loaded}")
                             except Exception as e:
-                                print(f"    Warning: Could not load previous finetuning status for track '{track_name}': {e}")
+                                print(f"      Warning: Could not load previous finetuning status: {e}")
+                        else:
+                            print(f"      No previous finetuning status file found")
+
                         prev_track_clients_metadata = set()
                         prev_track_metadata_path_iter = os.path.join(prev_specific_track_dir, "metadata.json")
                         if os.path.exists(prev_track_metadata_path_iter):
                             try:
                                 with open(prev_track_metadata_path_iter, 'r') as f_meta:
                                     prev_track_clients_metadata = set(json.load(f_meta).get("client_ids", []))
+                                print(f"      Previous track clients: {sorted(list(prev_track_clients_metadata))}")
                             except Exception as e:
-                                print(f"    Warning: Could not load previous metadata for track '{track_name}': {e}")
+                                print(f"      Warning: Could not load previous metadata: {e}")
+                        else:
+                            print(f"      No previous track metadata found")
+
+                        # Analyze client finetuning needs
+                        clients_new_to_track = []
+                        clients_continuing_ft = []
+                        clients_completed_ft = []
+                        clients_no_ft = []
+
+                        print(f"      Analyzing finetuning for each client:")
                         for client_id_numeric in clients_in_this_track_list:
                             client_id_str_iter = str(client_id_numeric)
                             if client_id_numeric not in prev_track_clients_metadata and track_existed_previously_as_specific_dir:
-                                print(f"    Client {client_id_str_iter} is new to track '{track_name}'. Starting incremental finetuning.")
+                                print(f"        Client {client_id_str_iter}: New to track → Starting finetuning (1/{finetune_total_rounds})")
                                 current_track_finetuning_status[client_id_str_iter] = 1
+                                clients_new_to_track.append(client_id_str_iter)
                             elif client_id_str_iter in prev_track_finetuning_status_loaded:
                                 progress = prev_track_finetuning_status_loaded[client_id_str_iter] + 1
                                 if progress <= finetune_total_rounds:
-                                    print(f"    Client {client_id_str_iter} continuing finetuning in track '{track_name}', round {progress}/{finetune_total_rounds}")
+                                    print(f"        Client {client_id_str_iter}: Continuing finetuning → Round {progress}/{finetune_total_rounds}")
                                     current_track_finetuning_status[client_id_str_iter] = progress
+                                    clients_continuing_ft.append(f"{client_id_str_iter}({progress}/{finetune_total_rounds})")
                                 else:
-                                    print(f"    Client {client_id_str_iter} completed finetuning in track '{track_name}'.")
+                                    print(f"        Client {client_id_str_iter}: Completed finetuning → No further action")
+                                    clients_completed_ft.append(client_id_str_iter)
+                            else:
+                                print(f"        Client {client_id_str_iter}: No finetuning required")
+                                clients_no_ft.append(client_id_str_iter)
+
+                        # Summary of finetuning actions for this track
+                        print(f"      Track '{track_name}' finetuning summary:")
+                        if clients_new_to_track:
+                            print(f"        New to track: {clients_new_to_track}")
+                        if clients_continuing_ft:
+                            print(f"        Continuing: {clients_continuing_ft}")
+                        if clients_completed_ft:
+                            print(f"        Completed: {clients_completed_ft}")
+                        if clients_no_ft:
+                            print(f"        No action: {clients_no_ft}")
+
                     if current_track_finetuning_status:
                         with open(os.path.join(current_specific_track_dir, "finetuning_status.json"), 'w') as f_fs_curr:
                             json.dump(current_track_finetuning_status, f_fs_curr, indent=2)
-                        print(f"    Saved finetuning status for track '{track_name}'.")
+                        print(f"    Saved finetuning status for track '{track_name}': {current_track_finetuning_status}")
+                    else:
+                        print(f"    No clients require finetuning in track '{track_name}'")
 
                     print(f"  Evaluating track: '{track_name}'. Existed previously: {track_existed_previously_as_specific_dir}")
                     is_new_track_to_dir_structure = not track_existed_previously_as_specific_dir
@@ -569,24 +608,31 @@ class FederatedServer:
                     print(f"    Perform rewind for '{track_name}': {perform_rewind_for_this_track}")
 
                     if perform_rewind_for_this_track:
-                        print(f"Performing deep rewind for track '{track_name}'.")
+                        print(f"    Performing deep rewind for track '{track_name}':")
                         self.load_model(os.path.join(self.results_dir, structure["global_model_initial"]))
                         current_rewound_model_state = self.global_model.state_dict()
                         for hist_round in range(1, round_num):
                             hist_clients_dir = os.path.join(self.results_dir, structure["round_template"].format(round=hist_round), structure["clients_dir"])
                             client_model_files_hist = [os.path.join(hist_clients_dir, f"{structure['client_prefix']}{cid}", "model.pt") for cid in clients_in_this_track_list if os.path.exists(os.path.join(hist_clients_dir, f"{structure['client_prefix']}{cid}", "model.pt"))]
                             if client_model_files_hist:
-                                print(f"  Rewinding '{track_name}' for hist_round {hist_round} with {len(client_model_files_hist)} models.")
+                                # Extract client IDs from file paths for better logging
+                                client_ids_in_round = []
+                                for file_path in client_model_files_hist:
+                                    client_dir = os.path.basename(os.path.dirname(file_path))
+                                    client_id = client_dir.replace(structure['client_prefix'], "")
+                                    client_ids_in_round.append(client_id)
+                                client_ids_str = ", ".join(sorted(client_ids_in_round))
+                                print(f"      Round {hist_round}: Aggregating {len(client_model_files_hist)} models from clients [{client_ids_str}]")
                                 aggregated_state = self._aggregate_model_states_from_files_for_rewind(client_model_files_hist, self.device)
                                 if aggregated_state:
                                     current_rewound_model_state = aggregated_state
                                 else:
-                                    print(f"  Warning: Aggregation failed for '{track_name}' in hist_round {hist_round}.")
+                                    print(f"        Warning: Aggregation failed for '{track_name}' in round {hist_round}.")
                             else:
-                                print(f"  No models for '{track_name}' in hist_round {hist_round} for rewind.")
+                                print(f"      Round {hist_round}: No models available for '{track_name}' in rewind.")
                         self.global_model.load_state_dict(current_rewound_model_state)
                         self.save_model(current_specific_track_dir)
-                        print(f"  Deep rewind complete for '{track_name}'. Saved to {current_specific_track_dir}")
+                        print(f"    Deep rewind complete for '{track_name}'. Saved to {current_specific_track_dir}")
                     else: # Not rewinding this track
                         source_model_for_track_path = prev_specific_track_dir if track_existed_previously_as_specific_dir else prev_global_aggregated_dir
                         print(f"Loading model for track '{track_name}' from '{source_model_for_track_path}'.")
@@ -608,7 +654,10 @@ class FederatedServer:
             else: # No active disagreements
                 print(f"No active disagreements for round {round_num}. Using standard global model from {prev_global_aggregated_dir}")
                 if round_num > 1 and lifting_mechanism == "deep_incr_finetune":
-                    print("    Global finetuning check: lifting_mechanism is deep_incr_finetune and no active tracks.")
+                    print(f"    Deep incremental finetuning check for round {round_num}:")
+                    print(f"      - Mechanism: {lifting_mechanism}")
+                    print(f"      - Total finetuning rounds: {finetune_total_rounds}")
+                    print(f"      - No active tracks detected")
                     current_global_finetuning_status = {}
                     prev_round_main_dir = os.path.join(self.results_dir, structure["round_template"].format(round=round_num - 1))
                     prev_global_finetune_status_path = os.path.join(prev_round_main_dir, "global_finetuning_status.json")
@@ -617,25 +666,25 @@ class FederatedServer:
                         try:
                             with open(prev_global_finetune_status_path, 'r') as f_fs:
                                 prev_global_finetuning_status_loaded = json.load(f_fs)
-                            print(f"    Loaded previous global_finetuning_status.json from {prev_global_finetune_status_path}")
+                            print(f"      Loaded previous finetuning status from R{round_num-1}: {prev_global_finetuning_status_loaded}")
                         except Exception as e:
-                            print(f"    Warning: Could not load previous global finetuning status: {e}")
+                            print(f"      Warning: Could not load previous global finetuning status: {e}")
 
                     prev_round_track_metadata_path = os.path.join(prev_round_main_dir, "tracks", "track_metadata.json")
                     prev_round_had_active_tracks = os.path.exists(prev_round_track_metadata_path)
                     prev_round_client_track_map = {} # Stores client_id_str -> track_name from previous round
 
                     if prev_round_had_active_tracks:
-                        print(f"    Tracks were active in previous round (R{round_num-1}). Will check if clients rejoin from non-global tracks.")
+                        print(f"      Tracks were active in previous round (R{round_num-1}). Checking for clients rejoining from non-global tracks.")
                         try:
                             with open(prev_round_track_metadata_path, 'r') as f_prev_meta:
                                 prev_track_meta_content = json.load(f_prev_meta)
                                 # Ensure keys are strings for consistent lookup
                                 prev_round_client_track_map = {str(k): v for k, v in prev_track_meta_content.get("client_tracks", {}).items()}
                         except Exception as e:
-                            print(f"    Warning: Could not load client_tracks from previous round's track_metadata.json: {e}")
+                            print(f"        Warning: Could not load client_tracks from previous round's track_metadata.json: {e}")
                     else:
-                        print(f"    No tracks were active in previous round (R{round_num-1}). Finetuning initiation relies on absence or loaded global status.")
+                        print(f"      No tracks were active in previous round (R{round_num-1}). Finetuning initiation based on client absence or status.")
 
                     prev_round_clients_dir = os.path.join(prev_round_main_dir, structure["clients_dir"])
                     prev_round_submitted_model_ids = set()
@@ -646,46 +695,80 @@ class FederatedServer:
                                 prev_round_submitted_model_ids.add(int(os.path.basename(d_path).replace(structure['client_prefix'], "")))
                             except ValueError:
                                 pass
-                    print(f"    Clients who submitted models in R{round_num-1}: {sorted(list(prev_round_submitted_model_ids))}")
+                    print(f"      Previous round (R{round_num-1}) participants: {sorted(list(prev_round_submitted_model_ids))}")
                     current_global_participants = set(self.results.get("client_ids", [])) - self.fully_excluded_clients_for_current_round
-                    print(f"    Current global participants in R{round_num}: {sorted(list(current_global_participants))}")
+                    print(f"      Current round (R{round_num}) participants: {sorted(list(current_global_participants))}")
+
+                    # Analyze client changes
+                    newly_joining = current_global_participants - prev_round_submitted_model_ids
+                    continuing = current_global_participants & prev_round_submitted_model_ids
+                    if newly_joining:
+                        print(f"      Newly joining clients: {sorted(list(newly_joining))}")
+                    if continuing:
+                        print(f"      Continuing clients: {sorted(list(continuing))}")
+
+                    print(f"      Analyzing finetuning requirements for each client:")
+
+                    clients_starting_new = []
+                    clients_continuing = []
+                    clients_completed = []
+                    clients_no_action = []
 
                     for client_id_numeric in current_global_participants:
                         client_id_str_gf = str(client_id_numeric)
                         start_new_finetuning_for_client = False
                         if client_id_numeric not in prev_round_submitted_model_ids:
-                            print(f"    Global: Client {client_id_str_gf} was absent in R{round_num-1}, now joining. Starting finetuning.")
+                            print(f"        Client {client_id_str_gf}: Was absent in R{round_num-1}, now joining → Starting finetuning")
                             start_new_finetuning_for_client = True
                         elif prev_round_had_active_tracks:
                             client_prev_track = prev_round_client_track_map.get(client_id_str_gf)
                             if client_prev_track and client_prev_track != "global":
-                                print(f"    Global: Client {client_id_str_gf} is rejoining from a non-global track ('{client_prev_track}') in R{round_num-1}. Starting finetuning.")
+                                print(f"        Client {client_id_str_gf}: Rejoining from track '{client_prev_track}' → Starting finetuning")
                                 start_new_finetuning_for_client = True
                             else:
                                 # Client was present, tracks existed, but client was on 'global' track or track info missing for them.
                                 # No NEW finetuning initiation due to track dissolution itself.
-                                print(f"    Global: Client {client_id_str_gf} was on '{client_prev_track or '(no specific track assigned / or global)'}' in tracked R{round_num-1}. No new finetuning initiated by track dissolution.")
+                                print(f"        Client {client_id_str_gf}: Was on '{client_prev_track or 'global'}' track → No new finetuning from track dissolution")
 
                         if start_new_finetuning_for_client:
                             current_global_finetuning_status[client_id_str_gf] = 1
+                            clients_starting_new.append(client_id_str_gf)
                         elif client_id_str_gf in prev_global_finetuning_status_loaded:
                             # Not starting NEW, but might be CONTINUING a previous global finetune cycle
                             progress_gf = prev_global_finetuning_status_loaded[client_id_str_gf] + 1
                             if progress_gf <= finetune_total_rounds:
-                                print(f"    Global: Client {client_id_str_gf} continuing existing global finetuning, round {progress_gf}/{finetune_total_rounds}")
+                                print(f"        Client {client_id_str_gf}: Continuing finetuning → Round {progress_gf}/{finetune_total_rounds}")
                                 current_global_finetuning_status[client_id_str_gf] = progress_gf
+                                clients_continuing.append(f"{client_id_str_gf}({progress_gf}/{finetune_total_rounds})")
                             else:
-                                print(f"    Global: Client {client_id_str_gf} completed existing global finetuning.")
+                                print(f"        Client {client_id_str_gf}: Completed finetuning → No further action needed")
+                                clients_completed.append(client_id_str_gf)
+                        else:
+                            print(f"        Client {client_id_str_gf}: No finetuning action required")
+                            clients_no_action.append(client_id_str_gf)
                         # Else: Client was present, no new trigger, and not in prev_global_finetuning_status_loaded -> no finetuning action for this client.
+
+                    # Summary of finetuning actions
+                    print(f"      Finetuning summary:")
+                    if clients_starting_new:
+                        print(f"        Starting new: {clients_starting_new}")
+                    if clients_continuing:
+                        print(f"        Continuing: {clients_continuing}")
+                    if clients_completed:
+                        print(f"        Completed: {clients_completed}")
+                    if clients_no_action:
+                        print(f"        No action: {clients_no_action}")
 
                     if current_global_finetuning_status:
                         current_global_finetune_status_path = os.path.join(round_dir, "global_finetuning_status.json")
                         try:
                             with open(current_global_finetune_status_path, 'w') as f_fs_global:
                                 json.dump(current_global_finetuning_status, f_fs_global, indent=2)
-                            print(f"    Saved global finetuning status to {current_global_finetune_status_path}")
+                            print(f"      Saved global finetuning status: {current_global_finetuning_status}")
                         except Exception as e:
-                            print(f"    Warning: Could not save global finetuning status: {e}")
+                            print(f"      Warning: Could not save global finetuning status: {e}")
+                    else:
+                        print(f"      No clients require finetuning this round")
 
         print(f"=== END SERVER PREPARATION FOR ROUND {round_num} ===\\n")
         return training_model_dir

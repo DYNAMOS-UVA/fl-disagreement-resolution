@@ -237,7 +237,21 @@ class FederatedClient:
                             try:
                                 with open(track_metadata_path, 'r') as f:
                                     primary_track_metadata = json.load(f)
-                                print(f"Primary track '{primary_track}' info: {primary_track_metadata}")
+                                # Format the track metadata for better readability
+                                track_info = f"Primary track '{primary_track}' details:"
+                                track_info += f"\n        Round: {primary_track_metadata.get('round', 'N/A')}"
+                                track_info += f"\n        Clients: {primary_track_metadata.get('client_ids', [])}"
+                                track_info += f"\n        Rewound this round: {primary_track_metadata.get('rewound_this_round', False)}"
+                                finetuning_status = primary_track_metadata.get('finetuning_status', {})
+                                if finetuning_status:
+                                    track_info += f"\n        Finetuning status: {finetuning_status}"
+                                    # Check if this client is in finetuning
+                                    client_ft_status = finetuning_status.get(str(self.client_id))
+                                    if client_ft_status:
+                                        track_info += f"\n        This client's finetuning: {client_ft_status}"
+                                else:
+                                    track_info += f"\n        No clients currently finetuning"
+                                print(track_info)
                             except Exception as e:
                                 print(f"Error reading track metadata: {e}")
 

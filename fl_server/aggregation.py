@@ -155,6 +155,7 @@ def aggregate_standard(server, clients_dir, aggregation_weights):
     finetune_total_rounds = server.disagreement_settings.get("deep_lifting_finetune_rounds", 3)
 
     if lifting_mechanism == "deep_incr_finetune" and server.round > 0: # server.round is current round
+        print(f"  Deep incremental finetuning active for round {server.round}:")
         # Path to global_finetuning_status.json for the current round
         # It's saved in the main round directory by prepare_training_model
         structure = get_structure_config(server) # Get structure for round_template
@@ -169,9 +170,13 @@ def aggregate_standard(server, clients_dir, aggregation_weights):
                 with open(global_finetune_status_path, 'r') as f_fs:
                     current_global_finetuning_status = json.load(f_fs)
                 if current_global_finetuning_status:
-                    print(f"  Loaded global finetuning status: {current_global_finetuning_status}")
+                    print(f"    Clients in finetuning: {current_global_finetuning_status}")
+                else:
+                    print(f"    No clients currently finetuning")
             except Exception as e:
-                print(f"    Warning: Could not load global finetuning status for standard aggregation: {e}")
+                print(f"    Warning: Could not load global finetuning status for aggregation: {e}")
+        else:
+            print(f"    No finetuning status file found for round {server.round}")
     # --- End Load Global Finetuning Status ---
 
     total_effective_weight = 0.0 # For normalization if weights are adjusted
@@ -196,7 +201,7 @@ def aggregate_standard(server, clients_dir, aggregation_weights):
             progress = current_global_finetuning_status[client_id_str]
             if finetune_total_rounds > 0:
                 finetune_multiplier = min(float(progress) / finetune_total_rounds, 1.0)
-                print(f"    Client {client_id_str} (global) is finetuning (round {progress}/{finetune_total_rounds}). Multiplier: {finetune_multiplier:.2f}")
+                print(f"    Client {client_id_str}: Finetuning round {progress}/{finetune_total_rounds} → Weight multiplier: {finetune_multiplier:.3f} (original: {weight:.3f})")
 
         adjusted_weight = finetune_multiplier * weight
         # --- End Incremental Finetuning Weight Adjustment (Global) ---
@@ -344,11 +349,8 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
             print(f"Skipping empty track: {track_name}")
             continue
 
-        # Special case: if this is the global track, use the true global parameters we created
-        if track_name == "global":
-            track_parameters[track_name] = [p.clone() for p in true_global_params]
-            print(f"  Using true global model for track '{track_name}'")
-            continue
+        # Note: Removed special case for global track to allow finetuning adjustments
+        # Global track will now go through normal aggregation process with finetuning support
 
         # Initialize parameters for this track
         track_parameters[track_name] = [torch.zeros_like(param) for param in server.global_model.parameters()]
@@ -381,6 +383,8 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
                         track_name,
                         "finetuning_status.json"
                     )
+                    finetune_status_path = os.path.normpath(finetune_status_path)  # Normalize the path
+
                     if os.path.exists(finetune_status_path):
                         try:
                             with open(finetune_status_path, 'r') as f_fs:
@@ -391,9 +395,13 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
                                 total_rounds = server.disagreement_settings.get("deep_lifting_finetune_rounds", 3)
                                 if total_rounds > 0:
                                     finetune_multiplier = min(float(progress) / total_rounds, 1.0) # Cap at 1.0
-                                    print(f"    Client {client_id_str} in track '{track_name}' is finetuning (round {progress}/{total_rounds}). Multiplier: {finetune_multiplier:.2f}")
+                                    print(f"    Client {client_id_str} in track '{track_name}': Finetuning round {progress}/{total_rounds} → Weight multiplier: {finetune_multiplier:.3f} (original weight: {weight:.3f})")
+                            else:
+                                print(f"    Client {client_id_str} in track '{track_name}': Not in finetuning status → Using normal weight: {weight:.3f}")
                         except Exception as e:
-                            print(f"    Warning: Could not load or parse finetuning status for track '{track_name}': {e}")
+                            print(f"    Warning: Could not load finetuning status for track '{track_name}': {e}")
+                    else:
+                        print(f"    Finetuning status file not found at: {finetune_status_path}")
 
                 adjusted_weight = finetune_multiplier * weight
                 # --- End Incremental Finetuning Weight Adjustment ---
@@ -420,14 +428,44 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
 
                 # Use an equal weight for background participation
                 weight = aggregation_weights.get(client_id, 1.0 / len(track_clients))
-                background_weight += weight
+
+                # --- Apply Incremental Finetuning Weight Adjustment for Background Client ---
+                finetune_multiplier = 1.0
+                if server.disagreement_settings.get("lifting_mechanism") == "deep_incr_finetune":
+                    finetune_status_path = os.path.join(
+                        clients_dir, # clients_dir is actually round_X_clients_dir
+                        "..", # up to round_X dir
+                        "tracks",
+                        track_name,
+                        "finetuning_status.json"
+                    )
+                    finetune_status_path = os.path.normpath(finetune_status_path)  # Normalize the path
+
+                    if os.path.exists(finetune_status_path):
+                        try:
+                            with open(finetune_status_path, 'r') as f_fs:
+                                track_finetune_status = json.load(f_fs)
+                            client_id_str = str(client_id)
+                            if client_id_str in track_finetune_status:
+                                progress = track_finetune_status[client_id_str]
+                                total_rounds = server.disagreement_settings.get("deep_lifting_finetune_rounds", 3)
+                                if total_rounds > 0:
+                                    finetune_multiplier = min(float(progress) / total_rounds, 1.0) # Cap at 1.0
+                                    print(f"    Background client {client_id_str} in track '{track_name}': Finetuning round {progress}/{total_rounds} → Weight multiplier: {finetune_multiplier:.3f} (original weight: {weight:.3f})")
+                        except Exception as e:
+                            print(f"    Warning: Could not load finetuning status for background client {client_id_str} in track '{track_name}': {e}")
+
+                adjusted_weight = finetune_multiplier * weight
+                # --- End Incremental Finetuning Weight Adjustment for Background Client ---
+
+                background_weight += adjusted_weight
                 background_clients_aggregated.append(client_id)
 
-                print(f"  Including background model from client {client_id} with weight {weight}")
+                print(f"  Including background model from client {client_id} with adjusted weight {adjusted_weight:.4f} (original: {weight:.4f})")
 
                 # Add weighted parameters
                 for i, param in enumerate(bg_params):
-                    track_parameters[track_name][i] += param * weight
+                    track_parameters[track_name][i] += param * adjusted_weight
 
             print(f"  Background models aggregated: {sorted(background_clients_aggregated)} with total weight {background_weight:.4f}")
 
