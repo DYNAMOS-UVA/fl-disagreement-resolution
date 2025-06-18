@@ -1,0 +1,2880 @@
+Updated configuration in mock_etcd/configuration.json
+Initialized global n_cmapss model
+Loading test data from data/n-cmapss/test/Unit11_win50_str1_smp10.npz
+Sampling 500 instances from 66301 for test unit 11
+Loading test data from data/n-cmapss/test/Unit14_win50_str1_smp10.npz
+Sampling 500 instances from 15628 for test unit 14
+Loading test data from data/n-cmapss/test/Unit15_win50_str1_smp10.npz
+Sampling 500 instances from 43298 for test unit 15
+Loaded test data with 1500 samples
+Saved experiment results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/fl_results.json
+Loading data from data/n-cmapss/train/client_0/Unit2_win50_str1_smp10.npz
+Sampling 1000 instances from 85266 for client 0
+Client 0 loaded 1000 samples
+Loading data from data/n-cmapss/train/client_1/Unit5_win50_str1_smp10.npz
+Sampling 1000 instances from 103293 for client 1
+Client 1 loaded 1000 samples
+Loading data from data/n-cmapss/train/client_2/Unit10_win50_str1_smp10.npz
+Sampling 1000 instances from 95222 for client 2
+Client 2 loaded 1000 samples
+Loading data from data/n-cmapss/train/client_3/Unit16_win50_str1_smp10.npz
+Sampling 1000 instances from 76480 for client 3
+Client 3 loaded 1000 samples
+Loading data from data/n-cmapss/train/client_4/Unit18_win50_str1_smp10.npz
+Sampling 1000 instances from 89023 for client 4
+Client 4 loaded 1000 samples
+Loading data from data/n-cmapss/train/client_5/Unit20_win50_str1_smp10.npz
+Sampling 1000 instances from 76767 for client 5
+Client 5 loaded 1000 samples
+Initialized disagreement-aware federated learning orchestrator
+  - 6 clients for n_cmapss experiment
+  - Advanced disagreement resolution with multi-track model training
+  - Results directory: results/fl_simulation_20250618_144934_n_cmapss_s34
+Starting federated learning with 5 rounds...
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/global_model_initial
+Initialized and saved the initial global model
+Round 0 - RUL Prediction Metrics:
+  RMSE: 37.93 cycles
+  MAE: 32.36 cycles
+  R²: -2.6729
+  Within ±10 cycles: 18.33%
+  Within ±20 cycles: 31.87%
+Round 0 - Global model test loss: 37.927352
+Saved results for round 0 (plot mode: minimal)
+Saved experiment results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/fl_results.json
+Initial model evaluation completed
+
+--- Federated Learning Round 1/5 ---
+Analyzing disagreements and preparing track-specific models...
+
+=== SERVER PREPARATION FOR ROUND 1 ===
+  Using initiation_mechanism: deep_rewind, lifting_mechanism: deep_incr_finetune, deep_lifting_finetune_rounds: 3
+Loaded disagreements: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Filtering disagreements for round 1...
+  Inactive: Client client_1 inbound disagreement with client client_0 (not yet started)
+  Active: Client client_2 full disagreement (expires after round 7)
+  Active: Client client_4 outbound disagreement with client client_5
+Round 1: Found 2 clients with active disagreements
+  Fully excluded clients identified for round 1: [2]
+Round 1 starting with initial global model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/global_model_initial
+Loaded model from round 0
+Loaded global model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/global_model_initial
+Creating initial tracks for round 1 from global initial model
+Creating model tracks for active disagreements: {'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Client 0 assigned to global track (no disagreements)
+Client 1 assigned to global track (no disagreements)
+Client 3 assigned to global track (no disagreements)
+Client 2 is fully excluded and not assigned to any track
+Clients not involved in disagreements: {0, 1, 3}
+Fully excluded clients: {2}
+
+=== MODEL TRACK ASSIGNMENTS ===
+Total tracks created: 2
+
+Track 'track_5_no4':
+  Participating clients: [0, 1, 3, 5]
+  Primary for clients: [5]
+
+Track 'global':
+  Participating clients: [0, 1, 3, 4, 5]
+  Primary for clients: [0, 1, 3, 4]
+
+Client primary track assignments:
+  Client 0 → Primary track: global
+  Client 1 → Primary track: global
+  Client 3 → Primary track: global
+  Client 4 → Primary track: global
+  Client 5 → Primary track: track_5_no4
+
+Client background participations:
+  Client 4 (primary: global) → Background participations: [0, 1, 3, 5]
+  Client 5 (primary: track_5_no4) → Background participations: [0, 1, 3]
+=== END TRACK ASSIGNMENTS ===
+
+Disagreement resolution completed in 0.0001 seconds
+Created initial track 'track_5_no4' for round 1
+Created initial track 'global' for round 1
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/global_model_for_training
+Saved global model for training at results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/global_model_for_training
+=== END SERVER PREPARATION FOR ROUND 1 ===\n
+Created initial track models from global_model_initial for round 1
+Starting disagreement-aware multi-track client training...
+Orchestrator: Fully excluded clients for round 1: [2]
+Client 0: Loading track models and training with disagreement resolution...
+
+=== CLIENT 0 MODEL LOADING FOR ROUND 1 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks
+Found 2 tracks: ['track_5_no4', 'global']
+Client 0 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 1
+        Clients: [0, 1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/global
+This is a new track model created for round 1
+Client 0 will also train on background tracks: ['track_5_no4']
+Successfully loaded background track model 'track_5_no4' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/track_5_no4
+=== END CLIENT 0 MODEL LOADING ===
+
+
+=== CLIENT 0 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 0 starting training for 10 epochs
+Client 0 - Epoch 1/10 - Train Loss: 1654.981812, Valid Loss: 1459.823059
+Client 0 - Epoch 2/10 - Train Loss: 1229.438326, Valid Loss: 1132.080383
+Client 0 - Epoch 3/10 - Train Loss: 959.241258, Valid Loss: 961.203888
+Client 0 - Epoch 4/10 - Train Loss: 871.084567, Valid Loss: 920.176682
+Client 0 - Epoch 5/10 - Train Loss: 876.716008, Valid Loss: 907.254242
+Client 0 - Epoch 6/10 - Train Loss: 828.884273, Valid Loss: 894.417343
+Client 0 - Epoch 7/10 - Train Loss: 820.961280, Valid Loss: 875.908127
+Client 0 - Epoch 8/10 - Train Loss: 823.248657, Valid Loss: 852.840439
+Client 0 - Epoch 9/10 - Train Loss: 808.541208, Valid Loss: 829.240631
+Client 0 - Epoch 10/10 - Train Loss: 750.790462, Valid Loss: 794.459900
+Client 0 finished training
+Client 0 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_0/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 0 has 1 background tracks to train
+Training on background track: 'track_5_no4'
+Client 0 starting training for 10 epochs
+Client 0 - Epoch 1/10 - Train Loss: 1629.035260, Valid Loss: 1451.887131
+Client 0 - Epoch 2/10 - Train Loss: 1198.010700, Valid Loss: 1116.271332
+Client 0 - Epoch 3/10 - Train Loss: 965.078336, Valid Loss: 941.396149
+Client 0 - Epoch 4/10 - Train Loss: 846.794152, Valid Loss: 896.978104
+Client 0 - Epoch 5/10 - Train Loss: 830.966412, Valid Loss: 876.981003
+Client 0 - Epoch 6/10 - Train Loss: 817.875000, Valid Loss: 858.229294
+Client 0 - Epoch 7/10 - Train Loss: 785.630127, Valid Loss: 834.093979
+Client 0 - Epoch 8/10 - Train Loss: 778.212285, Valid Loss: 810.965271
+Client 0 - Epoch 9/10 - Train Loss: 740.476055, Valid Loss: 780.782562
+Client 0 - Epoch 10/10 - Train Loss: 717.405748, Valid Loss: 750.136261
+Client 0 finished training
+Background model 'track_5_no4' training complete. Accuracy: N/A
+=== END CLIENT 0 TRAINING ===
+
+
+=== CLIENT 0 MODEL SAVING FOR ROUND 1 ===
+Client 0 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/clients/client_0
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/clients/client_0
+Saving trained background model for track: 'track_5_no4'
+Saved 1 background models
+=== END CLIENT 0 MODEL SAVING ===
+
+Client 1: Loading track models and training with disagreement resolution...
+
+=== CLIENT 1 MODEL LOADING FOR ROUND 1 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks
+Found 2 tracks: ['track_5_no4', 'global']
+Client 1 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 1
+        Clients: [0, 1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/global
+This is a new track model created for round 1
+Client 1 will also train on background tracks: ['track_5_no4']
+Successfully loaded background track model 'track_5_no4' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/track_5_no4
+=== END CLIENT 1 MODEL LOADING ===
+
+
+=== CLIENT 1 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 1 starting training for 10 epochs
+Client 1 - Epoch 1/10 - Train Loss: 2278.239023, Valid Loss: 1622.584839
+Client 1 - Epoch 2/10 - Train Loss: 1750.999418, Valid Loss: 1208.256348
+Client 1 - Epoch 3/10 - Train Loss: 1350.127329, Valid Loss: 961.328583
+Client 1 - Epoch 4/10 - Train Loss: 1174.082153, Valid Loss: 879.742538
+Client 1 - Epoch 5/10 - Train Loss: 1141.774207, Valid Loss: 850.691803
+Client 1 - Epoch 6/10 - Train Loss: 1107.624183, Valid Loss: 823.591682
+Client 1 - Epoch 7/10 - Train Loss: 1068.842928, Valid Loss: 805.817474
+Client 1 - Epoch 8/10 - Train Loss: 1076.604807, Valid Loss: 786.459595
+Client 1 - Epoch 9/10 - Train Loss: 1016.598511, Valid Loss: 774.592400
+Client 1 - Epoch 10/10 - Train Loss: 1012.933800, Valid Loss: 750.401611
+Client 1 finished training
+Client 1 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_1/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 1 has 1 background tracks to train
+Training on background track: 'track_5_no4'
+Client 1 starting training for 10 epochs
+Client 1 - Epoch 1/10 - Train Loss: 2273.169312, Valid Loss: 1666.347870
+Client 1 - Epoch 2/10 - Train Loss: 1795.135714, Valid Loss: 1291.530579
+Client 1 - Epoch 3/10 - Train Loss: 1414.034926, Valid Loss: 1048.481674
+Client 1 - Epoch 4/10 - Train Loss: 1228.025607, Valid Loss: 893.803802
+Client 1 - Epoch 5/10 - Train Loss: 1117.201031, Valid Loss: 835.588478
+Client 1 - Epoch 6/10 - Train Loss: 1101.611009, Valid Loss: 816.774361
+Client 1 - Epoch 7/10 - Train Loss: 1102.551932, Valid Loss: 801.256264
+Client 1 - Epoch 8/10 - Train Loss: 1069.653259, Valid Loss: 783.806694
+Client 1 - Epoch 9/10 - Train Loss: 1010.827613, Valid Loss: 762.584724
+Client 1 - Epoch 10/10 - Train Loss: 1020.292363, Valid Loss: 737.957024
+Client 1 finished training
+Background model 'track_5_no4' training complete. Accuracy: N/A
+=== END CLIENT 1 TRAINING ===
+
+
+=== CLIENT 1 MODEL SAVING FOR ROUND 1 ===
+Client 1 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/clients/client_1
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/clients/client_1
+Saving trained background model for track: 'track_5_no4'
+Saved 1 background models
+=== END CLIENT 1 MODEL SAVING ===
+
+Skipping training for client 2 in round 1 due to full exclusion from all tracks.
+Client 3: Loading track models and training with disagreement resolution...
+
+=== CLIENT 3 MODEL LOADING FOR ROUND 1 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks
+Found 2 tracks: ['track_5_no4', 'global']
+Client 3 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 1
+        Clients: [0, 1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/global
+This is a new track model created for round 1
+Client 3 will also train on background tracks: ['track_5_no4']
+Successfully loaded background track model 'track_5_no4' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/track_5_no4
+=== END CLIENT 3 MODEL LOADING ===
+
+
+=== CLIENT 3 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 3 starting training for 10 epochs
+Client 3 - Epoch 1/10 - Train Loss: 1078.000394, Valid Loss: 809.518692
+Client 3 - Epoch 2/10 - Train Loss: 771.270069, Valid Loss: 575.321930
+Client 3 - Epoch 3/10 - Train Loss: 593.719499, Valid Loss: 494.038101
+Client 3 - Epoch 4/10 - Train Loss: 576.031546, Valid Loss: 476.566814
+Client 3 - Epoch 5/10 - Train Loss: 538.702273, Valid Loss: 464.425686
+Client 3 - Epoch 6/10 - Train Loss: 520.544412, Valid Loss: 448.967464
+Client 3 - Epoch 7/10 - Train Loss: 503.896693, Valid Loss: 431.612015
+Client 3 - Epoch 8/10 - Train Loss: 496.019296, Valid Loss: 414.553703
+Client 3 - Epoch 9/10 - Train Loss: 477.392480, Valid Loss: 399.588741
+Client 3 - Epoch 10/10 - Train Loss: 470.700714, Valid Loss: 382.051678
+Client 3 finished training
+Client 3 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_3/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 3 has 1 background tracks to train
+Training on background track: 'track_5_no4'
+Client 3 starting training for 10 epochs
+Client 3 - Epoch 1/10 - Train Loss: 1096.405067, Valid Loss: 809.736183
+Client 3 - Epoch 2/10 - Train Loss: 766.487394, Valid Loss: 563.220108
+Client 3 - Epoch 3/10 - Train Loss: 555.063227, Valid Loss: 464.712166
+Client 3 - Epoch 4/10 - Train Loss: 530.927326, Valid Loss: 451.165543
+Client 3 - Epoch 5/10 - Train Loss: 520.774827, Valid Loss: 428.699715
+Client 3 - Epoch 6/10 - Train Loss: 490.280377, Valid Loss: 410.392414
+Client 3 - Epoch 7/10 - Train Loss: 477.406586, Valid Loss: 389.900589
+Client 3 - Epoch 8/10 - Train Loss: 453.090140, Valid Loss: 374.347805
+Client 3 - Epoch 9/10 - Train Loss: 446.297126, Valid Loss: 362.407234
+Client 3 - Epoch 10/10 - Train Loss: 445.257742, Valid Loss: 350.600960
+Client 3 finished training
+Background model 'track_5_no4' training complete. Accuracy: N/A
+=== END CLIENT 3 TRAINING ===
+
+
+=== CLIENT 3 MODEL SAVING FOR ROUND 1 ===
+Client 3 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/clients/client_3
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/clients/client_3
+Saving trained background model for track: 'track_5_no4'
+Saved 1 background models
+=== END CLIENT 3 MODEL SAVING ===
+
+Client 4: Loading track models and training with disagreement resolution...
+
+=== CLIENT 4 MODEL LOADING FOR ROUND 1 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks
+Found 2 tracks: ['track_5_no4', 'global']
+Client 4 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 1
+        Clients: [0, 1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/global
+This is a new track model created for round 1
+Client 4 has no background tracks to train on
+=== END CLIENT 4 MODEL LOADING ===
+
+
+=== CLIENT 4 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 4 starting training for 10 epochs
+Client 4 - Epoch 1/10 - Train Loss: 1470.678636, Valid Loss: 1194.262817
+Client 4 - Epoch 2/10 - Train Loss: 1111.757118, Valid Loss: 897.054794
+Client 4 - Epoch 3/10 - Train Loss: 875.535081, Valid Loss: 743.801041
+Client 4 - Epoch 4/10 - Train Loss: 765.942420, Valid Loss: 706.634735
+Client 4 - Epoch 5/10 - Train Loss: 749.587111, Valid Loss: 690.197876
+Client 4 - Epoch 6/10 - Train Loss: 729.782879, Valid Loss: 669.461609
+Client 4 - Epoch 7/10 - Train Loss: 691.852525, Valid Loss: 645.522308
+Client 4 - Epoch 8/10 - Train Loss: 664.106877, Valid Loss: 618.563324
+Client 4 - Epoch 9/10 - Train Loss: 627.911567, Valid Loss: 595.252769
+Client 4 - Epoch 10/10 - Train Loss: 621.077879, Valid Loss: 571.540527
+Client 4 finished training
+Client 4 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_4/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 4 has no background tracks to train
+=== END CLIENT 4 TRAINING ===
+
+
+=== CLIENT 4 MODEL SAVING FOR ROUND 1 ===
+Client 4 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/clients/client_4
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/clients/client_4
+Saved 0 background models
+=== END CLIENT 4 MODEL SAVING ===
+
+Client 5: Loading track models and training with disagreement resolution...
+
+=== CLIENT 5 MODEL LOADING FOR ROUND 1 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks
+Found 2 tracks: ['track_5_no4', 'global']
+Client 5 is assigned to primary track: 'track_5_no4'
+Primary track 'track_5_no4' details:
+        Round: 1
+        Clients: [0, 1, 3, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/track_5_no4
+This is a new track model created for round 1
+Client 5 will also train on background tracks: ['global']
+Successfully loaded background track model 'global' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/global
+=== END CLIENT 5 MODEL LOADING ===
+
+
+=== CLIENT 5 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 5 starting training for 10 epochs
+Client 5 - Epoch 1/10 - Train Loss: 1248.544819, Valid Loss: 1100.266937
+Client 5 - Epoch 2/10 - Train Loss: 900.802720, Valid Loss: 794.301804
+Client 5 - Epoch 3/10 - Train Loss: 677.595525, Valid Loss: 645.217682
+Client 5 - Epoch 4/10 - Train Loss: 622.476375, Valid Loss: 611.739937
+Client 5 - Epoch 5/10 - Train Loss: 641.951834, Valid Loss: 595.882187
+Client 5 - Epoch 6/10 - Train Loss: 603.960168, Valid Loss: 585.161308
+Client 5 - Epoch 7/10 - Train Loss: 611.568784, Valid Loss: 572.087158
+Client 5 - Epoch 8/10 - Train Loss: 581.152062, Valid Loss: 551.170563
+Client 5 - Epoch 9/10 - Train Loss: 585.218893, Valid Loss: 533.806915
+Client 5 - Epoch 10/10 - Train Loss: 562.090564, Valid Loss: 523.683945
+Client 5 finished training
+Client 5 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_5/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 5 has 1 background tracks to train
+Training on background track: 'global'
+Client 5 starting training for 10 epochs
+Client 5 - Epoch 1/10 - Train Loss: 1245.448050, Valid Loss: 1093.078537
+Client 5 - Epoch 2/10 - Train Loss: 889.644118, Valid Loss: 781.111221
+Client 5 - Epoch 3/10 - Train Loss: 685.430671, Valid Loss: 631.825584
+Client 5 - Epoch 4/10 - Train Loss: 625.743852, Valid Loss: 604.904068
+Client 5 - Epoch 5/10 - Train Loss: 601.683422, Valid Loss: 596.986687
+Client 5 - Epoch 6/10 - Train Loss: 601.190765, Valid Loss: 583.044830
+Client 5 - Epoch 7/10 - Train Loss: 586.063578, Valid Loss: 566.513123
+Client 5 - Epoch 8/10 - Train Loss: 587.080632, Valid Loss: 548.040146
+Client 5 - Epoch 9/10 - Train Loss: 578.170359, Valid Loss: 534.697495
+Client 5 - Epoch 10/10 - Train Loss: 553.476943, Valid Loss: 515.685890
+Client 5 finished training
+Background model 'global' training complete. Accuracy: N/A
+=== END CLIENT 5 TRAINING ===
+
+
+=== CLIENT 5 MODEL SAVING FOR ROUND 1 ===
+Client 5 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/clients/client_5
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/clients/client_5
+Saving trained background model for track: 'global'
+Saved 1 background models
+=== END CLIENT 5 MODEL SAVING ===
+
+Performing disagreement-aware track-based model aggregation...
+Starting file-based aggregation for round 1
+Found 5 clients: [4, 5, 3, 0, 1]
+Loaded disagreements: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Filtering disagreements for round 1...
+  Inactive: Client client_1 inbound disagreement with client client_0 (not yet started)
+  Active: Client client_2 full disagreement (expires after round 7)
+  Active: Client client_4 outbound disagreement with client client_5
+Round 1: Found 2 clients with active disagreements
+Active disagreements found for round 1: {'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Creating model tracks for active disagreements: {'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Client 0 assigned to global track (no disagreements)
+Client 1 assigned to global track (no disagreements)
+Client 3 assigned to global track (no disagreements)
+Clients not involved in disagreements: {0, 1, 3}
+Fully excluded clients: {2}
+
+=== MODEL TRACK ASSIGNMENTS ===
+Total tracks created: 2
+
+Track 'track_5_no4':
+  Participating clients: [0, 1, 3, 5]
+  Primary for clients: [5]
+
+Track 'global':
+  Participating clients: [0, 1, 3, 4, 5]
+  Primary for clients: [0, 1, 3, 4]
+
+Client primary track assignments:
+  Client 0 → Primary track: global
+  Client 1 → Primary track: global
+  Client 3 → Primary track: global
+  Client 4 → Primary track: global
+  Client 5 → Primary track: track_5_no4
+
+Client background participations:
+  Client 4 (primary: global) → Background participations: [0, 1, 3, 5]
+  Client 5 (primary: track_5_no4) → Background participations: [0, 1, 3]
+=== END TRACK ASSIGNMENTS ===
+
+Disagreement resolution completed in 0.0001 seconds
+
+=== AGGREGATION FOR ROUND 1 ===
+Found 5 clients: [4, 5, 3, 0, 1]
+Loaded primary model from client 4
+Loaded primary model from client 5
+Loaded background model from client 5 for track global
+Loaded primary model from client 3
+Loaded background model from client 3 for track track_5_no4
+Loaded primary model from client 0
+Loaded background model from client 0 for track track_5_no4
+Loaded primary model from client 1
+Loaded background model from client 1 for track track_5_no4
+
+Aggregating 2 tracks:
+Loaded initial model parameters as fallback
+Created true global model with parameters from all 5 clients
+
+Aggregating track: 'track_5_no4' with clients: [0, 1, 3, 5]
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/track_5_no4/finetuning_status.json
+  Including primary model from client 5 with adjusted weight 0.2000 (original: 0.2000)
+  Primary models aggregated: [5] with total weight 0.2000
+  Including background model from client 3 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 0 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 1 with adjusted weight 0.2000 (original: 0.2000)
+  Background models aggregated: [0, 1, 3] with total weight 0.6000
+  Track 'track_5_no4' normalized with combined weight 0.8000
+  Track 'track_5_no4' aggregation complete.
+
+Aggregating track: 'global' with clients: [0, 1, 3, 4, 5]
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/global/finetuning_status.json
+  Including primary model from client 0 with adjusted weight 0.2000 (original: 0.2000)
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/global/finetuning_status.json
+  Including primary model from client 1 with adjusted weight 0.2000 (original: 0.2000)
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/global/finetuning_status.json
+  Including primary model from client 3 with adjusted weight 0.2000 (original: 0.2000)
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/global/finetuning_status.json
+  Including primary model from client 4 with adjusted weight 0.2000 (original: 0.2000)
+  Primary models aggregated: [0, 1, 3, 4] with total weight 0.8000
+  Including background model from client 5 with adjusted weight 0.2000 (original: 0.2000)
+  Background models aggregated: [5] with total weight 0.2000
+  Track 'global' normalized with combined weight 1.0000
+  Track 'global' aggregation complete.
+Saved true global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/global_model_aggregated
+Saved track model: track_5_no4
+Saved track model: global
+Track saving completed in 0.0034 seconds
+
+Updated server's global model with parameters from true global model
+=== END AGGREGATION FOR ROUND 1 ===
+
+
+=== AGGREGATION TIMING SUMMARY FOR ROUND 1 ===
+  Disagreement loading: 0.0001s
+  Resolution time: 0.0001s
+  Aggregation time: 0.0514s
+  Track saving time: 0.0000s
+  Total time: 0.0517s
+  Has disagreements: True
+=== END TIMING SUMMARY ===
+
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/global_model_aggregated
+Evaluating global model and track-specific performance...
+No training results found for client 2
+Round 1 - RUL Prediction Metrics:
+  RMSE: 25.46 cycles
+  MAE: 20.81 cycles
+  R²: -0.6647
+  Within ±10 cycles: 29.40%
+  Within ±20 cycles: 53.20%
+Round 1 - Global model test loss: 25.458224
+Saved results for round 1 (plot mode: minimal)
+
+=== EVALUATING TRACK MODELS FOR ROUND 1 ===
+Found 2 tracks to evaluate: ['track_5_no4', 'global']
+Evaluating track: track_5_no4
+Track 'track_5_no4' - RMSE: 25.5845, MAE: 20.8985, R²: -0.6808
+Evaluating track: global
+Track 'global' - RMSE: 25.4582, MAE: 20.8099, R²: -0.6647
+
+=== TRACK EVALUATION SUMMARY FOR ROUND 1 ===
+Global model - RMSE: 25.458224
+track_5_no4 - RMSE: 25.584529
+global - RMSE: 25.458224
+=== END TRACK EVALUATION ===
+
+Saved experiment results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/fl_results.json
+Saved timing metrics to results/fl_simulation_20250618_144934_n_cmapss_s34/output/aggregation_timing_metrics.json
+Round 1 completed with disagreement resolution.
+
+--- Federated Learning Round 2/5 ---
+Analyzing disagreements and preparing track-specific models...
+
+=== SERVER PREPARATION FOR ROUND 2 ===
+  Using initiation_mechanism: deep_rewind, lifting_mechanism: deep_incr_finetune, deep_lifting_finetune_rounds: 3
+Loaded disagreements: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Filtering disagreements for round 2...
+  Inactive: Client client_1 inbound disagreement with client client_0 (not yet started)
+  Active: Client client_2 full disagreement (expires after round 7)
+  Active: Client client_4 outbound disagreement with client client_5
+Round 2: Found 2 clients with active disagreements
+  Fully excluded clients identified for round 2: [2]
+Loading main global model from previous round 1's aggregated model: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/global_model_aggregated
+Loaded model from round 1
+Loaded global model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/global_model_aggregated
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/global_model_for_training
+Saved main global model for training in round 2 at results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/global_model_for_training
+Active disagreements found for round 2. Initiation mechanism: deep_rewind
+Creating model tracks for active disagreements: {'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Client 0 assigned to global track (no disagreements)
+Client 1 assigned to global track (no disagreements)
+Client 3 assigned to global track (no disagreements)
+Client 2 is fully excluded and not assigned to any track
+Clients not involved in disagreements: {0, 1, 3}
+Fully excluded clients: {2}
+
+=== MODEL TRACK ASSIGNMENTS ===
+Total tracks created: 2
+
+Track 'track_5_no4':
+  Participating clients: [0, 1, 3, 5]
+  Primary for clients: [5]
+
+Track 'global':
+  Participating clients: [0, 1, 3, 4, 5]
+  Primary for clients: [0, 1, 3, 4]
+
+Client primary track assignments:
+  Client 0 → Primary track: global
+  Client 1 → Primary track: global
+  Client 3 → Primary track: global
+  Client 4 → Primary track: global
+  Client 5 → Primary track: track_5_no4
+
+Client background participations:
+  Client 4 (primary: global) → Background participations: [0, 1, 3, 5]
+  Client 5 (primary: track_5_no4) → Background participations: [0, 1, 3]
+=== END TRACK ASSIGNMENTS ===
+
+Disagreement resolution completed in 0.0001 seconds
+    Deep incremental finetuning analysis for track 'track_5_no4':
+      Total finetuning rounds: 3
+      Clients in track: [0, 1, 3, 5]
+      No previous finetuning status file found
+      Previous track clients: [0, 1, 3, 5]
+      Analyzing finetuning for each client:
+        Client 0: No finetuning required
+        Client 1: No finetuning required
+        Client 3: No finetuning required
+        Client 5: No finetuning required
+      Track 'track_5_no4' finetuning summary:
+        No action: ['0', '1', '3', '5']
+    No clients require finetuning in track 'track_5_no4'
+  Evaluating track: 'track_5_no4'. Existed previously: True
+    Track 'track_5_no4' existed and composition UNCHANGED.
+    Perform rewind for 'track_5_no4': False
+Loading model for track 'track_5_no4' from 'results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/track_5_no4'.
+Loaded model from round 1
+Loaded global model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/track_5_no4
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/track_5_no4
+    Deep incremental finetuning analysis for track 'global':
+      Total finetuning rounds: 3
+      Clients in track: [0, 1, 3, 4, 5]
+      No previous finetuning status file found
+      Previous track clients: [0, 1, 3, 4, 5]
+      Analyzing finetuning for each client:
+        Client 0: No finetuning required
+        Client 1: No finetuning required
+        Client 3: No finetuning required
+        Client 4: No finetuning required
+        Client 5: No finetuning required
+      Track 'global' finetuning summary:
+        No action: ['0', '1', '3', '4', '5']
+    No clients require finetuning in track 'global'
+  Evaluating track: 'global'. Existed previously: True
+    Track 'global' existed and composition UNCHANGED.
+    Perform rewind for 'global': False
+Loading model for track 'global' from 'results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/global'.
+Loaded model from round 1
+Loaded global model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_1/tracks/global
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/global
+Saved track metadata for round 2.
+=== END SERVER PREPARATION FOR ROUND 2 ===\n
+Updated track models based on disagreement changes from round 1
+Starting disagreement-aware multi-track client training...
+Orchestrator: Fully excluded clients for round 2: [2]
+Client 0: Loading track models and training with disagreement resolution...
+
+=== CLIENT 0 MODEL LOADING FOR ROUND 2 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks
+Found 2 tracks: ['track_5_no4', 'global']
+Client 0 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 2
+        Clients: [0, 1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/global
+This is a new track model created for round 2
+Client 0 will also train on background tracks: ['track_5_no4']
+Successfully loaded background track model 'track_5_no4' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/track_5_no4
+=== END CLIENT 0 MODEL LOADING ===
+
+
+=== CLIENT 0 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 0 starting training for 10 epochs
+Client 0 - Epoch 1/10 - Train Loss: 721.059063, Valid Loss: 723.649536
+Client 0 - Epoch 2/10 - Train Loss: 681.119399, Valid Loss: 681.166412
+Client 0 - Epoch 3/10 - Train Loss: 653.210017, Valid Loss: 639.621658
+Client 0 - Epoch 4/10 - Train Loss: 631.662055, Valid Loss: 606.280319
+Client 0 - Epoch 5/10 - Train Loss: 628.009773, Valid Loss: 582.055954
+Client 0 - Epoch 6/10 - Train Loss: 575.582071, Valid Loss: 554.680183
+Client 0 - Epoch 7/10 - Train Loss: 583.599924, Valid Loss: 538.251221
+Client 0 - Epoch 8/10 - Train Loss: 548.822120, Valid Loss: 527.121635
+Client 0 - Epoch 9/10 - Train Loss: 568.886580, Valid Loss: 519.321503
+Client 0 - Epoch 10/10 - Train Loss: 562.423227, Valid Loss: 520.717453
+Client 0 finished training
+Client 0 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_0/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 0 has 1 background tracks to train
+Training on background track: 'track_5_no4'
+Client 0 starting training for 10 epochs
+Client 0 - Epoch 1/10 - Train Loss: 732.643926, Valid Loss: 738.780914
+Client 0 - Epoch 2/10 - Train Loss: 684.776762, Valid Loss: 693.729248
+Client 0 - Epoch 3/10 - Train Loss: 668.514606, Valid Loss: 649.599396
+Client 0 - Epoch 4/10 - Train Loss: 637.898017, Valid Loss: 616.062790
+Client 0 - Epoch 5/10 - Train Loss: 621.613051, Valid Loss: 592.960724
+Client 0 - Epoch 6/10 - Train Loss: 603.715046, Valid Loss: 562.299820
+Client 0 - Epoch 7/10 - Train Loss: 590.671060, Valid Loss: 543.806198
+Client 0 - Epoch 8/10 - Train Loss: 595.980100, Valid Loss: 530.089745
+Client 0 - Epoch 9/10 - Train Loss: 569.570221, Valid Loss: 529.296425
+Client 0 - Epoch 10/10 - Train Loss: 575.576935, Valid Loss: 510.986435
+Client 0 finished training
+Background model 'track_5_no4' training complete. Accuracy: N/A
+=== END CLIENT 0 TRAINING ===
+
+
+=== CLIENT 0 MODEL SAVING FOR ROUND 2 ===
+Client 0 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/clients/client_0
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/clients/client_0
+Saving trained background model for track: 'track_5_no4'
+Saved 1 background models
+=== END CLIENT 0 MODEL SAVING ===
+
+Client 1: Loading track models and training with disagreement resolution...
+
+=== CLIENT 1 MODEL LOADING FOR ROUND 2 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks
+Found 2 tracks: ['track_5_no4', 'global']
+Client 1 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 2
+        Clients: [0, 1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/global
+This is a new track model created for round 2
+Client 1 will also train on background tracks: ['track_5_no4']
+Successfully loaded background track model 'track_5_no4' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/track_5_no4
+=== END CLIENT 1 MODEL LOADING ===
+
+
+=== CLIENT 1 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 1 starting training for 10 epochs
+Client 1 - Epoch 1/10 - Train Loss: 1025.465299, Valid Loss: 721.968567
+Client 1 - Epoch 2/10 - Train Loss: 947.700754, Valid Loss: 697.589279
+Client 1 - Epoch 3/10 - Train Loss: 932.819829, Valid Loss: 670.972252
+Client 1 - Epoch 4/10 - Train Loss: 883.678110, Valid Loss: 653.731339
+Client 1 - Epoch 5/10 - Train Loss: 868.506038, Valid Loss: 624.698822
+Client 1 - Epoch 6/10 - Train Loss: 851.000653, Valid Loss: 607.877846
+Client 1 - Epoch 7/10 - Train Loss: 818.851595, Valid Loss: 592.944054
+Client 1 - Epoch 8/10 - Train Loss: 803.222835, Valid Loss: 574.011528
+Client 1 - Epoch 9/10 - Train Loss: 798.582036, Valid Loss: 556.197403
+Client 1 - Epoch 10/10 - Train Loss: 740.883829, Valid Loss: 541.782967
+Client 1 finished training
+Client 1 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_1/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 1 has 1 background tracks to train
+Training on background track: 'track_5_no4'
+Client 1 starting training for 10 epochs
+Client 1 - Epoch 1/10 - Train Loss: 1031.809481, Valid Loss: 738.447647
+Client 1 - Epoch 2/10 - Train Loss: 983.872883, Valid Loss: 717.482910
+Client 1 - Epoch 3/10 - Train Loss: 966.823787, Valid Loss: 697.633972
+Client 1 - Epoch 4/10 - Train Loss: 926.442364, Valid Loss: 660.189476
+Client 1 - Epoch 5/10 - Train Loss: 936.068045, Valid Loss: 637.590057
+Client 1 - Epoch 6/10 - Train Loss: 867.445683, Valid Loss: 621.670494
+Client 1 - Epoch 7/10 - Train Loss: 870.316636, Valid Loss: 598.524406
+Client 1 - Epoch 8/10 - Train Loss: 810.345220, Valid Loss: 590.654434
+Client 1 - Epoch 9/10 - Train Loss: 817.063876, Valid Loss: 565.820572
+Client 1 - Epoch 10/10 - Train Loss: 758.208745, Valid Loss: 559.755074
+Client 1 finished training
+Background model 'track_5_no4' training complete. Accuracy: N/A
+=== END CLIENT 1 TRAINING ===
+
+
+=== CLIENT 1 MODEL SAVING FOR ROUND 2 ===
+Client 1 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/clients/client_1
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/clients/client_1
+Saving trained background model for track: 'track_5_no4'
+Saved 1 background models
+=== END CLIENT 1 MODEL SAVING ===
+
+Skipping training for client 2 in round 2 due to full exclusion from all tracks.
+Client 3: Loading track models and training with disagreement resolution...
+
+=== CLIENT 3 MODEL LOADING FOR ROUND 2 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks
+Found 2 tracks: ['track_5_no4', 'global']
+Client 3 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 2
+        Clients: [0, 1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/global
+This is a new track model created for round 2
+Client 3 will also train on background tracks: ['track_5_no4']
+Successfully loaded background track model 'track_5_no4' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/track_5_no4
+=== END CLIENT 3 MODEL LOADING ===
+
+
+=== CLIENT 3 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 3 starting training for 10 epochs
+Client 3 - Epoch 1/10 - Train Loss: 466.168110, Valid Loss: 376.246044
+Client 3 - Epoch 2/10 - Train Loss: 435.923946, Valid Loss: 353.211336
+Client 3 - Epoch 3/10 - Train Loss: 422.953872, Valid Loss: 336.515198
+Client 3 - Epoch 4/10 - Train Loss: 419.150879, Valid Loss: 320.799877
+Client 3 - Epoch 5/10 - Train Loss: 386.800584, Valid Loss: 310.413799
+Client 3 - Epoch 6/10 - Train Loss: 391.117624, Valid Loss: 301.032873
+Client 3 - Epoch 7/10 - Train Loss: 380.626223, Valid Loss: 298.840260
+Client 3 - Epoch 8/10 - Train Loss: 365.750615, Valid Loss: 289.977240
+Client 3 - Epoch 9/10 - Train Loss: 370.448745, Valid Loss: 280.141432
+Client 3 - Epoch 10/10 - Train Loss: 328.800009, Valid Loss: 273.056183
+Client 3 finished training
+Client 3 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_3/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 3 has 1 background tracks to train
+Training on background track: 'track_5_no4'
+Client 3 starting training for 10 epochs
+Client 3 - Epoch 1/10 - Train Loss: 481.818296, Valid Loss: 383.667332
+Client 3 - Epoch 2/10 - Train Loss: 450.665091, Valid Loss: 363.909731
+Client 3 - Epoch 3/10 - Train Loss: 436.657750, Valid Loss: 343.834133
+Client 3 - Epoch 4/10 - Train Loss: 425.393691, Valid Loss: 330.310719
+Client 3 - Epoch 5/10 - Train Loss: 399.423931, Valid Loss: 316.571579
+Client 3 - Epoch 6/10 - Train Loss: 395.583482, Valid Loss: 308.210136
+Client 3 - Epoch 7/10 - Train Loss: 391.149980, Valid Loss: 300.154285
+Client 3 - Epoch 8/10 - Train Loss: 379.105605, Valid Loss: 290.428053
+Client 3 - Epoch 9/10 - Train Loss: 357.580503, Valid Loss: 284.200205
+Client 3 - Epoch 10/10 - Train Loss: 341.557983, Valid Loss: 274.384348
+Client 3 finished training
+Background model 'track_5_no4' training complete. Accuracy: N/A
+=== END CLIENT 3 TRAINING ===
+
+
+=== CLIENT 3 MODEL SAVING FOR ROUND 2 ===
+Client 3 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/clients/client_3
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/clients/client_3
+Saving trained background model for track: 'track_5_no4'
+Saved 1 background models
+=== END CLIENT 3 MODEL SAVING ===
+
+Client 4: Loading track models and training with disagreement resolution...
+
+=== CLIENT 4 MODEL LOADING FOR ROUND 2 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks
+Found 2 tracks: ['track_5_no4', 'global']
+Client 4 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 2
+        Clients: [0, 1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/global
+This is a new track model created for round 2
+Client 4 has no background tracks to train on
+=== END CLIENT 4 MODEL LOADING ===
+
+
+=== CLIENT 4 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 4 starting training for 10 epochs
+Client 4 - Epoch 1/10 - Train Loss: 679.076374, Valid Loss: 617.114487
+Client 4 - Epoch 2/10 - Train Loss: 648.284116, Valid Loss: 587.078758
+Client 4 - Epoch 3/10 - Train Loss: 596.960318, Valid Loss: 550.828468
+Client 4 - Epoch 4/10 - Train Loss: 578.741364, Valid Loss: 524.691933
+Client 4 - Epoch 5/10 - Train Loss: 552.457074, Valid Loss: 504.568893
+Client 4 - Epoch 6/10 - Train Loss: 534.704426, Valid Loss: 488.316956
+Client 4 - Epoch 7/10 - Train Loss: 526.644724, Valid Loss: 473.478111
+Client 4 - Epoch 8/10 - Train Loss: 507.428443, Valid Loss: 459.887566
+Client 4 - Epoch 9/10 - Train Loss: 476.106603, Valid Loss: 445.535278
+Client 4 - Epoch 10/10 - Train Loss: 464.515212, Valid Loss: 425.953453
+Client 4 finished training
+Client 4 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_4/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 4 has no background tracks to train
+=== END CLIENT 4 TRAINING ===
+
+
+=== CLIENT 4 MODEL SAVING FOR ROUND 2 ===
+Client 4 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/clients/client_4
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/clients/client_4
+Saved 0 background models
+=== END CLIENT 4 MODEL SAVING ===
+
+Client 5: Loading track models and training with disagreement resolution...
+
+=== CLIENT 5 MODEL LOADING FOR ROUND 2 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks
+Found 2 tracks: ['track_5_no4', 'global']
+Client 5 is assigned to primary track: 'track_5_no4'
+Primary track 'track_5_no4' details:
+        Round: 2
+        Clients: [0, 1, 3, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/track_5_no4
+This is a new track model created for round 2
+Client 5 will also train on background tracks: ['global']
+Successfully loaded background track model 'global' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/global
+=== END CLIENT 5 MODEL LOADING ===
+
+
+=== CLIENT 5 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 5 starting training for 10 epochs
+Client 5 - Epoch 1/10 - Train Loss: 561.325153, Valid Loss: 505.496323
+Client 5 - Epoch 2/10 - Train Loss: 533.614007, Valid Loss: 493.057709
+Client 5 - Epoch 3/10 - Train Loss: 528.437413, Valid Loss: 481.660828
+Client 5 - Epoch 4/10 - Train Loss: 492.829545, Valid Loss: 461.832794
+Client 5 - Epoch 5/10 - Train Loss: 502.961238, Valid Loss: 450.716232
+Client 5 - Epoch 6/10 - Train Loss: 480.097760, Valid Loss: 445.092705
+Client 5 - Epoch 7/10 - Train Loss: 459.382723, Valid Loss: 428.000786
+Client 5 - Epoch 8/10 - Train Loss: 456.137909, Valid Loss: 422.544815
+Client 5 - Epoch 9/10 - Train Loss: 445.699303, Valid Loss: 409.408081
+Client 5 - Epoch 10/10 - Train Loss: 449.153240, Valid Loss: 402.903427
+Client 5 finished training
+Client 5 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_5/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 5 has 1 background tracks to train
+Training on background track: 'global'
+Client 5 starting training for 10 epochs
+Client 5 - Epoch 1/10 - Train Loss: 551.802305, Valid Loss: 502.264214
+Client 5 - Epoch 2/10 - Train Loss: 539.900001, Valid Loss: 479.587883
+Client 5 - Epoch 3/10 - Train Loss: 505.863746, Valid Loss: 474.586960
+Client 5 - Epoch 4/10 - Train Loss: 494.402456, Valid Loss: 453.482300
+Client 5 - Epoch 5/10 - Train Loss: 505.430807, Valid Loss: 452.116585
+Client 5 - Epoch 6/10 - Train Loss: 478.804946, Valid Loss: 440.408607
+Client 5 - Epoch 7/10 - Train Loss: 479.963731, Valid Loss: 433.647537
+Client 5 - Epoch 8/10 - Train Loss: 452.746394, Valid Loss: 413.985611
+Client 5 - Epoch 9/10 - Train Loss: 459.734718, Valid Loss: 408.173073
+Client 5 - Epoch 10/10 - Train Loss: 439.038269, Valid Loss: 408.732452
+Client 5 finished training
+Background model 'global' training complete. Accuracy: N/A
+=== END CLIENT 5 TRAINING ===
+
+
+=== CLIENT 5 MODEL SAVING FOR ROUND 2 ===
+Client 5 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/clients/client_5
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/clients/client_5
+Saving trained background model for track: 'global'
+Saved 1 background models
+=== END CLIENT 5 MODEL SAVING ===
+
+Performing disagreement-aware track-based model aggregation...
+Starting file-based aggregation for round 2
+Found 5 clients: [4, 5, 3, 0, 1]
+Loaded disagreements: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Filtering disagreements for round 2...
+  Inactive: Client client_1 inbound disagreement with client client_0 (not yet started)
+  Active: Client client_2 full disagreement (expires after round 7)
+  Active: Client client_4 outbound disagreement with client client_5
+Round 2: Found 2 clients with active disagreements
+Active disagreements found for round 2: {'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Creating model tracks for active disagreements: {'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Client 0 assigned to global track (no disagreements)
+Client 1 assigned to global track (no disagreements)
+Client 3 assigned to global track (no disagreements)
+Clients not involved in disagreements: {0, 1, 3}
+Fully excluded clients: {2}
+
+=== MODEL TRACK ASSIGNMENTS ===
+Total tracks created: 2
+
+Track 'track_5_no4':
+  Participating clients: [0, 1, 3, 5]
+  Primary for clients: [5]
+
+Track 'global':
+  Participating clients: [0, 1, 3, 4, 5]
+  Primary for clients: [0, 1, 3, 4]
+
+Client primary track assignments:
+  Client 0 → Primary track: global
+  Client 1 → Primary track: global
+  Client 3 → Primary track: global
+  Client 4 → Primary track: global
+  Client 5 → Primary track: track_5_no4
+
+Client background participations:
+  Client 4 (primary: global) → Background participations: [0, 1, 3, 5]
+  Client 5 (primary: track_5_no4) → Background participations: [0, 1, 3]
+=== END TRACK ASSIGNMENTS ===
+
+Disagreement resolution completed in 0.0001 seconds
+
+=== AGGREGATION FOR ROUND 2 ===
+Found 5 clients: [4, 5, 3, 0, 1]
+Loaded primary model from client 4
+Loaded primary model from client 5
+Loaded background model from client 5 for track global
+Loaded primary model from client 3
+Loaded background model from client 3 for track track_5_no4
+Loaded primary model from client 0
+Loaded background model from client 0 for track track_5_no4
+Loaded primary model from client 1
+Loaded background model from client 1 for track track_5_no4
+
+Aggregating 2 tracks:
+Loaded initial model parameters as fallback
+Created true global model with parameters from all 5 clients
+
+Aggregating track: 'track_5_no4' with clients: [0, 1, 3, 5]
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/track_5_no4/finetuning_status.json
+  Including primary model from client 5 with adjusted weight 0.2000 (original: 0.2000)
+  Primary models aggregated: [5] with total weight 0.2000
+  Including background model from client 3 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 0 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 1 with adjusted weight 0.2000 (original: 0.2000)
+  Background models aggregated: [0, 1, 3] with total weight 0.6000
+  Track 'track_5_no4' normalized with combined weight 0.8000
+  Track 'track_5_no4' aggregation complete.
+
+Aggregating track: 'global' with clients: [0, 1, 3, 4, 5]
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/global/finetuning_status.json
+  Including primary model from client 0 with adjusted weight 0.2000 (original: 0.2000)
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/global/finetuning_status.json
+  Including primary model from client 1 with adjusted weight 0.2000 (original: 0.2000)
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/global/finetuning_status.json
+  Including primary model from client 3 with adjusted weight 0.2000 (original: 0.2000)
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/global/finetuning_status.json
+  Including primary model from client 4 with adjusted weight 0.2000 (original: 0.2000)
+  Primary models aggregated: [0, 1, 3, 4] with total weight 0.8000
+  Including background model from client 5 with adjusted weight 0.2000 (original: 0.2000)
+  Background models aggregated: [5] with total weight 0.2000
+  Track 'global' normalized with combined weight 1.0000
+  Track 'global' aggregation complete.
+Saved true global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/global_model_aggregated
+Saved track model: track_5_no4
+Saved track model: global
+Track saving completed in 0.0031 seconds
+
+Updated server's global model with parameters from true global model
+=== END AGGREGATION FOR ROUND 2 ===
+
+
+=== AGGREGATION TIMING SUMMARY FOR ROUND 2 ===
+  Disagreement loading: 0.0001s
+  Resolution time: 0.0001s
+  Aggregation time: 0.0178s
+  Track saving time: 0.0000s
+  Total time: 0.0181s
+  Has disagreements: True
+=== END TIMING SUMMARY ===
+
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/global_model_aggregated
+Evaluating global model and track-specific performance...
+No training results found for client 2
+Round 2 - RUL Prediction Metrics:
+  RMSE: 22.80 cycles
+  MAE: 18.63 cycles
+  R²: -0.3402
+  Within ±10 cycles: 32.07%
+  Within ±20 cycles: 60.53%
+Round 2 - Global model test loss: 22.795583
+Only 1 rounds of track data found - need at least 2 to create progress plots
+Saved results for round 2 (plot mode: minimal)
+
+=== EVALUATING TRACK MODELS FOR ROUND 2 ===
+Found 2 tracks to evaluate: ['track_5_no4', 'global']
+Evaluating track: track_5_no4
+Track 'track_5_no4' - RMSE: 22.5126, MAE: 18.4137, R²: -0.3062
+Evaluating track: global
+Track 'global' - RMSE: 22.7956, MAE: 18.6273, R²: -0.3402
+
+=== TRACK EVALUATION SUMMARY FOR ROUND 2 ===
+Global model - RMSE: 22.795583
+track_5_no4 - RMSE: 22.512609
+global - RMSE: 22.795583
+=== END TRACK EVALUATION ===
+
+Saved experiment results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/fl_results.json
+Saved timing metrics to results/fl_simulation_20250618_144934_n_cmapss_s34/output/aggregation_timing_metrics.json
+Round 2 completed with disagreement resolution.
+
+--- Federated Learning Round 3/5 ---
+Analyzing disagreements and preparing track-specific models...
+
+=== SERVER PREPARATION FOR ROUND 3 ===
+  Using initiation_mechanism: deep_rewind, lifting_mechanism: deep_incr_finetune, deep_lifting_finetune_rounds: 3
+Loaded disagreements: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Filtering disagreements for round 3...
+  Active: Client client_1 inbound disagreement with client client_0
+  Active: Client client_2 full disagreement (expires after round 7)
+  Active: Client client_4 outbound disagreement with client client_5
+Round 3: Found 3 clients with active disagreements
+  Fully excluded clients identified for round 3: [2]
+Loading main global model from previous round 2's aggregated model: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/global_model_aggregated
+Loaded model from round 2
+Loaded global model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/global_model_aggregated
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/global_model_for_training
+Saved main global model for training in round 3 at results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/global_model_for_training
+Active disagreements found for round 3. Initiation mechanism: deep_rewind
+Creating model tracks for active disagreements: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Client 3 assigned to global track (no disagreements)
+Client 0 assigned to global track (no outbound exclusions)
+Client 2 is fully excluded and not assigned to any track
+Clients not involved in disagreements: {3}
+Fully excluded clients: {2}
+
+=== MODEL TRACK ASSIGNMENTS ===
+Total tracks created: 3
+
+Track 'track_1_no0':
+  Participating clients: [1, 3, 4, 5]
+  Primary for clients: [1]
+
+Track 'track_5_no4':
+  Participating clients: [0, 1, 3, 5]
+  Primary for clients: [5]
+
+Track 'global':
+  Participating clients: [0, 1, 3, 4, 5]
+  Primary for clients: [0, 3, 4]
+
+Client primary track assignments:
+  Client 0 → Primary track: global
+  Client 1 → Primary track: track_1_no0
+  Client 3 → Primary track: global
+  Client 4 → Primary track: global
+  Client 5 → Primary track: track_5_no4
+
+Client background participations:
+  Client 1 (primary: track_1_no0) → Background participations: [3, 4, 5]
+  Client 4 (primary: global) → Background participations: [0, 1, 3, 5]
+  Client 5 (primary: track_5_no4) → Background participations: [0, 1, 3]
+=== END TRACK ASSIGNMENTS ===
+
+Disagreement resolution completed in 0.0001 seconds
+    Deep incremental finetuning analysis for track 'track_1_no0':
+      Total finetuning rounds: 3
+      Clients in track: [1, 3, 4, 5]
+      No previous finetuning status file found
+      No previous track metadata found
+      Analyzing finetuning for each client:
+        Client 1: No finetuning required
+        Client 3: No finetuning required
+        Client 4: No finetuning required
+        Client 5: No finetuning required
+      Track 'track_1_no0' finetuning summary:
+        No action: ['1', '3', '4', '5']
+    No clients require finetuning in track 'track_1_no0'
+  Evaluating track: 'track_1_no0'. Existed previously: False
+    Non-global track 'track_1_no0' is new. Marking composition changed.
+    Perform rewind for 'track_1_no0': True
+    Performing deep rewind for track 'track_1_no0':
+Loaded model from round 0
+Loaded global model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/global_model_initial
+      Round 1: Aggregating 4 models from clients [1, 3, 4, 5]
+      Round 2: Aggregating 4 models from clients [1, 3, 4, 5]
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/track_1_no0
+    Deep rewind complete for 'track_1_no0'. Saved to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/track_1_no0
+    Deep incremental finetuning analysis for track 'track_5_no4':
+      Total finetuning rounds: 3
+      Clients in track: [0, 1, 3, 5]
+      No previous finetuning status file found
+      Previous track clients: [0, 1, 3, 5]
+      Analyzing finetuning for each client:
+        Client 0: No finetuning required
+        Client 1: No finetuning required
+        Client 3: No finetuning required
+        Client 5: No finetuning required
+      Track 'track_5_no4' finetuning summary:
+        No action: ['0', '1', '3', '5']
+    No clients require finetuning in track 'track_5_no4'
+  Evaluating track: 'track_5_no4'. Existed previously: True
+    Track 'track_5_no4' existed and composition UNCHANGED.
+    Perform rewind for 'track_5_no4': False
+Loading model for track 'track_5_no4' from 'results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/track_5_no4'.
+Loaded model from round 2
+Loaded global model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/track_5_no4
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/track_5_no4
+    Deep incremental finetuning analysis for track 'global':
+      Total finetuning rounds: 3
+      Clients in track: [0, 1, 3, 4, 5]
+      No previous finetuning status file found
+      Previous track clients: [0, 1, 3, 4, 5]
+      Analyzing finetuning for each client:
+        Client 0: No finetuning required
+        Client 1: No finetuning required
+        Client 3: No finetuning required
+        Client 4: No finetuning required
+        Client 5: No finetuning required
+      Track 'global' finetuning summary:
+        No action: ['0', '1', '3', '4', '5']
+    No clients require finetuning in track 'global'
+  Evaluating track: 'global'. Existed previously: True
+    Track 'global' existed and composition UNCHANGED.
+    Perform rewind for 'global': False
+Loading model for track 'global' from 'results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/global'.
+Loaded model from round 2
+Loaded global model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_2/tracks/global
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/global
+Saved track metadata for round 3.
+=== END SERVER PREPARATION FOR ROUND 3 ===\n
+Updated track models based on disagreement changes from round 2
+Starting disagreement-aware multi-track client training...
+Orchestrator: Fully excluded clients for round 3: [2]
+Client 0: Loading track models and training with disagreement resolution...
+
+=== CLIENT 0 MODEL LOADING FOR ROUND 3 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks
+Found 3 tracks: ['track_1_no0', 'track_5_no4', 'global']
+Client 0 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 3
+        Clients: [0, 1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/global
+This is a new track model created for round 3
+Client 0 will also train on background tracks: ['track_5_no4']
+Successfully loaded background track model 'track_5_no4' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/track_5_no4
+=== END CLIENT 0 MODEL LOADING ===
+
+
+=== CLIENT 0 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 0 starting training for 10 epochs
+Client 0 - Epoch 1/10 - Train Loss: 555.021893, Valid Loss: 492.290100
+Client 0 - Epoch 2/10 - Train Loss: 533.239760, Valid Loss: 479.072014
+Client 0 - Epoch 3/10 - Train Loss: 528.121730, Valid Loss: 480.171768
+Client 0 - Epoch 4/10 - Train Loss: 515.984436, Valid Loss: 466.624252
+Client 0 - Epoch 5/10 - Train Loss: 499.213726, Valid Loss: 460.671371
+Client 0 - Epoch 6/10 - Train Loss: 482.997901, Valid Loss: 439.383690
+Client 0 - Epoch 7/10 - Train Loss: 479.958475, Valid Loss: 430.350563
+Client 0 - Epoch 8/10 - Train Loss: 474.943463, Valid Loss: 420.168373
+Client 0 - Epoch 9/10 - Train Loss: 450.623976, Valid Loss: 419.555412
+Client 0 - Epoch 10/10 - Train Loss: 447.695993, Valid Loss: 399.028328
+Client 0 finished training
+Client 0 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_0/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 0 has 1 background tracks to train
+Training on background track: 'track_5_no4'
+Client 0 starting training for 10 epochs
+Client 0 - Epoch 1/10 - Train Loss: 552.544450, Valid Loss: 499.372124
+Client 0 - Epoch 2/10 - Train Loss: 519.130183, Valid Loss: 473.264908
+Client 0 - Epoch 3/10 - Train Loss: 519.804425, Valid Loss: 459.364777
+Client 0 - Epoch 4/10 - Train Loss: 504.821324, Valid Loss: 460.557472
+Client 0 - Epoch 5/10 - Train Loss: 488.267712, Valid Loss: 448.901901
+Client 0 - Epoch 6/10 - Train Loss: 477.533187, Valid Loss: 428.190254
+Client 0 - Epoch 7/10 - Train Loss: 450.041509, Valid Loss: 429.578369
+Client 0 - Epoch 8/10 - Train Loss: 456.011160, Valid Loss: 406.178543
+Client 0 - Epoch 9/10 - Train Loss: 464.585862, Valid Loss: 427.680107
+Client 0 - Epoch 10/10 - Train Loss: 456.484147, Valid Loss: 394.691750
+Client 0 finished training
+Background model 'track_5_no4' training complete. Accuracy: N/A
+=== END CLIENT 0 TRAINING ===
+
+
+=== CLIENT 0 MODEL SAVING FOR ROUND 3 ===
+Client 0 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/clients/client_0
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/clients/client_0
+Saving trained background model for track: 'track_5_no4'
+Saved 1 background models
+=== END CLIENT 0 MODEL SAVING ===
+
+Client 1: Loading track models and training with disagreement resolution...
+
+=== CLIENT 1 MODEL LOADING FOR ROUND 3 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks
+Found 3 tracks: ['track_1_no0', 'track_5_no4', 'global']
+Client 1 is assigned to primary track: 'track_1_no0'
+Primary track 'track_1_no0' details:
+        Round: 3
+        Clients: [1, 3, 4, 5]
+        Rewound this round: True
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/track_1_no0
+This is a new track model created for round 3
+Client 1 will also train on background tracks: ['track_5_no4', 'global']
+Successfully loaded background track model 'track_5_no4' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/track_5_no4
+Successfully loaded background track model 'global' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/global
+=== END CLIENT 1 MODEL LOADING ===
+
+
+=== CLIENT 1 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 1 starting training for 10 epochs
+Client 1 - Epoch 1/10 - Train Loss: 796.243737, Valid Loss: 544.622742
+Client 1 - Epoch 2/10 - Train Loss: 733.584628, Valid Loss: 520.231892
+Client 1 - Epoch 3/10 - Train Loss: 730.739873, Valid Loss: 505.893501
+Client 1 - Epoch 4/10 - Train Loss: 721.116272, Valid Loss: 483.667564
+Client 1 - Epoch 5/10 - Train Loss: 681.066941, Valid Loss: 471.159012
+Client 1 - Epoch 6/10 - Train Loss: 660.602398, Valid Loss: 464.467522
+Client 1 - Epoch 7/10 - Train Loss: 641.160593, Valid Loss: 457.994232
+Client 1 - Epoch 8/10 - Train Loss: 643.154386, Valid Loss: 427.747505
+Client 1 - Epoch 9/10 - Train Loss: 601.586421, Valid Loss: 412.123055
+Client 1 - Epoch 10/10 - Train Loss: 587.975645, Valid Loss: 399.143145
+Client 1 finished training
+Client 1 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_1/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 1 has 2 background tracks to train
+Training on background track: 'track_5_no4'
+Client 1 starting training for 10 epochs
+Client 1 - Epoch 1/10 - Train Loss: 799.409198, Valid Loss: 567.258400
+Client 1 - Epoch 2/10 - Train Loss: 763.408142, Valid Loss: 533.891838
+Client 1 - Epoch 3/10 - Train Loss: 727.013907, Valid Loss: 518.680042
+Client 1 - Epoch 4/10 - Train Loss: 705.712114, Valid Loss: 492.841434
+Client 1 - Epoch 5/10 - Train Loss: 698.187106, Valid Loss: 484.913208
+Client 1 - Epoch 6/10 - Train Loss: 657.494324, Valid Loss: 450.265541
+Client 1 - Epoch 7/10 - Train Loss: 639.007958, Valid Loss: 437.356209
+Client 1 - Epoch 8/10 - Train Loss: 642.617110, Valid Loss: 422.163704
+Client 1 - Epoch 9/10 - Train Loss: 595.819071, Valid Loss: 413.264496
+Client 1 - Epoch 10/10 - Train Loss: 626.430875, Valid Loss: 402.036720
+Client 1 finished training
+Background model 'track_5_no4' training complete. Accuracy: N/A
+Training on background track: 'global'
+Client 1 starting training for 10 epochs
+Client 1 - Epoch 1/10 - Train Loss: 793.433458, Valid Loss: 556.040291
+Client 1 - Epoch 2/10 - Train Loss: 748.976182, Valid Loss: 531.001785
+Client 1 - Epoch 3/10 - Train Loss: 742.860410, Valid Loss: 514.565575
+Client 1 - Epoch 4/10 - Train Loss: 711.423204, Valid Loss: 494.414894
+Client 1 - Epoch 5/10 - Train Loss: 697.958132, Valid Loss: 473.551537
+Client 1 - Epoch 6/10 - Train Loss: 638.348926, Valid Loss: 464.465622
+Client 1 - Epoch 7/10 - Train Loss: 652.823407, Valid Loss: 437.503418
+Client 1 - Epoch 8/10 - Train Loss: 666.738711, Valid Loss: 432.033356
+Client 1 - Epoch 9/10 - Train Loss: 597.148027, Valid Loss: 411.037491
+Client 1 - Epoch 10/10 - Train Loss: 569.966187, Valid Loss: 406.200605
+Client 1 finished training
+Background model 'global' training complete. Accuracy: N/A
+=== END CLIENT 1 TRAINING ===
+
+
+=== CLIENT 1 MODEL SAVING FOR ROUND 3 ===
+Client 1 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/clients/client_1
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/clients/client_1
+Saving trained background model for track: 'track_5_no4'
+Saving trained background model for track: 'global'
+Saved 2 background models
+=== END CLIENT 1 MODEL SAVING ===
+
+Skipping training for client 2 in round 3 due to full exclusion from all tracks.
+Client 3: Loading track models and training with disagreement resolution...
+
+=== CLIENT 3 MODEL LOADING FOR ROUND 3 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks
+Found 3 tracks: ['track_1_no0', 'track_5_no4', 'global']
+Client 3 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 3
+        Clients: [0, 1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/global
+This is a new track model created for round 3
+Client 3 will also train on background tracks: ['track_1_no0', 'track_5_no4']
+Successfully loaded background track model 'track_1_no0' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/track_1_no0
+Successfully loaded background track model 'track_5_no4' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/track_5_no4
+=== END CLIENT 3 MODEL LOADING ===
+
+
+=== CLIENT 3 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 3 starting training for 10 epochs
+Client 3 - Epoch 1/10 - Train Loss: 351.487697, Valid Loss: 273.513475
+Client 3 - Epoch 2/10 - Train Loss: 343.126641, Valid Loss: 265.017017
+Client 3 - Epoch 3/10 - Train Loss: 314.845309, Valid Loss: 259.914150
+Client 3 - Epoch 4/10 - Train Loss: 318.650327, Valid Loss: 252.980227
+Client 3 - Epoch 5/10 - Train Loss: 309.687796, Valid Loss: 244.460171
+Client 3 - Epoch 6/10 - Train Loss: 305.256832, Valid Loss: 237.467798
+Client 3 - Epoch 7/10 - Train Loss: 304.577535, Valid Loss: 231.582994
+Client 3 - Epoch 8/10 - Train Loss: 283.830473, Valid Loss: 231.347219
+Client 3 - Epoch 9/10 - Train Loss: 280.040874, Valid Loss: 218.510220
+Client 3 - Epoch 10/10 - Train Loss: 263.417543, Valid Loss: 211.153145
+Client 3 finished training
+Client 3 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_3/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 3 has 2 background tracks to train
+Training on background track: 'track_1_no0'
+Client 3 starting training for 10 epochs
+Client 3 - Epoch 1/10 - Train Loss: 350.235676, Valid Loss: 275.505613
+Client 3 - Epoch 2/10 - Train Loss: 338.434845, Valid Loss: 265.062401
+Client 3 - Epoch 3/10 - Train Loss: 311.426074, Valid Loss: 257.104897
+Client 3 - Epoch 4/10 - Train Loss: 315.697799, Valid Loss: 252.637623
+Client 3 - Epoch 5/10 - Train Loss: 303.663836, Valid Loss: 243.658787
+Client 3 - Epoch 6/10 - Train Loss: 312.503261, Valid Loss: 236.863075
+Client 3 - Epoch 7/10 - Train Loss: 281.901595, Valid Loss: 228.538177
+Client 3 - Epoch 8/10 - Train Loss: 290.196544, Valid Loss: 221.226334
+Client 3 - Epoch 9/10 - Train Loss: 277.505942, Valid Loss: 216.102573
+Client 3 - Epoch 10/10 - Train Loss: 262.173766, Valid Loss: 210.811064
+Client 3 finished training
+Background model 'track_1_no0' training complete. Accuracy: N/A
+Training on background track: 'track_5_no4'
+Client 3 starting training for 10 epochs
+Client 3 - Epoch 1/10 - Train Loss: 352.262280, Valid Loss: 271.962099
+Client 3 - Epoch 2/10 - Train Loss: 326.434703, Valid Loss: 264.974026
+Client 3 - Epoch 3/10 - Train Loss: 326.990443, Valid Loss: 257.421268
+Client 3 - Epoch 4/10 - Train Loss: 324.366442, Valid Loss: 250.548462
+Client 3 - Epoch 5/10 - Train Loss: 310.287248, Valid Loss: 242.185524
+Client 3 - Epoch 6/10 - Train Loss: 303.274234, Valid Loss: 237.173737
+Client 3 - Epoch 7/10 - Train Loss: 296.736174, Valid Loss: 228.651745
+Client 3 - Epoch 8/10 - Train Loss: 293.056831, Valid Loss: 223.482780
+Client 3 - Epoch 9/10 - Train Loss: 272.339256, Valid Loss: 214.532463
+Client 3 - Epoch 10/10 - Train Loss: 264.121807, Valid Loss: 210.154846
+Client 3 finished training
+Background model 'track_5_no4' training complete. Accuracy: N/A
+=== END CLIENT 3 TRAINING ===
+
+
+=== CLIENT 3 MODEL SAVING FOR ROUND 3 ===
+Client 3 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/clients/client_3
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/clients/client_3
+Saving trained background model for track: 'track_1_no0'
+Saving trained background model for track: 'track_5_no4'
+Saved 2 background models
+=== END CLIENT 3 MODEL SAVING ===
+
+Client 4: Loading track models and training with disagreement resolution...
+
+=== CLIENT 4 MODEL LOADING FOR ROUND 3 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks
+Found 3 tracks: ['track_1_no0', 'track_5_no4', 'global']
+Client 4 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 3
+        Clients: [0, 1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/global
+This is a new track model created for round 3
+Client 4 will also train on background tracks: ['track_1_no0']
+Successfully loaded background track model 'track_1_no0' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/track_1_no0
+=== END CLIENT 4 MODEL LOADING ===
+
+
+=== CLIENT 4 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 4 starting training for 10 epochs
+Client 4 - Epoch 1/10 - Train Loss: 486.766003, Valid Loss: 429.059837
+Client 4 - Epoch 2/10 - Train Loss: 455.044981, Valid Loss: 408.250237
+Client 4 - Epoch 3/10 - Train Loss: 458.043922, Valid Loss: 395.619743
+Client 4 - Epoch 4/10 - Train Loss: 450.665567, Valid Loss: 378.493698
+Client 4 - Epoch 5/10 - Train Loss: 420.980265, Valid Loss: 366.659843
+Client 4 - Epoch 6/10 - Train Loss: 387.394855, Valid Loss: 350.436020
+Client 4 - Epoch 7/10 - Train Loss: 386.599577, Valid Loss: 334.534210
+Client 4 - Epoch 8/10 - Train Loss: 354.452052, Valid Loss: 322.924660
+Client 4 - Epoch 9/10 - Train Loss: 362.876923, Valid Loss: 309.869125
+Client 4 - Epoch 10/10 - Train Loss: 352.610208, Valid Loss: 300.759499
+Client 4 finished training
+Client 4 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_4/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 4 has 1 background tracks to train
+Training on background track: 'track_1_no0'
+Client 4 starting training for 10 epochs
+Client 4 - Epoch 1/10 - Train Loss: 465.886181, Valid Loss: 424.328606
+Client 4 - Epoch 2/10 - Train Loss: 466.287269, Valid Loss: 407.685829
+Client 4 - Epoch 3/10 - Train Loss: 440.432603, Valid Loss: 390.030838
+Client 4 - Epoch 4/10 - Train Loss: 413.991530, Valid Loss: 371.626389
+Client 4 - Epoch 5/10 - Train Loss: 412.149853, Valid Loss: 358.236084
+Client 4 - Epoch 6/10 - Train Loss: 403.495791, Valid Loss: 338.744591
+Client 4 - Epoch 7/10 - Train Loss: 378.471694, Valid Loss: 329.324692
+Client 4 - Epoch 8/10 - Train Loss: 360.012538, Valid Loss: 319.339325
+Client 4 - Epoch 9/10 - Train Loss: 346.813526, Valid Loss: 301.950134
+Client 4 - Epoch 10/10 - Train Loss: 331.576799, Valid Loss: 292.493080
+Client 4 finished training
+Background model 'track_1_no0' training complete. Accuracy: N/A
+=== END CLIENT 4 TRAINING ===
+
+
+=== CLIENT 4 MODEL SAVING FOR ROUND 3 ===
+Client 4 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/clients/client_4
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/clients/client_4
+Saving trained background model for track: 'track_1_no0'
+Saved 1 background models
+=== END CLIENT 4 MODEL SAVING ===
+
+Client 5: Loading track models and training with disagreement resolution...
+
+=== CLIENT 5 MODEL LOADING FOR ROUND 3 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks
+Found 3 tracks: ['track_1_no0', 'track_5_no4', 'global']
+Client 5 is assigned to primary track: 'track_5_no4'
+Primary track 'track_5_no4' details:
+        Round: 3
+        Clients: [0, 1, 3, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/track_5_no4
+This is a new track model created for round 3
+Client 5 will also train on background tracks: ['track_1_no0', 'global']
+Successfully loaded background track model 'track_1_no0' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/track_1_no0
+Successfully loaded background track model 'global' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/global
+=== END CLIENT 5 MODEL LOADING ===
+
+
+=== CLIENT 5 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 5 starting training for 10 epochs
+Client 5 - Epoch 1/10 - Train Loss: 471.275273, Valid Loss: 389.871941
+Client 5 - Epoch 2/10 - Train Loss: 432.447989, Valid Loss: 389.851837
+Client 5 - Epoch 3/10 - Train Loss: 414.253803, Valid Loss: 375.392265
+Client 5 - Epoch 4/10 - Train Loss: 406.826036, Valid Loss: 357.300701
+Client 5 - Epoch 5/10 - Train Loss: 401.580658, Valid Loss: 354.646072
+Client 5 - Epoch 6/10 - Train Loss: 399.347544, Valid Loss: 349.022228
+Client 5 - Epoch 7/10 - Train Loss: 370.821475, Valid Loss: 332.066010
+Client 5 - Epoch 8/10 - Train Loss: 362.979368, Valid Loss: 320.916023
+Client 5 - Epoch 9/10 - Train Loss: 359.618695, Valid Loss: 313.609108
+Client 5 - Epoch 10/10 - Train Loss: 349.856934, Valid Loss: 308.032112
+Client 5 finished training
+Client 5 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_5/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 5 has 2 background tracks to train
+Training on background track: 'track_1_no0'
+Client 5 starting training for 10 epochs
+Client 5 - Epoch 1/10 - Train Loss: 462.545847, Valid Loss: 394.525398
+Client 5 - Epoch 2/10 - Train Loss: 432.316279, Valid Loss: 381.742142
+Client 5 - Epoch 3/10 - Train Loss: 418.750322, Valid Loss: 368.597244
+Client 5 - Epoch 4/10 - Train Loss: 406.656731, Valid Loss: 362.212669
+Client 5 - Epoch 5/10 - Train Loss: 401.288464, Valid Loss: 350.379650
+Client 5 - Epoch 6/10 - Train Loss: 399.668807, Valid Loss: 337.222668
+Client 5 - Epoch 7/10 - Train Loss: 388.168371, Valid Loss: 333.309952
+Client 5 - Epoch 8/10 - Train Loss: 368.633902, Valid Loss: 321.480404
+Client 5 - Epoch 9/10 - Train Loss: 368.697007, Valid Loss: 314.678574
+Client 5 - Epoch 10/10 - Train Loss: 340.713173, Valid Loss: 304.050369
+Client 5 finished training
+Background model 'track_1_no0' training complete. Accuracy: N/A
+Training on background track: 'global'
+Client 5 starting training for 10 epochs
+Client 5 - Epoch 1/10 - Train Loss: 462.460733, Valid Loss: 396.392616
+Client 5 - Epoch 2/10 - Train Loss: 442.760014, Valid Loss: 378.907066
+Client 5 - Epoch 3/10 - Train Loss: 413.400259, Valid Loss: 379.514809
+Client 5 - Epoch 4/10 - Train Loss: 393.873730, Valid Loss: 361.357727
+Client 5 - Epoch 5/10 - Train Loss: 395.912795, Valid Loss: 356.904572
+Client 5 - Epoch 6/10 - Train Loss: 378.470208, Valid Loss: 344.320538
+Client 5 - Epoch 7/10 - Train Loss: 386.667512, Valid Loss: 331.341167
+Client 5 - Epoch 8/10 - Train Loss: 370.564862, Valid Loss: 319.672012
+Client 5 - Epoch 9/10 - Train Loss: 363.354807, Valid Loss: 308.289524
+Client 5 - Epoch 10/10 - Train Loss: 356.893804, Valid Loss: 304.011265
+Client 5 finished training
+Background model 'global' training complete. Accuracy: N/A
+=== END CLIENT 5 TRAINING ===
+
+
+=== CLIENT 5 MODEL SAVING FOR ROUND 3 ===
+Client 5 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/clients/client_5
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/clients/client_5
+Saving trained background model for track: 'track_1_no0'
+Saving trained background model for track: 'global'
+Saved 2 background models
+=== END CLIENT 5 MODEL SAVING ===
+
+Performing disagreement-aware track-based model aggregation...
+Starting file-based aggregation for round 3
+Found 5 clients: [4, 5, 3, 0, 1]
+Loaded disagreements: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Filtering disagreements for round 3...
+  Active: Client client_1 inbound disagreement with client client_0
+  Active: Client client_2 full disagreement (expires after round 7)
+  Active: Client client_4 outbound disagreement with client client_5
+Round 3: Found 3 clients with active disagreements
+Active disagreements found for round 3: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Creating model tracks for active disagreements: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Client 3 assigned to global track (no disagreements)
+Client 0 assigned to global track (no outbound exclusions)
+Clients not involved in disagreements: {3}
+Fully excluded clients: {2}
+
+=== MODEL TRACK ASSIGNMENTS ===
+Total tracks created: 3
+
+Track 'track_1_no0':
+  Participating clients: [1, 3, 4, 5]
+  Primary for clients: [1]
+
+Track 'track_5_no4':
+  Participating clients: [0, 1, 3, 5]
+  Primary for clients: [5]
+
+Track 'global':
+  Participating clients: [0, 1, 3, 4, 5]
+  Primary for clients: [0, 3, 4]
+
+Client primary track assignments:
+  Client 0 → Primary track: global
+  Client 1 → Primary track: track_1_no0
+  Client 3 → Primary track: global
+  Client 4 → Primary track: global
+  Client 5 → Primary track: track_5_no4
+
+Client background participations:
+  Client 1 (primary: track_1_no0) → Background participations: [3, 4, 5]
+  Client 4 (primary: global) → Background participations: [0, 1, 3, 5]
+  Client 5 (primary: track_5_no4) → Background participations: [0, 1, 3]
+=== END TRACK ASSIGNMENTS ===
+
+Disagreement resolution completed in 0.0001 seconds
+
+=== AGGREGATION FOR ROUND 3 ===
+Found 5 clients: [4, 5, 3, 0, 1]
+Loaded primary model from client 4
+Loaded background model from client 4 for track track_1_no0
+Loaded primary model from client 5
+Loaded background model from client 5 for track track_1_no0
+Loaded background model from client 5 for track global
+Loaded primary model from client 3
+Loaded background model from client 3 for track track_1_no0
+Loaded background model from client 3 for track track_5_no4
+Loaded primary model from client 0
+Loaded background model from client 0 for track track_5_no4
+Loaded primary model from client 1
+Loaded background model from client 1 for track track_5_no4
+Loaded background model from client 1 for track global
+
+Aggregating 3 tracks:
+Loaded initial model parameters as fallback
+Created true global model with parameters from all 5 clients
+
+Aggregating track: 'track_1_no0' with clients: [1, 3, 4, 5]
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/track_1_no0/finetuning_status.json
+  Including primary model from client 1 with adjusted weight 0.2000 (original: 0.2000)
+  Primary models aggregated: [1] with total weight 0.2000
+  Including background model from client 4 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 5 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 3 with adjusted weight 0.2000 (original: 0.2000)
+  Background models aggregated: [3, 4, 5] with total weight 0.6000
+  Track 'track_1_no0' normalized with combined weight 0.8000
+  Track 'track_1_no0' aggregation complete.
+
+Aggregating track: 'track_5_no4' with clients: [0, 1, 3, 5]
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/track_5_no4/finetuning_status.json
+  Including primary model from client 5 with adjusted weight 0.2000 (original: 0.2000)
+  Primary models aggregated: [5] with total weight 0.2000
+  Including background model from client 3 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 0 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 1 with adjusted weight 0.2000 (original: 0.2000)
+  Background models aggregated: [0, 1, 3] with total weight 0.6000
+  Track 'track_5_no4' normalized with combined weight 0.8000
+  Track 'track_5_no4' aggregation complete.
+
+Aggregating track: 'global' with clients: [0, 1, 3, 4, 5]
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/global/finetuning_status.json
+  Including primary model from client 0 with adjusted weight 0.2000 (original: 0.2000)
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/global/finetuning_status.json
+  Including primary model from client 3 with adjusted weight 0.2000 (original: 0.2000)
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/global/finetuning_status.json
+  Including primary model from client 4 with adjusted weight 0.2000 (original: 0.2000)
+  Primary models aggregated: [0, 3, 4] with total weight 0.6000
+  Including background model from client 5 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 1 with adjusted weight 0.2000 (original: 0.2000)
+  Background models aggregated: [1, 5] with total weight 0.4000
+  Track 'global' normalized with combined weight 1.0000
+  Track 'global' aggregation complete.
+Saved true global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/global_model_aggregated
+Saved track model: track_1_no0
+Saved track model: track_5_no4
+Saved track model: global
+Track saving completed in 0.0039 seconds
+
+Updated server's global model with parameters from true global model
+=== END AGGREGATION FOR ROUND 3 ===
+
+
+=== AGGREGATION TIMING SUMMARY FOR ROUND 3 ===
+  Disagreement loading: 0.0001s
+  Resolution time: 0.0001s
+  Aggregation time: 0.0248s
+  Track saving time: 0.0000s
+  Total time: 0.0251s
+  Has disagreements: True
+=== END TIMING SUMMARY ===
+
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/global_model_aggregated
+Evaluating global model and track-specific performance...
+No training results found for client 2
+Round 3 - RUL Prediction Metrics:
+  RMSE: 21.05 cycles
+  MAE: 17.02 cycles
+  R²: -0.1455
+  Within ±10 cycles: 36.80%
+  Within ±20 cycles: 63.93%
+Round 3 - Global model test loss: 21.046892
+Creating track progress plots with data from 2 rounds
+Saved 0 track progress plots for round 3
+Saved results for round 3 (plot mode: minimal)
+
+=== EVALUATING TRACK MODELS FOR ROUND 3 ===
+Found 3 tracks to evaluate: ['track_1_no0', 'track_5_no4', 'global']
+Evaluating track: track_1_no0
+Track 'track_1_no0' - RMSE: 21.0528, MAE: 17.0064, R²: -0.1464
+Evaluating track: track_5_no4
+Track 'track_5_no4' - RMSE: 20.8381, MAE: 16.8365, R²: -0.1223
+Evaluating track: global
+Track 'global' - RMSE: 21.0469, MAE: 17.0154, R²: -0.1455
+
+=== TRACK EVALUATION SUMMARY FOR ROUND 3 ===
+Global model - RMSE: 21.046892
+track_1_no0 - RMSE: 21.052811
+track_5_no4 - RMSE: 20.838092
+global - RMSE: 21.046892
+=== END TRACK EVALUATION ===
+
+Saved experiment results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/fl_results.json
+Saved timing metrics to results/fl_simulation_20250618_144934_n_cmapss_s34/output/aggregation_timing_metrics.json
+Round 3 completed with disagreement resolution.
+
+--- Federated Learning Round 4/5 ---
+Analyzing disagreements and preparing track-specific models...
+
+=== SERVER PREPARATION FOR ROUND 4 ===
+  Using initiation_mechanism: deep_rewind, lifting_mechanism: deep_incr_finetune, deep_lifting_finetune_rounds: 3
+Loaded disagreements: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Filtering disagreements for round 4...
+  Active: Client client_1 inbound disagreement with client client_0
+  Active: Client client_2 full disagreement (expires after round 7)
+  Active: Client client_4 outbound disagreement with client client_5
+Round 4: Found 3 clients with active disagreements
+  Fully excluded clients identified for round 4: [2]
+Loading main global model from previous round 3's aggregated model: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/global_model_aggregated
+Loaded model from round 3
+Loaded global model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/global_model_aggregated
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/global_model_for_training
+Saved main global model for training in round 4 at results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/global_model_for_training
+Active disagreements found for round 4. Initiation mechanism: deep_rewind
+Creating model tracks for active disagreements: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Client 3 assigned to global track (no disagreements)
+Client 0 assigned to global track (no outbound exclusions)
+Client 2 is fully excluded and not assigned to any track
+Clients not involved in disagreements: {3}
+Fully excluded clients: {2}
+
+=== MODEL TRACK ASSIGNMENTS ===
+Total tracks created: 3
+
+Track 'track_1_no0':
+  Participating clients: [1, 3, 4, 5]
+  Primary for clients: [1]
+
+Track 'track_5_no4':
+  Participating clients: [0, 1, 3, 5]
+  Primary for clients: [5]
+
+Track 'global':
+  Participating clients: [0, 1, 3, 4, 5]
+  Primary for clients: [0, 3, 4]
+
+Client primary track assignments:
+  Client 0 → Primary track: global
+  Client 1 → Primary track: track_1_no0
+  Client 3 → Primary track: global
+  Client 4 → Primary track: global
+  Client 5 → Primary track: track_5_no4
+
+Client background participations:
+  Client 1 (primary: track_1_no0) → Background participations: [3, 4, 5]
+  Client 4 (primary: global) → Background participations: [0, 1, 3, 5]
+  Client 5 (primary: track_5_no4) → Background participations: [0, 1, 3]
+=== END TRACK ASSIGNMENTS ===
+
+Disagreement resolution completed in 0.0001 seconds
+    Deep incremental finetuning analysis for track 'track_1_no0':
+      Total finetuning rounds: 3
+      Clients in track: [1, 3, 4, 5]
+      No previous finetuning status file found
+      Previous track clients: [1, 3, 4, 5]
+      Analyzing finetuning for each client:
+        Client 1: No finetuning required
+        Client 3: No finetuning required
+        Client 4: No finetuning required
+        Client 5: No finetuning required
+      Track 'track_1_no0' finetuning summary:
+        No action: ['1', '3', '4', '5']
+    No clients require finetuning in track 'track_1_no0'
+  Evaluating track: 'track_1_no0'. Existed previously: True
+    Track 'track_1_no0' existed and composition UNCHANGED.
+    Perform rewind for 'track_1_no0': False
+Loading model for track 'track_1_no0' from 'results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/track_1_no0'.
+Loaded model from round 3
+Loaded global model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/track_1_no0
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/track_1_no0
+    Deep incremental finetuning analysis for track 'track_5_no4':
+      Total finetuning rounds: 3
+      Clients in track: [0, 1, 3, 5]
+      No previous finetuning status file found
+      Previous track clients: [0, 1, 3, 5]
+      Analyzing finetuning for each client:
+        Client 0: No finetuning required
+        Client 1: No finetuning required
+        Client 3: No finetuning required
+        Client 5: No finetuning required
+      Track 'track_5_no4' finetuning summary:
+        No action: ['0', '1', '3', '5']
+    No clients require finetuning in track 'track_5_no4'
+  Evaluating track: 'track_5_no4'. Existed previously: True
+    Track 'track_5_no4' existed and composition UNCHANGED.
+    Perform rewind for 'track_5_no4': False
+Loading model for track 'track_5_no4' from 'results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/track_5_no4'.
+Loaded model from round 3
+Loaded global model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/track_5_no4
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/track_5_no4
+    Deep incremental finetuning analysis for track 'global':
+      Total finetuning rounds: 3
+      Clients in track: [0, 1, 3, 4, 5]
+      No previous finetuning status file found
+      Previous track clients: [0, 1, 3, 4, 5]
+      Analyzing finetuning for each client:
+        Client 0: No finetuning required
+        Client 1: No finetuning required
+        Client 3: No finetuning required
+        Client 4: No finetuning required
+        Client 5: No finetuning required
+      Track 'global' finetuning summary:
+        No action: ['0', '1', '3', '4', '5']
+    No clients require finetuning in track 'global'
+  Evaluating track: 'global'. Existed previously: True
+    Track 'global' existed and composition UNCHANGED.
+    Perform rewind for 'global': False
+Loading model for track 'global' from 'results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/global'.
+Loaded model from round 3
+Loaded global model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_3/tracks/global
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/global
+Saved track metadata for round 4.
+=== END SERVER PREPARATION FOR ROUND 4 ===\n
+Updated track models based on disagreement changes from round 3
+Starting disagreement-aware multi-track client training...
+Orchestrator: Fully excluded clients for round 4: [2]
+Client 0: Loading track models and training with disagreement resolution...
+
+=== CLIENT 0 MODEL LOADING FOR ROUND 4 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks
+Found 3 tracks: ['track_1_no0', 'track_5_no4', 'global']
+Client 0 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 4
+        Clients: [0, 1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/global
+This is a new track model created for round 4
+Client 0 will also train on background tracks: ['track_5_no4']
+Successfully loaded background track model 'track_5_no4' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/track_5_no4
+=== END CLIENT 0 MODEL LOADING ===
+
+
+=== CLIENT 0 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 0 starting training for 10 epochs
+Client 0 - Epoch 1/10 - Train Loss: 477.958444, Valid Loss: 403.104080
+Client 0 - Epoch 2/10 - Train Loss: 424.057467, Valid Loss: 373.926445
+Client 0 - Epoch 3/10 - Train Loss: 420.499472, Valid Loss: 381.838120
+Client 0 - Epoch 4/10 - Train Loss: 412.533168, Valid Loss: 359.594719
+Client 0 - Epoch 5/10 - Train Loss: 400.379826, Valid Loss: 369.316757
+Client 0 - Epoch 6/10 - Train Loss: 400.620364, Valid Loss: 341.243820
+Client 0 - Epoch 7/10 - Train Loss: 377.727093, Valid Loss: 343.608704
+Client 0 - Epoch 8/10 - Train Loss: 377.702886, Valid Loss: 325.399536
+Client 0 - Epoch 9/10 - Train Loss: 363.111478, Valid Loss: 334.919319
+Client 0 - Epoch 10/10 - Train Loss: 355.902762, Valid Loss: 309.694099
+Client 0 finished training
+Client 0 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_0/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 0 has 1 background tracks to train
+Training on background track: 'track_5_no4'
+Client 0 starting training for 10 epochs
+Client 0 - Epoch 1/10 - Train Loss: 441.777550, Valid Loss: 397.924591
+Client 0 - Epoch 2/10 - Train Loss: 436.623765, Valid Loss: 384.781693
+Client 0 - Epoch 3/10 - Train Loss: 433.961811, Valid Loss: 366.863396
+Client 0 - Epoch 4/10 - Train Loss: 425.191230, Valid Loss: 356.818069
+Client 0 - Epoch 5/10 - Train Loss: 410.263533, Valid Loss: 366.189537
+Client 0 - Epoch 6/10 - Train Loss: 396.262946, Valid Loss: 336.895325
+Client 0 - Epoch 7/10 - Train Loss: 370.555037, Valid Loss: 325.275993
+Client 0 - Epoch 8/10 - Train Loss: 374.878970, Valid Loss: 325.945183
+Client 0 - Epoch 9/10 - Train Loss: 384.192240, Valid Loss: 318.341476
+Client 0 - Epoch 10/10 - Train Loss: 363.386587, Valid Loss: 312.912537
+Client 0 finished training
+Background model 'track_5_no4' training complete. Accuracy: N/A
+=== END CLIENT 0 TRAINING ===
+
+
+=== CLIENT 0 MODEL SAVING FOR ROUND 4 ===
+Client 0 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/clients/client_0
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/clients/client_0
+Saving trained background model for track: 'track_5_no4'
+Saved 1 background models
+=== END CLIENT 0 MODEL SAVING ===
+
+Client 1: Loading track models and training with disagreement resolution...
+
+=== CLIENT 1 MODEL LOADING FOR ROUND 4 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks
+Found 3 tracks: ['track_1_no0', 'track_5_no4', 'global']
+Client 1 is assigned to primary track: 'track_1_no0'
+Primary track 'track_1_no0' details:
+        Round: 4
+        Clients: [1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/track_1_no0
+This is a new track model created for round 4
+Client 1 will also train on background tracks: ['track_5_no4', 'global']
+Successfully loaded background track model 'track_5_no4' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/track_5_no4
+Successfully loaded background track model 'global' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/global
+=== END CLIENT 1 MODEL LOADING ===
+
+
+=== CLIENT 1 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 1 starting training for 10 epochs
+Client 1 - Epoch 1/10 - Train Loss: 649.463290, Valid Loss: 416.671722
+Client 1 - Epoch 2/10 - Train Loss: 596.032363, Valid Loss: 398.356789
+Client 1 - Epoch 3/10 - Train Loss: 576.564014, Valid Loss: 364.782196
+Client 1 - Epoch 4/10 - Train Loss: 554.971907, Valid Loss: 357.374603
+Client 1 - Epoch 5/10 - Train Loss: 531.972576, Valid Loss: 356.957951
+Client 1 - Epoch 6/10 - Train Loss: 528.512141, Valid Loss: 331.943773
+Client 1 - Epoch 7/10 - Train Loss: 500.472623, Valid Loss: 334.710949
+Client 1 - Epoch 8/10 - Train Loss: 475.295567, Valid Loss: 321.550613
+Client 1 - Epoch 9/10 - Train Loss: 512.244352, Valid Loss: 306.769421
+Client 1 - Epoch 10/10 - Train Loss: 459.447101, Valid Loss: 306.198347
+Client 1 finished training
+Client 1 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_1/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 1 has 2 background tracks to train
+Training on background track: 'track_5_no4'
+Client 1 starting training for 10 epochs
+Client 1 - Epoch 1/10 - Train Loss: 626.236150, Valid Loss: 406.474403
+Client 1 - Epoch 2/10 - Train Loss: 606.434446, Valid Loss: 389.187103
+Client 1 - Epoch 3/10 - Train Loss: 569.652574, Valid Loss: 386.261452
+Client 1 - Epoch 4/10 - Train Loss: 586.680422, Valid Loss: 362.666496
+Client 1 - Epoch 5/10 - Train Loss: 527.227377, Valid Loss: 362.795599
+Client 1 - Epoch 6/10 - Train Loss: 528.889829, Valid Loss: 346.699165
+Client 1 - Epoch 7/10 - Train Loss: 500.904494, Valid Loss: 340.364553
+Client 1 - Epoch 8/10 - Train Loss: 513.594320, Valid Loss: 321.806578
+Client 1 - Epoch 9/10 - Train Loss: 498.194174, Valid Loss: 310.257757
+Client 1 - Epoch 10/10 - Train Loss: 481.344513, Valid Loss: 319.068127
+Client 1 finished training
+Background model 'track_5_no4' training complete. Accuracy: N/A
+Training on background track: 'global'
+Client 1 starting training for 10 epochs
+Client 1 - Epoch 1/10 - Train Loss: 630.054570, Valid Loss: 414.256489
+Client 1 - Epoch 2/10 - Train Loss: 571.614887, Valid Loss: 382.440121
+Client 1 - Epoch 3/10 - Train Loss: 555.921290, Valid Loss: 377.126217
+Client 1 - Epoch 4/10 - Train Loss: 569.592905, Valid Loss: 366.613392
+Client 1 - Epoch 5/10 - Train Loss: 557.803751, Valid Loss: 346.718948
+Client 1 - Epoch 6/10 - Train Loss: 502.307117, Valid Loss: 344.318693
+Client 1 - Epoch 7/10 - Train Loss: 507.163307, Valid Loss: 328.737923
+Client 1 - Epoch 8/10 - Train Loss: 510.836236, Valid Loss: 311.980423
+Client 1 - Epoch 9/10 - Train Loss: 484.965517, Valid Loss: 309.864933
+Client 1 - Epoch 10/10 - Train Loss: 494.434908, Valid Loss: 304.719570
+Client 1 finished training
+Background model 'global' training complete. Accuracy: N/A
+=== END CLIENT 1 TRAINING ===
+
+
+=== CLIENT 1 MODEL SAVING FOR ROUND 4 ===
+Client 1 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/clients/client_1
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/clients/client_1
+Saving trained background model for track: 'track_5_no4'
+Saving trained background model for track: 'global'
+Saved 2 background models
+=== END CLIENT 1 MODEL SAVING ===
+
+Skipping training for client 2 in round 4 due to full exclusion from all tracks.
+Client 3: Loading track models and training with disagreement resolution...
+
+=== CLIENT 3 MODEL LOADING FOR ROUND 4 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks
+Found 3 tracks: ['track_1_no0', 'track_5_no4', 'global']
+Client 3 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 4
+        Clients: [0, 1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/global
+This is a new track model created for round 4
+Client 3 will also train on background tracks: ['track_1_no0', 'track_5_no4']
+Successfully loaded background track model 'track_1_no0' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/track_1_no0
+Successfully loaded background track model 'track_5_no4' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/track_5_no4
+=== END CLIENT 3 MODEL LOADING ===
+
+
+=== CLIENT 3 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 3 starting training for 10 epochs
+Client 3 - Epoch 1/10 - Train Loss: 281.514386, Valid Loss: 206.208754
+Client 3 - Epoch 2/10 - Train Loss: 254.825556, Valid Loss: 200.668888
+Client 3 - Epoch 3/10 - Train Loss: 250.913264, Valid Loss: 193.241211
+Client 3 - Epoch 4/10 - Train Loss: 256.838574, Valid Loss: 194.778180
+Client 3 - Epoch 5/10 - Train Loss: 243.475275, Valid Loss: 184.622063
+Client 3 - Epoch 6/10 - Train Loss: 240.472526, Valid Loss: 185.130131
+Client 3 - Epoch 7/10 - Train Loss: 227.386877, Valid Loss: 178.506901
+Client 3 - Epoch 8/10 - Train Loss: 232.045599, Valid Loss: 179.687540
+Client 3 - Epoch 9/10 - Train Loss: 224.349008, Valid Loss: 170.695212
+Client 3 - Epoch 10/10 - Train Loss: 228.837709, Valid Loss: 167.109182
+Client 3 finished training
+Client 3 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_3/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 3 has 2 background tracks to train
+Training on background track: 'track_1_no0'
+Client 3 starting training for 10 epochs
+Client 3 - Epoch 1/10 - Train Loss: 285.153107, Valid Loss: 210.524681
+Client 3 - Epoch 2/10 - Train Loss: 265.227804, Valid Loss: 197.546117
+Client 3 - Epoch 3/10 - Train Loss: 245.776104, Valid Loss: 190.055002
+Client 3 - Epoch 4/10 - Train Loss: 245.871574, Valid Loss: 186.015448
+Client 3 - Epoch 5/10 - Train Loss: 234.304663, Valid Loss: 180.036337
+Client 3 - Epoch 6/10 - Train Loss: 233.021378, Valid Loss: 177.322039
+Client 3 - Epoch 7/10 - Train Loss: 228.541708, Valid Loss: 177.072089
+Client 3 - Epoch 8/10 - Train Loss: 215.222714, Valid Loss: 170.989557
+Client 3 - Epoch 9/10 - Train Loss: 211.461492, Valid Loss: 168.182538
+Client 3 - Epoch 10/10 - Train Loss: 214.049267, Valid Loss: 162.469253
+Client 3 finished training
+Background model 'track_1_no0' training complete. Accuracy: N/A
+Training on background track: 'track_5_no4'
+Client 3 starting training for 10 epochs
+Client 3 - Epoch 1/10 - Train Loss: 282.609112, Valid Loss: 208.999660
+Client 3 - Epoch 2/10 - Train Loss: 278.005409, Valid Loss: 197.455088
+Client 3 - Epoch 3/10 - Train Loss: 248.160765, Valid Loss: 191.298676
+Client 3 - Epoch 4/10 - Train Loss: 248.901551, Valid Loss: 183.759803
+Client 3 - Epoch 5/10 - Train Loss: 220.235600, Valid Loss: 185.294266
+Client 3 - Epoch 6/10 - Train Loss: 226.192918, Valid Loss: 174.904702
+Client 3 - Epoch 7/10 - Train Loss: 219.536598, Valid Loss: 175.269661
+Client 3 - Epoch 8/10 - Train Loss: 214.549840, Valid Loss: 168.302123
+Client 3 - Epoch 9/10 - Train Loss: 217.300630, Valid Loss: 173.104687
+Client 3 - Epoch 10/10 - Train Loss: 205.243206, Valid Loss: 165.982419
+Client 3 finished training
+Background model 'track_5_no4' training complete. Accuracy: N/A
+=== END CLIENT 3 TRAINING ===
+
+
+=== CLIENT 3 MODEL SAVING FOR ROUND 4 ===
+Client 3 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/clients/client_3
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/clients/client_3
+Saving trained background model for track: 'track_1_no0'
+Saving trained background model for track: 'track_5_no4'
+Saved 2 background models
+=== END CLIENT 3 MODEL SAVING ===
+
+Client 4: Loading track models and training with disagreement resolution...
+
+=== CLIENT 4 MODEL LOADING FOR ROUND 4 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks
+Found 3 tracks: ['track_1_no0', 'track_5_no4', 'global']
+Client 4 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 4
+        Clients: [0, 1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/global
+This is a new track model created for round 4
+Client 4 will also train on background tracks: ['track_1_no0']
+Successfully loaded background track model 'track_1_no0' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/track_1_no0
+=== END CLIENT 4 MODEL LOADING ===
+
+
+=== CLIENT 4 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 4 starting training for 10 epochs
+Client 4 - Epoch 1/10 - Train Loss: 352.875124, Valid Loss: 303.357620
+Client 4 - Epoch 2/10 - Train Loss: 347.509073, Valid Loss: 292.054199
+Client 4 - Epoch 3/10 - Train Loss: 337.938651, Valid Loss: 276.837494
+Client 4 - Epoch 4/10 - Train Loss: 332.459752, Valid Loss: 280.434357
+Client 4 - Epoch 5/10 - Train Loss: 314.785830, Valid Loss: 255.048073
+Client 4 - Epoch 6/10 - Train Loss: 317.817170, Valid Loss: 250.441391
+Client 4 - Epoch 7/10 - Train Loss: 311.537307, Valid Loss: 251.756313
+Client 4 - Epoch 8/10 - Train Loss: 288.556317, Valid Loss: 241.961906
+Client 4 - Epoch 9/10 - Train Loss: 267.243665, Valid Loss: 231.798229
+Client 4 - Epoch 10/10 - Train Loss: 279.746137, Valid Loss: 229.032444
+Client 4 finished training
+Client 4 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_4/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 4 has 1 background tracks to train
+Training on background track: 'track_1_no0'
+Client 4 starting training for 10 epochs
+Client 4 - Epoch 1/10 - Train Loss: 355.623352, Valid Loss: 310.177116
+Client 4 - Epoch 2/10 - Train Loss: 353.755555, Valid Loss: 294.480774
+Client 4 - Epoch 3/10 - Train Loss: 347.676777, Valid Loss: 283.767990
+Client 4 - Epoch 4/10 - Train Loss: 317.741173, Valid Loss: 272.205025
+Client 4 - Epoch 5/10 - Train Loss: 307.459854, Valid Loss: 257.422684
+Client 4 - Epoch 6/10 - Train Loss: 299.979757, Valid Loss: 249.956627
+Client 4 - Epoch 7/10 - Train Loss: 298.854500, Valid Loss: 240.088692
+Client 4 - Epoch 8/10 - Train Loss: 290.196700, Valid Loss: 235.980354
+Client 4 - Epoch 9/10 - Train Loss: 302.943176, Valid Loss: 227.316471
+Client 4 - Epoch 10/10 - Train Loss: 291.912811, Valid Loss: 236.039043
+Client 4 finished training
+Background model 'track_1_no0' training complete. Accuracy: N/A
+=== END CLIENT 4 TRAINING ===
+
+
+=== CLIENT 4 MODEL SAVING FOR ROUND 4 ===
+Client 4 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/clients/client_4
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/clients/client_4
+Saving trained background model for track: 'track_1_no0'
+Saved 1 background models
+=== END CLIENT 4 MODEL SAVING ===
+
+Client 5: Loading track models and training with disagreement resolution...
+
+=== CLIENT 5 MODEL LOADING FOR ROUND 4 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks
+Found 3 tracks: ['track_1_no0', 'track_5_no4', 'global']
+Client 5 is assigned to primary track: 'track_5_no4'
+Primary track 'track_5_no4' details:
+        Round: 4
+        Clients: [0, 1, 3, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/track_5_no4
+This is a new track model created for round 4
+Client 5 will also train on background tracks: ['track_1_no0', 'global']
+Successfully loaded background track model 'track_1_no0' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/track_1_no0
+Successfully loaded background track model 'global' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/global
+=== END CLIENT 5 MODEL LOADING ===
+
+
+=== CLIENT 5 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 5 starting training for 10 epochs
+Client 5 - Epoch 1/10 - Train Loss: 347.874741, Valid Loss: 312.821854
+Client 5 - Epoch 2/10 - Train Loss: 357.426814, Valid Loss: 289.137688
+Client 5 - Epoch 3/10 - Train Loss: 339.531600, Valid Loss: 278.471226
+Client 5 - Epoch 4/10 - Train Loss: 323.066125, Valid Loss: 277.610046
+Client 5 - Epoch 5/10 - Train Loss: 320.361354, Valid Loss: 256.972652
+Client 5 - Epoch 6/10 - Train Loss: 291.873322, Valid Loss: 255.235008
+Client 5 - Epoch 7/10 - Train Loss: 303.969835, Valid Loss: 241.281971
+Client 5 - Epoch 8/10 - Train Loss: 282.782161, Valid Loss: 243.095432
+Client 5 - Epoch 9/10 - Train Loss: 274.634798, Valid Loss: 231.986549
+Client 5 - Epoch 10/10 - Train Loss: 272.808441, Valid Loss: 219.495163
+Client 5 finished training
+Client 5 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_5/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 5 has 2 background tracks to train
+Training on background track: 'track_1_no0'
+Client 5 starting training for 10 epochs
+Client 5 - Epoch 1/10 - Train Loss: 361.912147, Valid Loss: 294.541279
+Client 5 - Epoch 2/10 - Train Loss: 359.842588, Valid Loss: 294.135468
+Client 5 - Epoch 3/10 - Train Loss: 309.258725, Valid Loss: 282.627510
+Client 5 - Epoch 4/10 - Train Loss: 334.258820, Valid Loss: 273.584785
+Client 5 - Epoch 5/10 - Train Loss: 312.969365, Valid Loss: 261.078430
+Client 5 - Epoch 6/10 - Train Loss: 306.014263, Valid Loss: 257.321270
+Client 5 - Epoch 7/10 - Train Loss: 302.269792, Valid Loss: 248.207283
+Client 5 - Epoch 8/10 - Train Loss: 288.903326, Valid Loss: 241.719181
+Client 5 - Epoch 9/10 - Train Loss: 271.622001, Valid Loss: 232.246292
+Client 5 - Epoch 10/10 - Train Loss: 288.259716, Valid Loss: 234.638029
+Client 5 finished training
+Background model 'track_1_no0' training complete. Accuracy: N/A
+Training on background track: 'global'
+Client 5 starting training for 10 epochs
+Client 5 - Epoch 1/10 - Train Loss: 345.031177, Valid Loss: 296.298996
+Client 5 - Epoch 2/10 - Train Loss: 341.269179, Valid Loss: 296.564270
+Client 5 - Epoch 3/10 - Train Loss: 327.894980, Valid Loss: 281.848110
+Client 5 - Epoch 4/10 - Train Loss: 337.302300, Valid Loss: 269.776806
+Client 5 - Epoch 5/10 - Train Loss: 322.367006, Valid Loss: 262.808907
+Client 5 - Epoch 6/10 - Train Loss: 306.609166, Valid Loss: 252.803280
+Client 5 - Epoch 7/10 - Train Loss: 299.126158, Valid Loss: 247.754585
+Client 5 - Epoch 8/10 - Train Loss: 298.365697, Valid Loss: 239.606010
+Client 5 - Epoch 9/10 - Train Loss: 280.196822, Valid Loss: 230.394123
+Client 5 - Epoch 10/10 - Train Loss: 269.371800, Valid Loss: 230.752350
+Client 5 finished training
+Background model 'global' training complete. Accuracy: N/A
+=== END CLIENT 5 TRAINING ===
+
+
+=== CLIENT 5 MODEL SAVING FOR ROUND 4 ===
+Client 5 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/clients/client_5
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/clients/client_5
+Saving trained background model for track: 'track_1_no0'
+Saving trained background model for track: 'global'
+Saved 2 background models
+=== END CLIENT 5 MODEL SAVING ===
+
+Performing disagreement-aware track-based model aggregation...
+Starting file-based aggregation for round 4
+Found 5 clients: [4, 5, 3, 0, 1]
+Loaded disagreements: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Filtering disagreements for round 4...
+  Active: Client client_1 inbound disagreement with client client_0
+  Active: Client client_2 full disagreement (expires after round 7)
+  Active: Client client_4 outbound disagreement with client client_5
+Round 4: Found 3 clients with active disagreements
+Active disagreements found for round 4: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Creating model tracks for active disagreements: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Client 3 assigned to global track (no disagreements)
+Client 0 assigned to global track (no outbound exclusions)
+Clients not involved in disagreements: {3}
+Fully excluded clients: {2}
+
+=== MODEL TRACK ASSIGNMENTS ===
+Total tracks created: 3
+
+Track 'track_1_no0':
+  Participating clients: [1, 3, 4, 5]
+  Primary for clients: [1]
+
+Track 'track_5_no4':
+  Participating clients: [0, 1, 3, 5]
+  Primary for clients: [5]
+
+Track 'global':
+  Participating clients: [0, 1, 3, 4, 5]
+  Primary for clients: [0, 3, 4]
+
+Client primary track assignments:
+  Client 0 → Primary track: global
+  Client 1 → Primary track: track_1_no0
+  Client 3 → Primary track: global
+  Client 4 → Primary track: global
+  Client 5 → Primary track: track_5_no4
+
+Client background participations:
+  Client 1 (primary: track_1_no0) → Background participations: [3, 4, 5]
+  Client 4 (primary: global) → Background participations: [0, 1, 3, 5]
+  Client 5 (primary: track_5_no4) → Background participations: [0, 1, 3]
+=== END TRACK ASSIGNMENTS ===
+
+Disagreement resolution completed in 0.0001 seconds
+
+=== AGGREGATION FOR ROUND 4 ===
+Found 5 clients: [4, 5, 3, 0, 1]
+Loaded primary model from client 4
+Loaded background model from client 4 for track track_1_no0
+Loaded primary model from client 5
+Loaded background model from client 5 for track track_1_no0
+Loaded background model from client 5 for track global
+Loaded primary model from client 3
+Loaded background model from client 3 for track track_1_no0
+Loaded background model from client 3 for track track_5_no4
+Loaded primary model from client 0
+Loaded background model from client 0 for track track_5_no4
+Loaded primary model from client 1
+Loaded background model from client 1 for track track_5_no4
+Loaded background model from client 1 for track global
+
+Aggregating 3 tracks:
+Loaded initial model parameters as fallback
+Created true global model with parameters from all 5 clients
+
+Aggregating track: 'track_1_no0' with clients: [1, 3, 4, 5]
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/track_1_no0/finetuning_status.json
+  Including primary model from client 1 with adjusted weight 0.2000 (original: 0.2000)
+  Primary models aggregated: [1] with total weight 0.2000
+  Including background model from client 4 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 5 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 3 with adjusted weight 0.2000 (original: 0.2000)
+  Background models aggregated: [3, 4, 5] with total weight 0.6000
+  Track 'track_1_no0' normalized with combined weight 0.8000
+  Track 'track_1_no0' aggregation complete.
+
+Aggregating track: 'track_5_no4' with clients: [0, 1, 3, 5]
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/track_5_no4/finetuning_status.json
+  Including primary model from client 5 with adjusted weight 0.2000 (original: 0.2000)
+  Primary models aggregated: [5] with total weight 0.2000
+  Including background model from client 3 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 0 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 1 with adjusted weight 0.2000 (original: 0.2000)
+  Background models aggregated: [0, 1, 3] with total weight 0.6000
+  Track 'track_5_no4' normalized with combined weight 0.8000
+  Track 'track_5_no4' aggregation complete.
+
+Aggregating track: 'global' with clients: [0, 1, 3, 4, 5]
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/global/finetuning_status.json
+  Including primary model from client 0 with adjusted weight 0.2000 (original: 0.2000)
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/global/finetuning_status.json
+  Including primary model from client 3 with adjusted weight 0.2000 (original: 0.2000)
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/global/finetuning_status.json
+  Including primary model from client 4 with adjusted weight 0.2000 (original: 0.2000)
+  Primary models aggregated: [0, 3, 4] with total weight 0.6000
+  Including background model from client 5 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 1 with adjusted weight 0.2000 (original: 0.2000)
+  Background models aggregated: [1, 5] with total weight 0.4000
+  Track 'global' normalized with combined weight 1.0000
+  Track 'global' aggregation complete.
+Saved true global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/global_model_aggregated
+Saved track model: track_1_no0
+Saved track model: track_5_no4
+Saved track model: global
+Track saving completed in 0.0042 seconds
+
+Updated server's global model with parameters from true global model
+=== END AGGREGATION FOR ROUND 4 ===
+
+
+=== AGGREGATION TIMING SUMMARY FOR ROUND 4 ===
+  Disagreement loading: 0.0001s
+  Resolution time: 0.0001s
+  Aggregation time: 0.0249s
+  Track saving time: 0.0000s
+  Total time: 0.0251s
+  Has disagreements: True
+=== END TIMING SUMMARY ===
+
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/global_model_aggregated
+Evaluating global model and track-specific performance...
+No training results found for client 2
+Round 4 - RUL Prediction Metrics:
+  RMSE: 19.49 cycles
+  MAE: 15.67 cycles
+  R²: 0.0158
+  Within ±10 cycles: 40.13%
+  Within ±20 cycles: 67.87%
+Round 4 - Global model test loss: 19.490631
+Creating track progress plots with data from 3 rounds
+Saved 0 track progress plots for round 4
+Saved results for round 4 (plot mode: minimal)
+
+=== EVALUATING TRACK MODELS FOR ROUND 4 ===
+Found 3 tracks to evaluate: ['track_1_no0', 'track_5_no4', 'global']
+Evaluating track: track_1_no0
+Track 'track_1_no0' - RMSE: 19.4670, MAE: 15.6534, R²: 0.0180
+Evaluating track: track_5_no4
+Track 'track_5_no4' - RMSE: 19.2734, MAE: 15.4744, R²: 0.0378
+Evaluating track: global
+Track 'global' - RMSE: 19.4906, MAE: 15.6687, R²: 0.0158
+
+=== TRACK EVALUATION SUMMARY FOR ROUND 4 ===
+Global model - RMSE: 19.490631
+track_1_no0 - RMSE: 19.467001
+track_5_no4 - RMSE: 19.273384
+global - RMSE: 19.490631
+=== END TRACK EVALUATION ===
+
+Saved experiment results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/fl_results.json
+Saved timing metrics to results/fl_simulation_20250618_144934_n_cmapss_s34/output/aggregation_timing_metrics.json
+Round 4 completed with disagreement resolution.
+
+--- Federated Learning Round 5/5 ---
+Analyzing disagreements and preparing track-specific models...
+
+=== SERVER PREPARATION FOR ROUND 5 ===
+  Using initiation_mechanism: deep_rewind, lifting_mechanism: deep_incr_finetune, deep_lifting_finetune_rounds: 3
+Loaded disagreements: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Filtering disagreements for round 5...
+  Active: Client client_1 inbound disagreement with client client_0
+  Active: Client client_2 full disagreement (expires after round 7)
+  Active: Client client_4 outbound disagreement with client client_5
+Round 5: Found 3 clients with active disagreements
+  Fully excluded clients identified for round 5: [2]
+Loading main global model from previous round 4's aggregated model: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/global_model_aggregated
+Loaded model from round 4
+Loaded global model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/global_model_aggregated
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/global_model_for_training
+Saved main global model for training in round 5 at results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/global_model_for_training
+Active disagreements found for round 5. Initiation mechanism: deep_rewind
+Creating model tracks for active disagreements: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Client 3 assigned to global track (no disagreements)
+Client 0 assigned to global track (no outbound exclusions)
+Client 2 is fully excluded and not assigned to any track
+Clients not involved in disagreements: {3}
+Fully excluded clients: {2}
+
+=== MODEL TRACK ASSIGNMENTS ===
+Total tracks created: 3
+
+Track 'track_1_no0':
+  Participating clients: [1, 3, 4, 5]
+  Primary for clients: [1]
+
+Track 'track_5_no4':
+  Participating clients: [0, 1, 3, 5]
+  Primary for clients: [5]
+
+Track 'global':
+  Participating clients: [0, 1, 3, 4, 5]
+  Primary for clients: [0, 3, 4]
+
+Client primary track assignments:
+  Client 0 → Primary track: global
+  Client 1 → Primary track: track_1_no0
+  Client 3 → Primary track: global
+  Client 4 → Primary track: global
+  Client 5 → Primary track: track_5_no4
+
+Client background participations:
+  Client 1 (primary: track_1_no0) → Background participations: [3, 4, 5]
+  Client 4 (primary: global) → Background participations: [0, 1, 3, 5]
+  Client 5 (primary: track_5_no4) → Background participations: [0, 1, 3]
+=== END TRACK ASSIGNMENTS ===
+
+Disagreement resolution completed in 0.0001 seconds
+    Deep incremental finetuning analysis for track 'track_1_no0':
+      Total finetuning rounds: 3
+      Clients in track: [1, 3, 4, 5]
+      No previous finetuning status file found
+      Previous track clients: [1, 3, 4, 5]
+      Analyzing finetuning for each client:
+        Client 1: No finetuning required
+        Client 3: No finetuning required
+        Client 4: No finetuning required
+        Client 5: No finetuning required
+      Track 'track_1_no0' finetuning summary:
+        No action: ['1', '3', '4', '5']
+    No clients require finetuning in track 'track_1_no0'
+  Evaluating track: 'track_1_no0'. Existed previously: True
+    Track 'track_1_no0' existed and composition UNCHANGED.
+    Perform rewind for 'track_1_no0': False
+Loading model for track 'track_1_no0' from 'results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/track_1_no0'.
+Loaded model from round 4
+Loaded global model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/track_1_no0
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/track_1_no0
+    Deep incremental finetuning analysis for track 'track_5_no4':
+      Total finetuning rounds: 3
+      Clients in track: [0, 1, 3, 5]
+      No previous finetuning status file found
+      Previous track clients: [0, 1, 3, 5]
+      Analyzing finetuning for each client:
+        Client 0: No finetuning required
+        Client 1: No finetuning required
+        Client 3: No finetuning required
+        Client 5: No finetuning required
+      Track 'track_5_no4' finetuning summary:
+        No action: ['0', '1', '3', '5']
+    No clients require finetuning in track 'track_5_no4'
+  Evaluating track: 'track_5_no4'. Existed previously: True
+    Track 'track_5_no4' existed and composition UNCHANGED.
+    Perform rewind for 'track_5_no4': False
+Loading model for track 'track_5_no4' from 'results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/track_5_no4'.
+Loaded model from round 4
+Loaded global model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/track_5_no4
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/track_5_no4
+    Deep incremental finetuning analysis for track 'global':
+      Total finetuning rounds: 3
+      Clients in track: [0, 1, 3, 4, 5]
+      No previous finetuning status file found
+      Previous track clients: [0, 1, 3, 4, 5]
+      Analyzing finetuning for each client:
+        Client 0: No finetuning required
+        Client 1: No finetuning required
+        Client 3: No finetuning required
+        Client 4: No finetuning required
+        Client 5: No finetuning required
+      Track 'global' finetuning summary:
+        No action: ['0', '1', '3', '4', '5']
+    No clients require finetuning in track 'global'
+  Evaluating track: 'global'. Existed previously: True
+    Track 'global' existed and composition UNCHANGED.
+    Perform rewind for 'global': False
+Loading model for track 'global' from 'results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/global'.
+Loaded model from round 4
+Loaded global model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_4/tracks/global
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/global
+Saved track metadata for round 5.
+=== END SERVER PREPARATION FOR ROUND 5 ===\n
+Updated track models based on disagreement changes from round 4
+Starting disagreement-aware multi-track client training...
+Orchestrator: Fully excluded clients for round 5: [2]
+Client 0: Loading track models and training with disagreement resolution...
+
+=== CLIENT 0 MODEL LOADING FOR ROUND 5 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks
+Found 3 tracks: ['track_1_no0', 'track_5_no4', 'global']
+Client 0 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 5
+        Clients: [0, 1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/global
+This is a new track model created for round 5
+Client 0 will also train on background tracks: ['track_5_no4']
+Successfully loaded background track model 'track_5_no4' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/track_5_no4
+=== END CLIENT 0 MODEL LOADING ===
+
+
+=== CLIENT 0 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 0 starting training for 10 epochs
+Client 0 - Epoch 1/10 - Train Loss: 372.077977, Valid Loss: 328.293236
+Client 0 - Epoch 2/10 - Train Loss: 363.013799, Valid Loss: 299.121109
+Client 0 - Epoch 3/10 - Train Loss: 356.388888, Valid Loss: 294.852364
+Client 0 - Epoch 4/10 - Train Loss: 338.010975, Valid Loss: 286.207344
+Client 0 - Epoch 5/10 - Train Loss: 325.921617, Valid Loss: 285.731911
+Client 0 - Epoch 6/10 - Train Loss: 346.464003, Valid Loss: 285.946892
+Client 0 - Epoch 7/10 - Train Loss: 334.396099, Valid Loss: 283.145866
+Client 0 - Epoch 8/10 - Train Loss: 302.770169, Valid Loss: 274.564354
+Client 0 - Epoch 9/10 - Train Loss: 304.031576, Valid Loss: 271.179577
+Client 0 - Epoch 10/10 - Train Loss: 307.358897, Valid Loss: 267.741562
+Client 0 finished training
+Client 0 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_0/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 0 has 1 background tracks to train
+Training on background track: 'track_5_no4'
+Client 0 starting training for 10 epochs
+Client 0 - Epoch 1/10 - Train Loss: 368.599769, Valid Loss: 326.543243
+Client 0 - Epoch 2/10 - Train Loss: 357.278975, Valid Loss: 290.094635
+Client 0 - Epoch 3/10 - Train Loss: 353.443386, Valid Loss: 293.621284
+Client 0 - Epoch 4/10 - Train Loss: 341.038331, Valid Loss: 286.067772
+Client 0 - Epoch 5/10 - Train Loss: 341.649986, Valid Loss: 288.225502
+Client 0 - Epoch 6/10 - Train Loss: 322.463513, Valid Loss: 280.819572
+Client 0 - Epoch 7/10 - Train Loss: 334.215520, Valid Loss: 275.576920
+Client 0 - Epoch 8/10 - Train Loss: 311.000320, Valid Loss: 291.462708
+Client 0 - Epoch 9/10 - Train Loss: 305.113932, Valid Loss: 275.318413
+Client 0 - Epoch 10/10 - Train Loss: 306.149902, Valid Loss: 268.577274
+Client 0 finished training
+Background model 'track_5_no4' training complete. Accuracy: N/A
+=== END CLIENT 0 TRAINING ===
+
+
+=== CLIENT 0 MODEL SAVING FOR ROUND 5 ===
+Client 0 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/clients/client_0
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/clients/client_0
+Saving trained background model for track: 'track_5_no4'
+Saved 1 background models
+=== END CLIENT 0 MODEL SAVING ===
+
+Client 1: Loading track models and training with disagreement resolution...
+
+=== CLIENT 1 MODEL LOADING FOR ROUND 5 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks
+Found 3 tracks: ['track_1_no0', 'track_5_no4', 'global']
+Client 1 is assigned to primary track: 'track_1_no0'
+Primary track 'track_1_no0' details:
+        Round: 5
+        Clients: [1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/track_1_no0
+This is a new track model created for round 5
+Client 1 will also train on background tracks: ['track_5_no4', 'global']
+Successfully loaded background track model 'track_5_no4' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/track_5_no4
+Successfully loaded background track model 'global' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/global
+=== END CLIENT 1 MODEL LOADING ===
+
+
+=== CLIENT 1 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 1 starting training for 10 epochs
+Client 1 - Epoch 1/10 - Train Loss: 512.299758, Valid Loss: 333.285637
+Client 1 - Epoch 2/10 - Train Loss: 503.313784, Valid Loss: 307.456736
+Client 1 - Epoch 3/10 - Train Loss: 483.408856, Valid Loss: 307.350601
+Client 1 - Epoch 4/10 - Train Loss: 460.791239, Valid Loss: 291.917442
+Client 1 - Epoch 5/10 - Train Loss: 448.520156, Valid Loss: 292.011354
+Client 1 - Epoch 6/10 - Train Loss: 437.279583, Valid Loss: 275.361069
+Client 1 - Epoch 7/10 - Train Loss: 439.074250, Valid Loss: 275.008919
+Client 1 - Epoch 8/10 - Train Loss: 408.317780, Valid Loss: 268.998889
+Client 1 - Epoch 9/10 - Train Loss: 419.778142, Valid Loss: 263.327457
+Client 1 - Epoch 10/10 - Train Loss: 419.345555, Valid Loss: 261.562826
+Client 1 finished training
+Client 1 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_1/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 1 has 2 background tracks to train
+Training on background track: 'track_5_no4'
+Client 1 starting training for 10 epochs
+Client 1 - Epoch 1/10 - Train Loss: 526.284616, Valid Loss: 330.245291
+Client 1 - Epoch 2/10 - Train Loss: 483.567859, Valid Loss: 300.780594
+Client 1 - Epoch 3/10 - Train Loss: 474.426584, Valid Loss: 288.519199
+Client 1 - Epoch 4/10 - Train Loss: 456.436955, Valid Loss: 284.544373
+Client 1 - Epoch 5/10 - Train Loss: 439.605304, Valid Loss: 283.511782
+Client 1 - Epoch 6/10 - Train Loss: 438.351600, Valid Loss: 274.172153
+Client 1 - Epoch 7/10 - Train Loss: 434.161156, Valid Loss: 270.536860
+Client 1 - Epoch 8/10 - Train Loss: 426.817648, Valid Loss: 276.335400
+Client 1 - Epoch 9/10 - Train Loss: 438.713654, Valid Loss: 270.273123
+Client 1 - Epoch 10/10 - Train Loss: 413.787112, Valid Loss: 287.196037
+Client 1 finished training
+Background model 'track_5_no4' training complete. Accuracy: N/A
+Training on background track: 'global'
+Client 1 starting training for 10 epochs
+Client 1 - Epoch 1/10 - Train Loss: 507.189777, Valid Loss: 331.889603
+Client 1 - Epoch 2/10 - Train Loss: 500.096100, Valid Loss: 307.195446
+Client 1 - Epoch 3/10 - Train Loss: 497.849438, Valid Loss: 294.938391
+Client 1 - Epoch 4/10 - Train Loss: 461.310545, Valid Loss: 287.221228
+Client 1 - Epoch 5/10 - Train Loss: 475.754857, Valid Loss: 279.701956
+Client 1 - Epoch 6/10 - Train Loss: 432.840069, Valid Loss: 274.741251
+Client 1 - Epoch 7/10 - Train Loss: 411.563329, Valid Loss: 270.925554
+Client 1 - Epoch 8/10 - Train Loss: 417.728701, Valid Loss: 265.855621
+Client 1 - Epoch 9/10 - Train Loss: 416.412403, Valid Loss: 255.837774
+Client 1 - Epoch 10/10 - Train Loss: 415.784215, Valid Loss: 249.429296
+Client 1 finished training
+Background model 'global' training complete. Accuracy: N/A
+=== END CLIENT 1 TRAINING ===
+
+
+=== CLIENT 1 MODEL SAVING FOR ROUND 5 ===
+Client 1 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/clients/client_1
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/clients/client_1
+Saving trained background model for track: 'track_5_no4'
+Saving trained background model for track: 'global'
+Saved 2 background models
+=== END CLIENT 1 MODEL SAVING ===
+
+Skipping training for client 2 in round 5 due to full exclusion from all tracks.
+Client 3: Loading track models and training with disagreement resolution...
+
+=== CLIENT 3 MODEL LOADING FOR ROUND 5 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks
+Found 3 tracks: ['track_1_no0', 'track_5_no4', 'global']
+Client 3 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 5
+        Clients: [0, 1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/global
+This is a new track model created for round 5
+Client 3 will also train on background tracks: ['track_1_no0', 'track_5_no4']
+Successfully loaded background track model 'track_1_no0' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/track_1_no0
+Successfully loaded background track model 'track_5_no4' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/track_5_no4
+=== END CLIENT 3 MODEL LOADING ===
+
+
+=== CLIENT 3 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 3 starting training for 10 epochs
+Client 3 - Epoch 1/10 - Train Loss: 229.802793, Valid Loss: 167.019844
+Client 3 - Epoch 2/10 - Train Loss: 214.328147, Valid Loss: 163.876945
+Client 3 - Epoch 3/10 - Train Loss: 211.956387, Valid Loss: 158.125179
+Client 3 - Epoch 4/10 - Train Loss: 207.963664, Valid Loss: 156.818052
+Client 3 - Epoch 5/10 - Train Loss: 202.857380, Valid Loss: 155.092815
+Client 3 - Epoch 6/10 - Train Loss: 200.537390, Valid Loss: 151.010971
+Client 3 - Epoch 7/10 - Train Loss: 198.183935, Valid Loss: 148.291593
+Client 3 - Epoch 8/10 - Train Loss: 198.562459, Valid Loss: 143.525708
+Client 3 - Epoch 9/10 - Train Loss: 180.613073, Valid Loss: 143.726114
+Client 3 - Epoch 10/10 - Train Loss: 185.312496, Valid Loss: 143.937586
+Client 3 finished training
+Client 3 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_3/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 3 has 2 background tracks to train
+Training on background track: 'track_1_no0'
+Client 3 starting training for 10 epochs
+Client 3 - Epoch 1/10 - Train Loss: 231.777144, Valid Loss: 163.791512
+Client 3 - Epoch 2/10 - Train Loss: 198.563541, Valid Loss: 162.973105
+Client 3 - Epoch 3/10 - Train Loss: 204.870360, Valid Loss: 162.008896
+Client 3 - Epoch 4/10 - Train Loss: 207.307166, Valid Loss: 153.781212
+Client 3 - Epoch 5/10 - Train Loss: 213.636416, Valid Loss: 151.627748
+Client 3 - Epoch 6/10 - Train Loss: 196.314832, Valid Loss: 147.848483
+Client 3 - Epoch 7/10 - Train Loss: 205.034324, Valid Loss: 147.800385
+Client 3 - Epoch 8/10 - Train Loss: 204.065691, Valid Loss: 144.433669
+Client 3 - Epoch 9/10 - Train Loss: 193.568541, Valid Loss: 145.020649
+Client 3 - Epoch 10/10 - Train Loss: 199.611474, Valid Loss: 139.281315
+Client 3 finished training
+Background model 'track_1_no0' training complete. Accuracy: N/A
+Training on background track: 'track_5_no4'
+Client 3 starting training for 10 epochs
+Client 3 - Epoch 1/10 - Train Loss: 222.742966, Valid Loss: 172.247540
+Client 3 - Epoch 2/10 - Train Loss: 217.194086, Valid Loss: 165.269882
+Client 3 - Epoch 3/10 - Train Loss: 213.166418, Valid Loss: 156.666037
+Client 3 - Epoch 4/10 - Train Loss: 221.155904, Valid Loss: 150.891802
+Client 3 - Epoch 5/10 - Train Loss: 213.009909, Valid Loss: 155.112951
+Client 3 - Epoch 6/10 - Train Loss: 189.148662, Valid Loss: 147.678919
+Client 3 - Epoch 7/10 - Train Loss: 199.700478, Valid Loss: 144.986435
+Client 3 - Epoch 8/10 - Train Loss: 192.950206, Valid Loss: 147.662992
+Client 3 - Epoch 9/10 - Train Loss: 187.327699, Valid Loss: 142.618382
+Client 3 - Epoch 10/10 - Train Loss: 190.467795, Valid Loss: 141.028741
+Client 3 finished training
+Background model 'track_5_no4' training complete. Accuracy: N/A
+=== END CLIENT 3 TRAINING ===
+
+
+=== CLIENT 3 MODEL SAVING FOR ROUND 5 ===
+Client 3 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/clients/client_3
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/clients/client_3
+Saving trained background model for track: 'track_1_no0'
+Saving trained background model for track: 'track_5_no4'
+Saved 2 background models
+=== END CLIENT 3 MODEL SAVING ===
+
+Client 4: Loading track models and training with disagreement resolution...
+
+=== CLIENT 4 MODEL LOADING FOR ROUND 5 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks
+Found 3 tracks: ['track_1_no0', 'track_5_no4', 'global']
+Client 4 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 5
+        Clients: [0, 1, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/global
+This is a new track model created for round 5
+Client 4 will also train on background tracks: ['track_1_no0']
+Successfully loaded background track model 'track_1_no0' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/track_1_no0
+=== END CLIENT 4 MODEL LOADING ===
+
+
+=== CLIENT 4 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 4 starting training for 10 epochs
+Client 4 - Epoch 1/10 - Train Loss: 281.751085, Valid Loss: 223.742218
+Client 4 - Epoch 2/10 - Train Loss: 300.936607, Valid Loss: 221.436699
+Client 4 - Epoch 3/10 - Train Loss: 261.526577, Valid Loss: 207.396111
+Client 4 - Epoch 4/10 - Train Loss: 267.007697, Valid Loss: 200.370335
+Client 4 - Epoch 5/10 - Train Loss: 274.312509, Valid Loss: 205.061615
+Client 4 - Epoch 6/10 - Train Loss: 258.283464, Valid Loss: 191.688923
+Client 4 - Epoch 7/10 - Train Loss: 258.354380, Valid Loss: 190.866207
+Client 4 - Epoch 8/10 - Train Loss: 252.954416, Valid Loss: 189.333801
+Client 4 - Epoch 9/10 - Train Loss: 273.486793, Valid Loss: 188.246235
+Client 4 - Epoch 10/10 - Train Loss: 247.447435, Valid Loss: 186.190842
+Client 4 finished training
+Client 4 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_4/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 4 has 1 background tracks to train
+Training on background track: 'track_1_no0'
+Client 4 starting training for 10 epochs
+Client 4 - Epoch 1/10 - Train Loss: 308.313014, Valid Loss: 228.045448
+Client 4 - Epoch 2/10 - Train Loss: 297.096019, Valid Loss: 219.222939
+Client 4 - Epoch 3/10 - Train Loss: 267.753648, Valid Loss: 219.928970
+Client 4 - Epoch 4/10 - Train Loss: 259.742029, Valid Loss: 216.636837
+Client 4 - Epoch 5/10 - Train Loss: 251.530453, Valid Loss: 208.107330
+Client 4 - Epoch 6/10 - Train Loss: 260.375757, Valid Loss: 200.832954
+Client 4 - Epoch 7/10 - Train Loss: 261.206221, Valid Loss: 197.913258
+Client 4 - Epoch 8/10 - Train Loss: 258.543779, Valid Loss: 188.971798
+Client 4 - Epoch 9/10 - Train Loss: 235.756142, Valid Loss: 185.955879
+Client 4 - Epoch 10/10 - Train Loss: 245.662661, Valid Loss: 187.858719
+Client 4 finished training
+Background model 'track_1_no0' training complete. Accuracy: N/A
+=== END CLIENT 4 TRAINING ===
+
+
+=== CLIENT 4 MODEL SAVING FOR ROUND 5 ===
+Client 4 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/clients/client_4
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/clients/client_4
+Saving trained background model for track: 'track_1_no0'
+Saved 1 background models
+=== END CLIENT 4 MODEL SAVING ===
+
+Client 5: Loading track models and training with disagreement resolution...
+
+=== CLIENT 5 MODEL LOADING FOR ROUND 5 ===
+Found tracks directory at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks
+Found 3 tracks: ['track_1_no0', 'track_5_no4', 'global']
+Client 5 is assigned to primary track: 'track_5_no4'
+Primary track 'track_5_no4' details:
+        Round: 5
+        Clients: [0, 1, 3, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/track_5_no4
+This is a new track model created for round 5
+Client 5 will also train on background tracks: ['track_1_no0', 'global']
+Successfully loaded background track model 'track_1_no0' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/track_1_no0
+Successfully loaded background track model 'global' from results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/global
+=== END CLIENT 5 MODEL LOADING ===
+
+
+=== CLIENT 5 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 5 starting training for 10 epochs
+Client 5 - Epoch 1/10 - Train Loss: 297.918490, Valid Loss: 222.693977
+Client 5 - Epoch 2/10 - Train Loss: 269.865101, Valid Loss: 221.212780
+Client 5 - Epoch 3/10 - Train Loss: 254.567295, Valid Loss: 215.864868
+Client 5 - Epoch 4/10 - Train Loss: 250.220686, Valid Loss: 205.729565
+Client 5 - Epoch 5/10 - Train Loss: 267.198362, Valid Loss: 211.893497
+Client 5 - Epoch 6/10 - Train Loss: 256.149906, Valid Loss: 200.085171
+Client 5 - Epoch 7/10 - Train Loss: 249.200875, Valid Loss: 191.573568
+Client 5 - Epoch 8/10 - Train Loss: 235.227971, Valid Loss: 197.239857
+Client 5 - Epoch 9/10 - Train Loss: 244.235846, Valid Loss: 182.231453
+Client 5 - Epoch 10/10 - Train Loss: 240.898165, Valid Loss: 176.093372
+Client 5 finished training
+Client 5 saved training results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/clients/client_5/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 5 has 2 background tracks to train
+Training on background track: 'track_1_no0'
+Client 5 starting training for 10 epochs
+Client 5 - Epoch 1/10 - Train Loss: 299.990227, Valid Loss: 244.277733
+Client 5 - Epoch 2/10 - Train Loss: 286.650431, Valid Loss: 229.776489
+Client 5 - Epoch 3/10 - Train Loss: 261.524467, Valid Loss: 214.222958
+Client 5 - Epoch 4/10 - Train Loss: 265.278926, Valid Loss: 214.890240
+Client 5 - Epoch 5/10 - Train Loss: 266.831147, Valid Loss: 203.685799
+Client 5 - Epoch 6/10 - Train Loss: 257.588602, Valid Loss: 199.928789
+Client 5 - Epoch 7/10 - Train Loss: 259.789474, Valid Loss: 195.874882
+Client 5 - Epoch 8/10 - Train Loss: 257.796868, Valid Loss: 190.232319
+Client 5 - Epoch 9/10 - Train Loss: 240.746640, Valid Loss: 183.779196
+Client 5 - Epoch 10/10 - Train Loss: 247.627477, Valid Loss: 187.446747
+Client 5 finished training
+Background model 'track_1_no0' training complete. Accuracy: N/A
+Training on background track: 'global'
+Client 5 starting training for 10 epochs
+Client 5 - Epoch 1/10 - Train Loss: 296.500161, Valid Loss: 233.792484
+Client 5 - Epoch 2/10 - Train Loss: 278.947767, Valid Loss: 223.849926
+Client 5 - Epoch 3/10 - Train Loss: 275.648671, Valid Loss: 217.704945
+Client 5 - Epoch 4/10 - Train Loss: 259.533263, Valid Loss: 210.832542
+Client 5 - Epoch 5/10 - Train Loss: 270.007261, Valid Loss: 207.058744
+Client 5 - Epoch 6/10 - Train Loss: 270.037382, Valid Loss: 202.191551
+Client 5 - Epoch 7/10 - Train Loss: 255.443530, Valid Loss: 208.878347
+Client 5 - Epoch 8/10 - Train Loss: 255.479504, Valid Loss: 192.923355
+Client 5 - Epoch 9/10 - Train Loss: 259.649481, Valid Loss: 195.864006
+Client 5 - Epoch 10/10 - Train Loss: 248.582517, Valid Loss: 181.666159
+Client 5 finished training
+Background model 'global' training complete. Accuracy: N/A
+=== END CLIENT 5 TRAINING ===
+
+
+=== CLIENT 5 MODEL SAVING FOR ROUND 5 ===
+Client 5 saved model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/clients/client_5
+Saved primary model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/clients/client_5
+Saving trained background model for track: 'track_1_no0'
+Saving trained background model for track: 'global'
+Saved 2 background models
+=== END CLIENT 5 MODEL SAVING ===
+
+Performing disagreement-aware track-based model aggregation...
+Starting file-based aggregation for round 5
+Found 5 clients: [4, 5, 3, 0, 1]
+Loaded disagreements: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Filtering disagreements for round 5...
+  Active: Client client_1 inbound disagreement with client client_0
+  Active: Client client_2 full disagreement (expires after round 7)
+  Active: Client client_4 outbound disagreement with client client_5
+Round 5: Found 3 clients with active disagreements
+Active disagreements found for round 5: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Creating model tracks for active disagreements: {'client_1': [{'type': 'inbound', 'target': 'client_0', 'active_rounds': {'start': 3, 'end': None}}], 'client_2': [{'type': 'full', 'active_rounds': {'start': 1, 'end': 7}}], 'client_4': [{'type': 'outbound', 'target': 'client_5', 'active_rounds': {'start': 1, 'end': None}}]}
+Client 3 assigned to global track (no disagreements)
+Client 0 assigned to global track (no outbound exclusions)
+Clients not involved in disagreements: {3}
+Fully excluded clients: {2}
+
+=== MODEL TRACK ASSIGNMENTS ===
+Total tracks created: 3
+
+Track 'track_1_no0':
+  Participating clients: [1, 3, 4, 5]
+  Primary for clients: [1]
+
+Track 'track_5_no4':
+  Participating clients: [0, 1, 3, 5]
+  Primary for clients: [5]
+
+Track 'global':
+  Participating clients: [0, 1, 3, 4, 5]
+  Primary for clients: [0, 3, 4]
+
+Client primary track assignments:
+  Client 0 → Primary track: global
+  Client 1 → Primary track: track_1_no0
+  Client 3 → Primary track: global
+  Client 4 → Primary track: global
+  Client 5 → Primary track: track_5_no4
+
+Client background participations:
+  Client 1 (primary: track_1_no0) → Background participations: [3, 4, 5]
+  Client 4 (primary: global) → Background participations: [0, 1, 3, 5]
+  Client 5 (primary: track_5_no4) → Background participations: [0, 1, 3]
+=== END TRACK ASSIGNMENTS ===
+
+Disagreement resolution completed in 0.0001 seconds
+
+=== AGGREGATION FOR ROUND 5 ===
+Found 5 clients: [4, 5, 3, 0, 1]
+Loaded primary model from client 4
+Loaded background model from client 4 for track track_1_no0
+Loaded primary model from client 5
+Loaded background model from client 5 for track track_1_no0
+Loaded background model from client 5 for track global
+Loaded primary model from client 3
+Loaded background model from client 3 for track track_1_no0
+Loaded background model from client 3 for track track_5_no4
+Loaded primary model from client 0
+Loaded background model from client 0 for track track_5_no4
+Loaded primary model from client 1
+Loaded background model from client 1 for track track_5_no4
+Loaded background model from client 1 for track global
+
+Aggregating 3 tracks:
+Loaded initial model parameters as fallback
+Created true global model with parameters from all 5 clients
+
+Aggregating track: 'track_1_no0' with clients: [1, 3, 4, 5]
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/track_1_no0/finetuning_status.json
+  Including primary model from client 1 with adjusted weight 0.2000 (original: 0.2000)
+  Primary models aggregated: [1] with total weight 0.2000
+  Including background model from client 4 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 5 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 3 with adjusted weight 0.2000 (original: 0.2000)
+  Background models aggregated: [3, 4, 5] with total weight 0.6000
+  Track 'track_1_no0' normalized with combined weight 0.8000
+  Track 'track_1_no0' aggregation complete.
+
+Aggregating track: 'track_5_no4' with clients: [0, 1, 3, 5]
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/track_5_no4/finetuning_status.json
+  Including primary model from client 5 with adjusted weight 0.2000 (original: 0.2000)
+  Primary models aggregated: [5] with total weight 0.2000
+  Including background model from client 3 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 0 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 1 with adjusted weight 0.2000 (original: 0.2000)
+  Background models aggregated: [0, 1, 3] with total weight 0.6000
+  Track 'track_5_no4' normalized with combined weight 0.8000
+  Track 'track_5_no4' aggregation complete.
+
+Aggregating track: 'global' with clients: [0, 1, 3, 4, 5]
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/global/finetuning_status.json
+  Including primary model from client 0 with adjusted weight 0.2000 (original: 0.2000)
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/global/finetuning_status.json
+  Including primary model from client 3 with adjusted weight 0.2000 (original: 0.2000)
+    Finetuning status file not found at: results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/tracks/global/finetuning_status.json
+  Including primary model from client 4 with adjusted weight 0.2000 (original: 0.2000)
+  Primary models aggregated: [0, 3, 4] with total weight 0.6000
+  Including background model from client 5 with adjusted weight 0.2000 (original: 0.2000)
+  Including background model from client 1 with adjusted weight 0.2000 (original: 0.2000)
+  Background models aggregated: [1, 5] with total weight 0.4000
+  Track 'global' normalized with combined weight 1.0000
+  Track 'global' aggregation complete.
+Saved true global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/global_model_aggregated
+Saved track model: track_1_no0
+Saved track model: track_5_no4
+Saved track model: global
+Track saving completed in 0.0044 seconds
+
+Updated server's global model with parameters from true global model
+=== END AGGREGATION FOR ROUND 5 ===
+
+
+=== AGGREGATION TIMING SUMMARY FOR ROUND 5 ===
+  Disagreement loading: 0.0001s
+  Resolution time: 0.0001s
+  Aggregation time: 0.0250s
+  Track saving time: 0.0000s
+  Total time: 0.0253s
+  Has disagreements: True
+=== END TIMING SUMMARY ===
+
+Saved global model to results/fl_simulation_20250618_144934_n_cmapss_s34/model_storage/round_5/global_model_aggregated
+Evaluating global model and track-specific performance...
+No training results found for client 2
+Round 5 - RUL Prediction Metrics:
+  RMSE: 19.01 cycles
+  MAE: 15.11 cycles
+  R²: 0.0630
+  Within ±10 cycles: 42.13%
+  Within ±20 cycles: 69.20%
+Round 5 - Global model test loss: 19.012894
+Creating track progress plots with data from 4 rounds
+Saved 5 track progress plots for round 5
+Creating timing plots with data from 5 rounds
+Saved timing plots for round 5
+Summary: Avg total time: 0.029s, Avg aggregation time: 0.029s, Avg resolution time: 0.090ms
+Saved results for round 5 (plot mode: last round)
+
+=== EVALUATING TRACK MODELS FOR ROUND 5 ===
+Found 3 tracks to evaluate: ['track_1_no0', 'track_5_no4', 'global']
+Evaluating track: track_1_no0
+Track 'track_1_no0' - RMSE: 18.8148, MAE: 14.9515, R²: 0.0822
+Evaluating track: track_5_no4
+Track 'track_5_no4' - RMSE: 18.8577, MAE: 15.0348, R²: 0.0782
+Evaluating track: global
+Track 'global' - RMSE: 19.0129, MAE: 15.1131, R²: 0.0630
+
+=== TRACK EVALUATION SUMMARY FOR ROUND 5 ===
+Global model - RMSE: 19.012894
+track_1_no0 - RMSE: 18.814792
+track_5_no4 - RMSE: 18.857711
+global - RMSE: 19.012894
+=== END TRACK EVALUATION ===
+
+Saved experiment results to results/fl_simulation_20250618_144934_n_cmapss_s34/output/fl_results.json
+Saved timing metrics to results/fl_simulation_20250618_144934_n_cmapss_s34/output/aggregation_timing_metrics.json
+Round 5 completed with disagreement resolution.
+
+Federated learning with disagreement resolution completed!

@@ -1,1 +1,31 @@
-{}
+{
+  "client_1": [
+    {
+      "type": "inbound",
+      "target": "client_0",
+      "active_rounds": {
+        "start": 3,
+        "end": null
+      }
+    }
+  ],
+  "client_2": [
+    {
+      "type": "full",
+      "active_rounds": {
+        "start": 1,
+        "end": 7
+      }
+    }
+  ],
+  "client_4": [
+    {
+      "type": "outbound",
+      "target": "client_5",
+      "active_rounds": {
+        "start": 1,
+        "end": null
+      }
+    }
+  ]
+}

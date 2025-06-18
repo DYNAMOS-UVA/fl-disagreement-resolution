@@ -1,0 +1,1559 @@
+Updated configuration in mock_etcd/configuration.json
+MNIST data already exists. Skipping setup.
+Use --force_setup_data to force recreation.
+Initialized global mnist model
+Loading MNIST test data from data/mnist/test/mnist_test.npz
+Loaded 10000 MNIST test samples
+Loaded MNIST test data with 10000 samples
+Saved experiment results to results/fl_simulation_20250618_135529_mnist_s7/output/fl_results.json
+Loading MNIST data from data/mnist/train/client_0/mnist_data.npz
+Client 0 loaded 600 MNIST samples
+Client 0 loaded 600 MNIST samples
+Loading MNIST data from data/mnist/train/client_1/mnist_data.npz
+Client 1 loaded 600 MNIST samples
+Client 1 loaded 600 MNIST samples
+Loading MNIST data from data/mnist/train/client_2/mnist_data.npz
+Client 2 loaded 600 MNIST samples
+Client 2 loaded 600 MNIST samples
+Loading MNIST data from data/mnist/train/client_3/mnist_data.npz
+Client 3 loaded 600 MNIST samples
+Client 3 loaded 600 MNIST samples
+Loading MNIST data from data/mnist/train/client_4/mnist_data.npz
+Client 4 loaded 600 MNIST samples
+Client 4 loaded 600 MNIST samples
+Loading MNIST data from data/mnist/train/client_5/mnist_data.npz
+Client 5 loaded 600 MNIST samples
+Client 5 loaded 600 MNIST samples
+Loading MNIST data from data/mnist/train/client_6/mnist_data.npz
+Client 6 loaded 600 MNIST samples
+Client 6 loaded 600 MNIST samples
+Loading MNIST data from data/mnist/train/client_7/mnist_data.npz
+Client 7 loaded 600 MNIST samples
+Client 7 loaded 600 MNIST samples
+Loading MNIST data from data/mnist/train/client_8/mnist_data.npz
+Client 8 loaded 600 MNIST samples
+Client 8 loaded 600 MNIST samples
+Loading MNIST data from data/mnist/train/client_9/mnist_data.npz
+Client 9 loaded 600 MNIST samples
+Client 9 loaded 600 MNIST samples
+Initialized disagreement-aware federated learning orchestrator
+  - 10 clients for mnist experiment
+  - Advanced disagreement resolution with multi-track model training
+  - Results directory: results/fl_simulation_20250618_135529_mnist_s7
+Starting federated learning with 5 rounds...
+Saved global model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/global_model_initial
+Initialized and saved the initial global model
+Round 0 - MNIST Classification Metrics:
+  Overall Accuracy: 0.0915
+  Mean Precision: 0.0235
+  Mean Recall: 0.0915
+  Mean F1 Score: 0.0349
+Round 0 - Global model test accuracy: 0.0915
+Round 0 - Global model test loss: 2.310839
+Saved results for round 0 (plot mode: minimal)
+Saved experiment results to results/fl_simulation_20250618_135529_mnist_s7/output/fl_results.json
+Initial model evaluation completed
+
+--- Federated Learning Round 1/5 ---
+Analyzing disagreements and preparing track-specific models...
+
+=== SERVER PREPARATION FOR ROUND 1 ===
+  Using initiation_mechanism: shallow, lifting_mechanism: shallow, deep_lifting_finetune_rounds: 3
+Loaded disagreements: {}
+Round 1: No disagreements defined in the system
+Round 1 starting with initial global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/global_model_initial
+Loaded model from round 0
+Loaded global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/global_model_initial
+Saved global model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/global_model_for_training
+Saved global model for training at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/global_model_for_training
+=== END SERVER PREPARATION FOR ROUND 1 ===\n
+Created initial track models from global_model_initial for round 1
+Starting disagreement-aware multi-track client training...
+Client 0: Loading track models and training with disagreement resolution...
+
+=== CLIENT 0 MODEL LOADING FOR ROUND 1 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/global_model_for_training
+=== END CLIENT 0 MODEL LOADING ===
+
+
+=== CLIENT 0 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 0 starting training for 1 epochs
+Client 0 - Epoch 1/1 - Train Loss: 1.973777, Train Acc: 0.3563, Valid Loss: 1.347534, Valid Acc: 0.6667
+Client 0 finished training
+Client 0 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_0/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 0 has no background tracks to train
+=== END CLIENT 0 TRAINING ===
+
+
+=== CLIENT 0 MODEL SAVING FOR ROUND 1 ===
+Client 0 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_0
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_0
+Saved 0 background models
+=== END CLIENT 0 MODEL SAVING ===
+
+Client 1: Loading track models and training with disagreement resolution...
+
+=== CLIENT 1 MODEL LOADING FOR ROUND 1 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/global_model_for_training
+=== END CLIENT 1 MODEL LOADING ===
+
+
+=== CLIENT 1 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 1 starting training for 1 epochs
+Client 1 - Epoch 1/1 - Train Loss: 2.096168, Train Acc: 0.3708, Valid Loss: 1.627547, Valid Acc: 0.5917
+Client 1 finished training
+Client 1 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_1/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 1 has no background tracks to train
+=== END CLIENT 1 TRAINING ===
+
+
+=== CLIENT 1 MODEL SAVING FOR ROUND 1 ===
+Client 1 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_1
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_1
+Saved 0 background models
+=== END CLIENT 1 MODEL SAVING ===
+
+Client 2: Loading track models and training with disagreement resolution...
+
+=== CLIENT 2 MODEL LOADING FOR ROUND 1 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/global_model_for_training
+=== END CLIENT 2 MODEL LOADING ===
+
+
+=== CLIENT 2 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 2 starting training for 1 epochs
+Client 2 - Epoch 1/1 - Train Loss: 2.070068, Train Acc: 0.3479, Valid Loss: 1.516837, Valid Acc: 0.6667
+Client 2 finished training
+Client 2 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_2/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 2 has no background tracks to train
+=== END CLIENT 2 TRAINING ===
+
+
+=== CLIENT 2 MODEL SAVING FOR ROUND 1 ===
+Client 2 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_2
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_2
+Saved 0 background models
+=== END CLIENT 2 MODEL SAVING ===
+
+Client 3: Loading track models and training with disagreement resolution...
+
+=== CLIENT 3 MODEL LOADING FOR ROUND 1 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/global_model_for_training
+=== END CLIENT 3 MODEL LOADING ===
+
+
+=== CLIENT 3 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 3 starting training for 1 epochs
+Client 3 - Epoch 1/1 - Train Loss: 2.043594, Train Acc: 0.3417, Valid Loss: 1.361036, Valid Acc: 0.7833
+Client 3 finished training
+Client 3 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_3/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 3 has no background tracks to train
+=== END CLIENT 3 TRAINING ===
+
+
+=== CLIENT 3 MODEL SAVING FOR ROUND 1 ===
+Client 3 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_3
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_3
+Saved 0 background models
+=== END CLIENT 3 MODEL SAVING ===
+
+Client 4: Loading track models and training with disagreement resolution...
+
+=== CLIENT 4 MODEL LOADING FOR ROUND 1 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/global_model_for_training
+=== END CLIENT 4 MODEL LOADING ===
+
+
+=== CLIENT 4 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 4 starting training for 1 epochs
+Client 4 - Epoch 1/1 - Train Loss: 1.977246, Train Acc: 0.3563, Valid Loss: 1.388433, Valid Acc: 0.7583
+Client 4 finished training
+Client 4 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_4/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 4 has no background tracks to train
+=== END CLIENT 4 TRAINING ===
+
+
+=== CLIENT 4 MODEL SAVING FOR ROUND 1 ===
+Client 4 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_4
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_4
+Saved 0 background models
+=== END CLIENT 4 MODEL SAVING ===
+
+Client 5: Loading track models and training with disagreement resolution...
+
+=== CLIENT 5 MODEL LOADING FOR ROUND 1 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/global_model_for_training
+=== END CLIENT 5 MODEL LOADING ===
+
+
+=== CLIENT 5 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 5 starting training for 1 epochs
+Client 5 - Epoch 1/1 - Train Loss: 2.029682, Train Acc: 0.3542, Valid Loss: 1.411009, Valid Acc: 0.7250
+Client 5 finished training
+Client 5 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_5/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 5 has no background tracks to train
+=== END CLIENT 5 TRAINING ===
+
+
+=== CLIENT 5 MODEL SAVING FOR ROUND 1 ===
+Client 5 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_5
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_5
+Saved 0 background models
+=== END CLIENT 5 MODEL SAVING ===
+
+Client 6: Loading track models and training with disagreement resolution...
+
+=== CLIENT 6 MODEL LOADING FOR ROUND 1 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/global_model_for_training
+=== END CLIENT 6 MODEL LOADING ===
+
+
+=== CLIENT 6 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 6 starting training for 1 epochs
+Client 6 - Epoch 1/1 - Train Loss: 2.069739, Train Acc: 0.3187, Valid Loss: 1.527194, Valid Acc: 0.7167
+Client 6 finished training
+Client 6 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_6/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 6 has no background tracks to train
+=== END CLIENT 6 TRAINING ===
+
+
+=== CLIENT 6 MODEL SAVING FOR ROUND 1 ===
+Client 6 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_6
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_6
+Saved 0 background models
+=== END CLIENT 6 MODEL SAVING ===
+
+Client 7: Loading track models and training with disagreement resolution...
+
+=== CLIENT 7 MODEL LOADING FOR ROUND 1 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/global_model_for_training
+=== END CLIENT 7 MODEL LOADING ===
+
+
+=== CLIENT 7 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 7 starting training for 1 epochs
+Client 7 - Epoch 1/1 - Train Loss: 2.111545, Train Acc: 0.2917, Valid Loss: 1.565179, Valid Acc: 0.7250
+Client 7 finished training
+Client 7 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_7/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 7 has no background tracks to train
+=== END CLIENT 7 TRAINING ===
+
+
+=== CLIENT 7 MODEL SAVING FOR ROUND 1 ===
+Client 7 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_7
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_7
+Saved 0 background models
+=== END CLIENT 7 MODEL SAVING ===
+
+Client 8: Loading track models and training with disagreement resolution...
+
+=== CLIENT 8 MODEL LOADING FOR ROUND 1 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/global_model_for_training
+=== END CLIENT 8 MODEL LOADING ===
+
+
+=== CLIENT 8 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 8 starting training for 1 epochs
+Client 8 - Epoch 1/1 - Train Loss: 2.009334, Train Acc: 0.3812, Valid Loss: 1.495182, Valid Acc: 0.6667
+Client 8 finished training
+Client 8 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_8/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 8 has no background tracks to train
+=== END CLIENT 8 TRAINING ===
+
+
+=== CLIENT 8 MODEL SAVING FOR ROUND 1 ===
+Client 8 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_8
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_8
+Saved 0 background models
+=== END CLIENT 8 MODEL SAVING ===
+
+Client 9: Loading track models and training with disagreement resolution...
+
+=== CLIENT 9 MODEL LOADING FOR ROUND 1 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/global_model_for_training
+=== END CLIENT 9 MODEL LOADING ===
+
+
+=== CLIENT 9 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 9 starting training for 1 epochs
+Client 9 - Epoch 1/1 - Train Loss: 2.063287, Train Acc: 0.3146, Valid Loss: 1.668432, Valid Acc: 0.5333
+Client 9 finished training
+Client 9 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_9/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 9 has no background tracks to train
+=== END CLIENT 9 TRAINING ===
+
+
+=== CLIENT 9 MODEL SAVING FOR ROUND 1 ===
+Client 9 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_9
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/clients/client_9
+Saved 0 background models
+=== END CLIENT 9 MODEL SAVING ===
+
+Performing disagreement-aware track-based model aggregation...
+Starting file-based aggregation for round 1
+Found 10 clients: [4, 5, 9, 3, 8, 7, 2, 0, 6, 1]
+Loaded disagreements: {}
+Round 1: No disagreements defined in the system
+No active disagreements for round 1, using standard aggregation
+Updated global model with parameters from 10 clients
+
+=== AGGREGATION TIMING SUMMARY FOR ROUND 1 ===
+  Disagreement loading: 0.0001s
+  Resolution time: 0.0000s
+  Aggregation time: 0.0378s
+  Track saving time: 0.0000s
+  Total time: 0.0382s
+  Has disagreements: False
+=== END TIMING SUMMARY ===
+
+Saved global model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/global_model_aggregated
+Evaluating global model and track-specific performance...
+Round 1 - MNIST Classification Metrics:
+  Overall Accuracy: 0.7040
+  Mean Precision: 0.7648
+  Mean Recall: 0.7040
+  Mean F1 Score: 0.6885
+Round 1 - Global model test accuracy: 0.7040
+Round 1 - Global model test loss: 1.614626
+Saved results for round 1 (plot mode: minimal)
+
+=== EVALUATING TRACK MODELS FOR ROUND 1 ===
+No tracks directory found for round 1
+Saved experiment results to results/fl_simulation_20250618_135529_mnist_s7/output/fl_results.json
+Saved timing metrics to results/fl_simulation_20250618_135529_mnist_s7/output/aggregation_timing_metrics.json
+Round 1 completed with disagreement resolution.
+
+--- Federated Learning Round 2/5 ---
+Analyzing disagreements and preparing track-specific models...
+
+=== SERVER PREPARATION FOR ROUND 2 ===
+  Using initiation_mechanism: shallow, lifting_mechanism: shallow, deep_lifting_finetune_rounds: 3
+Loaded disagreements: {}
+Round 2: No disagreements defined in the system
+Loading main global model from previous round 1's aggregated model: results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/global_model_aggregated
+Loaded model from round 1
+Loaded global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/global_model_aggregated
+Saved global model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/global_model_for_training
+Saved main global model for training in round 2 at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/global_model_for_training
+No active disagreements for round 2. Using standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_1/global_model_aggregated
+=== END SERVER PREPARATION FOR ROUND 2 ===\n
+Updated track models based on disagreement changes from round 1
+Starting disagreement-aware multi-track client training...
+Client 0: Loading track models and training with disagreement resolution...
+
+=== CLIENT 0 MODEL LOADING FOR ROUND 2 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/global_model_for_training
+=== END CLIENT 0 MODEL LOADING ===
+
+
+=== CLIENT 0 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 0 starting training for 1 epochs
+Client 0 - Epoch 1/1 - Train Loss: 1.142464, Train Acc: 0.6937, Valid Loss: 0.744397, Valid Acc: 0.7417
+Client 0 finished training
+Client 0 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_0/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 0 has no background tracks to train
+=== END CLIENT 0 TRAINING ===
+
+
+=== CLIENT 0 MODEL SAVING FOR ROUND 2 ===
+Client 0 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_0
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_0
+Saved 0 background models
+=== END CLIENT 0 MODEL SAVING ===
+
+Client 1: Loading track models and training with disagreement resolution...
+
+=== CLIENT 1 MODEL LOADING FOR ROUND 2 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/global_model_for_training
+=== END CLIENT 1 MODEL LOADING ===
+
+
+=== CLIENT 1 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 1 starting training for 1 epochs
+Client 1 - Epoch 1/1 - Train Loss: 1.129558, Train Acc: 0.6750, Valid Loss: 0.783330, Valid Acc: 0.7667
+Client 1 finished training
+Client 1 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_1/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 1 has no background tracks to train
+=== END CLIENT 1 TRAINING ===
+
+
+=== CLIENT 1 MODEL SAVING FOR ROUND 2 ===
+Client 1 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_1
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_1
+Saved 0 background models
+=== END CLIENT 1 MODEL SAVING ===
+
+Client 2: Loading track models and training with disagreement resolution...
+
+=== CLIENT 2 MODEL LOADING FOR ROUND 2 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/global_model_for_training
+=== END CLIENT 2 MODEL LOADING ===
+
+
+=== CLIENT 2 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 2 starting training for 1 epochs
+Client 2 - Epoch 1/1 - Train Loss: 1.183301, Train Acc: 0.6813, Valid Loss: 0.732762, Valid Acc: 0.8083
+Client 2 finished training
+Client 2 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_2/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 2 has no background tracks to train
+=== END CLIENT 2 TRAINING ===
+
+
+=== CLIENT 2 MODEL SAVING FOR ROUND 2 ===
+Client 2 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_2
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_2
+Saved 0 background models
+=== END CLIENT 2 MODEL SAVING ===
+
+Client 3: Loading track models and training with disagreement resolution...
+
+=== CLIENT 3 MODEL LOADING FOR ROUND 2 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/global_model_for_training
+=== END CLIENT 3 MODEL LOADING ===
+
+
+=== CLIENT 3 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 3 starting training for 1 epochs
+Client 3 - Epoch 1/1 - Train Loss: 1.233735, Train Acc: 0.6438, Valid Loss: 0.650854, Valid Acc: 0.7917
+Client 3 finished training
+Client 3 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_3/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 3 has no background tracks to train
+=== END CLIENT 3 TRAINING ===
+
+
+=== CLIENT 3 MODEL SAVING FOR ROUND 2 ===
+Client 3 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_3
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_3
+Saved 0 background models
+=== END CLIENT 3 MODEL SAVING ===
+
+Client 4: Loading track models and training with disagreement resolution...
+
+=== CLIENT 4 MODEL LOADING FOR ROUND 2 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/global_model_for_training
+=== END CLIENT 4 MODEL LOADING ===
+
+
+=== CLIENT 4 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 4 starting training for 1 epochs
+Client 4 - Epoch 1/1 - Train Loss: 1.183250, Train Acc: 0.6937, Valid Loss: 0.724594, Valid Acc: 0.7583
+Client 4 finished training
+Client 4 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_4/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 4 has no background tracks to train
+=== END CLIENT 4 TRAINING ===
+
+
+=== CLIENT 4 MODEL SAVING FOR ROUND 2 ===
+Client 4 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_4
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_4
+Saved 0 background models
+=== END CLIENT 4 MODEL SAVING ===
+
+Client 5: Loading track models and training with disagreement resolution...
+
+=== CLIENT 5 MODEL LOADING FOR ROUND 2 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/global_model_for_training
+=== END CLIENT 5 MODEL LOADING ===
+
+
+=== CLIENT 5 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 5 starting training for 1 epochs
+Client 5 - Epoch 1/1 - Train Loss: 1.148689, Train Acc: 0.7250, Valid Loss: 0.828001, Valid Acc: 0.7333
+Client 5 finished training
+Client 5 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_5/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 5 has no background tracks to train
+=== END CLIENT 5 TRAINING ===
+
+
+=== CLIENT 5 MODEL SAVING FOR ROUND 2 ===
+Client 5 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_5
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_5
+Saved 0 background models
+=== END CLIENT 5 MODEL SAVING ===
+
+Client 6: Loading track models and training with disagreement resolution...
+
+=== CLIENT 6 MODEL LOADING FOR ROUND 2 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/global_model_for_training
+=== END CLIENT 6 MODEL LOADING ===
+
+
+=== CLIENT 6 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 6 starting training for 1 epochs
+Client 6 - Epoch 1/1 - Train Loss: 1.209316, Train Acc: 0.6375, Valid Loss: 0.795955, Valid Acc: 0.7500
+Client 6 finished training
+Client 6 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_6/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 6 has no background tracks to train
+=== END CLIENT 6 TRAINING ===
+
+
+=== CLIENT 6 MODEL SAVING FOR ROUND 2 ===
+Client 6 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_6
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_6
+Saved 0 background models
+=== END CLIENT 6 MODEL SAVING ===
+
+Client 7: Loading track models and training with disagreement resolution...
+
+=== CLIENT 7 MODEL LOADING FOR ROUND 2 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/global_model_for_training
+=== END CLIENT 7 MODEL LOADING ===
+
+
+=== CLIENT 7 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 7 starting training for 1 epochs
+Client 7 - Epoch 1/1 - Train Loss: 1.185202, Train Acc: 0.6687, Valid Loss: 0.697129, Valid Acc: 0.7833
+Client 7 finished training
+Client 7 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_7/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 7 has no background tracks to train
+=== END CLIENT 7 TRAINING ===
+
+
+=== CLIENT 7 MODEL SAVING FOR ROUND 2 ===
+Client 7 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_7
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_7
+Saved 0 background models
+=== END CLIENT 7 MODEL SAVING ===
+
+Client 8: Loading track models and training with disagreement resolution...
+
+=== CLIENT 8 MODEL LOADING FOR ROUND 2 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/global_model_for_training
+=== END CLIENT 8 MODEL LOADING ===
+
+
+=== CLIENT 8 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 8 starting training for 1 epochs
+Client 8 - Epoch 1/1 - Train Loss: 1.077113, Train Acc: 0.7312, Valid Loss: 0.731202, Valid Acc: 0.7000
+Client 8 finished training
+Client 8 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_8/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 8 has no background tracks to train
+=== END CLIENT 8 TRAINING ===
+
+
+=== CLIENT 8 MODEL SAVING FOR ROUND 2 ===
+Client 8 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_8
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_8
+Saved 0 background models
+=== END CLIENT 8 MODEL SAVING ===
+
+Client 9: Loading track models and training with disagreement resolution...
+
+=== CLIENT 9 MODEL LOADING FOR ROUND 2 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/global_model_for_training
+=== END CLIENT 9 MODEL LOADING ===
+
+
+=== CLIENT 9 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 9 starting training for 1 epochs
+Client 9 - Epoch 1/1 - Train Loss: 1.094150, Train Acc: 0.6875, Valid Loss: 0.806287, Valid Acc: 0.7417
+Client 9 finished training
+Client 9 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_9/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 9 has no background tracks to train
+=== END CLIENT 9 TRAINING ===
+
+
+=== CLIENT 9 MODEL SAVING FOR ROUND 2 ===
+Client 9 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_9
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/clients/client_9
+Saved 0 background models
+=== END CLIENT 9 MODEL SAVING ===
+
+Performing disagreement-aware track-based model aggregation...
+Starting file-based aggregation for round 2
+Found 10 clients: [4, 5, 9, 3, 8, 7, 2, 0, 6, 1]
+Loaded disagreements: {}
+Round 2: No disagreements defined in the system
+No active disagreements for round 2, using standard aggregation
+Updated global model with parameters from 10 clients
+
+=== AGGREGATION TIMING SUMMARY FOR ROUND 2 ===
+  Disagreement loading: 0.0000s
+  Resolution time: 0.0000s
+  Aggregation time: 0.0269s
+  Track saving time: 0.0000s
+  Total time: 0.0270s
+  Has disagreements: False
+=== END TIMING SUMMARY ===
+
+Saved global model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/global_model_aggregated
+Evaluating global model and track-specific performance...
+Round 2 - MNIST Classification Metrics:
+  Overall Accuracy: 0.8575
+  Mean Precision: 0.8601
+  Mean Recall: 0.8575
+  Mean F1 Score: 0.8575
+Round 2 - Global model test accuracy: 0.8575
+Round 2 - Global model test loss: 0.594531
+Saved results for round 2 (plot mode: minimal)
+
+=== EVALUATING TRACK MODELS FOR ROUND 2 ===
+No tracks directory found for round 2
+Saved experiment results to results/fl_simulation_20250618_135529_mnist_s7/output/fl_results.json
+Saved timing metrics to results/fl_simulation_20250618_135529_mnist_s7/output/aggregation_timing_metrics.json
+Round 2 completed with disagreement resolution.
+
+--- Federated Learning Round 3/5 ---
+Analyzing disagreements and preparing track-specific models...
+
+=== SERVER PREPARATION FOR ROUND 3 ===
+  Using initiation_mechanism: shallow, lifting_mechanism: shallow, deep_lifting_finetune_rounds: 3
+Loaded disagreements: {}
+Round 3: No disagreements defined in the system
+Loading main global model from previous round 2's aggregated model: results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/global_model_aggregated
+Loaded model from round 2
+Loaded global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/global_model_aggregated
+Saved global model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/global_model_for_training
+Saved main global model for training in round 3 at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/global_model_for_training
+No active disagreements for round 3. Using standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_2/global_model_aggregated
+=== END SERVER PREPARATION FOR ROUND 3 ===\n
+Updated track models based on disagreement changes from round 2
+Starting disagreement-aware multi-track client training...
+Client 0: Loading track models and training with disagreement resolution...
+
+=== CLIENT 0 MODEL LOADING FOR ROUND 3 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/global_model_for_training
+=== END CLIENT 0 MODEL LOADING ===
+
+
+=== CLIENT 0 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 0 starting training for 1 epochs
+Client 0 - Epoch 1/1 - Train Loss: 0.937852, Train Acc: 0.6958, Valid Loss: 0.538167, Valid Acc: 0.8667
+Client 0 finished training
+Client 0 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_0/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 0 has no background tracks to train
+=== END CLIENT 0 TRAINING ===
+
+
+=== CLIENT 0 MODEL SAVING FOR ROUND 3 ===
+Client 0 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_0
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_0
+Saved 0 background models
+=== END CLIENT 0 MODEL SAVING ===
+
+Client 1: Loading track models and training with disagreement resolution...
+
+=== CLIENT 1 MODEL LOADING FOR ROUND 3 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/global_model_for_training
+=== END CLIENT 1 MODEL LOADING ===
+
+
+=== CLIENT 1 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 1 starting training for 1 epochs
+Client 1 - Epoch 1/1 - Train Loss: 0.992094, Train Acc: 0.6833, Valid Loss: 0.655219, Valid Acc: 0.7750
+Client 1 finished training
+Client 1 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_1/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 1 has no background tracks to train
+=== END CLIENT 1 TRAINING ===
+
+
+=== CLIENT 1 MODEL SAVING FOR ROUND 3 ===
+Client 1 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_1
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_1
+Saved 0 background models
+=== END CLIENT 1 MODEL SAVING ===
+
+Client 2: Loading track models and training with disagreement resolution...
+
+=== CLIENT 2 MODEL LOADING FOR ROUND 3 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/global_model_for_training
+=== END CLIENT 2 MODEL LOADING ===
+
+
+=== CLIENT 2 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 2 starting training for 1 epochs
+Client 2 - Epoch 1/1 - Train Loss: 0.919483, Train Acc: 0.7417, Valid Loss: 0.688531, Valid Acc: 0.8167
+Client 2 finished training
+Client 2 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_2/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 2 has no background tracks to train
+=== END CLIENT 2 TRAINING ===
+
+
+=== CLIENT 2 MODEL SAVING FOR ROUND 3 ===
+Client 2 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_2
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_2
+Saved 0 background models
+=== END CLIENT 2 MODEL SAVING ===
+
+Client 3: Loading track models and training with disagreement resolution...
+
+=== CLIENT 3 MODEL LOADING FOR ROUND 3 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/global_model_for_training
+=== END CLIENT 3 MODEL LOADING ===
+
+
+=== CLIENT 3 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 3 starting training for 1 epochs
+Client 3 - Epoch 1/1 - Train Loss: 0.937426, Train Acc: 0.6896, Valid Loss: 0.571156, Valid Acc: 0.8750
+Client 3 finished training
+Client 3 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_3/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 3 has no background tracks to train
+=== END CLIENT 3 TRAINING ===
+
+
+=== CLIENT 3 MODEL SAVING FOR ROUND 3 ===
+Client 3 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_3
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_3
+Saved 0 background models
+=== END CLIENT 3 MODEL SAVING ===
+
+Client 4: Loading track models and training with disagreement resolution...
+
+=== CLIENT 4 MODEL LOADING FOR ROUND 3 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/global_model_for_training
+=== END CLIENT 4 MODEL LOADING ===
+
+
+=== CLIENT 4 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 4 starting training for 1 epochs
+Client 4 - Epoch 1/1 - Train Loss: 0.912501, Train Acc: 0.7354, Valid Loss: 0.663031, Valid Acc: 0.8417
+Client 4 finished training
+Client 4 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_4/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 4 has no background tracks to train
+=== END CLIENT 4 TRAINING ===
+
+
+=== CLIENT 4 MODEL SAVING FOR ROUND 3 ===
+Client 4 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_4
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_4
+Saved 0 background models
+=== END CLIENT 4 MODEL SAVING ===
+
+Client 5: Loading track models and training with disagreement resolution...
+
+=== CLIENT 5 MODEL LOADING FOR ROUND 3 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/global_model_for_training
+=== END CLIENT 5 MODEL LOADING ===
+
+
+=== CLIENT 5 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 5 starting training for 1 epochs
+Client 5 - Epoch 1/1 - Train Loss: 0.822733, Train Acc: 0.7375, Valid Loss: 0.562489, Valid Acc: 0.8083
+Client 5 finished training
+Client 5 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_5/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 5 has no background tracks to train
+=== END CLIENT 5 TRAINING ===
+
+
+=== CLIENT 5 MODEL SAVING FOR ROUND 3 ===
+Client 5 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_5
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_5
+Saved 0 background models
+=== END CLIENT 5 MODEL SAVING ===
+
+Client 6: Loading track models and training with disagreement resolution...
+
+=== CLIENT 6 MODEL LOADING FOR ROUND 3 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/global_model_for_training
+=== END CLIENT 6 MODEL LOADING ===
+
+
+=== CLIENT 6 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 6 starting training for 1 epochs
+Client 6 - Epoch 1/1 - Train Loss: 0.759775, Train Acc: 0.7583, Valid Loss: 0.583532, Valid Acc: 0.8667
+Client 6 finished training
+Client 6 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_6/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 6 has no background tracks to train
+=== END CLIENT 6 TRAINING ===
+
+
+=== CLIENT 6 MODEL SAVING FOR ROUND 3 ===
+Client 6 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_6
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_6
+Saved 0 background models
+=== END CLIENT 6 MODEL SAVING ===
+
+Client 7: Loading track models and training with disagreement resolution...
+
+=== CLIENT 7 MODEL LOADING FOR ROUND 3 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/global_model_for_training
+=== END CLIENT 7 MODEL LOADING ===
+
+
+=== CLIENT 7 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 7 starting training for 1 epochs
+Client 7 - Epoch 1/1 - Train Loss: 0.996649, Train Acc: 0.6896, Valid Loss: 0.770892, Valid Acc: 0.7583
+Client 7 finished training
+Client 7 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_7/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 7 has no background tracks to train
+=== END CLIENT 7 TRAINING ===
+
+
+=== CLIENT 7 MODEL SAVING FOR ROUND 3 ===
+Client 7 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_7
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_7
+Saved 0 background models
+=== END CLIENT 7 MODEL SAVING ===
+
+Client 8: Loading track models and training with disagreement resolution...
+
+=== CLIENT 8 MODEL LOADING FOR ROUND 3 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/global_model_for_training
+=== END CLIENT 8 MODEL LOADING ===
+
+
+=== CLIENT 8 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 8 starting training for 1 epochs
+Client 8 - Epoch 1/1 - Train Loss: 0.914365, Train Acc: 0.6937, Valid Loss: 0.713308, Valid Acc: 0.8083
+Client 8 finished training
+Client 8 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_8/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 8 has no background tracks to train
+=== END CLIENT 8 TRAINING ===
+
+
+=== CLIENT 8 MODEL SAVING FOR ROUND 3 ===
+Client 8 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_8
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_8
+Saved 0 background models
+=== END CLIENT 8 MODEL SAVING ===
+
+Client 9: Loading track models and training with disagreement resolution...
+
+=== CLIENT 9 MODEL LOADING FOR ROUND 3 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/global_model_for_training
+=== END CLIENT 9 MODEL LOADING ===
+
+
+=== CLIENT 9 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 9 starting training for 1 epochs
+Client 9 - Epoch 1/1 - Train Loss: 0.829890, Train Acc: 0.7458, Valid Loss: 0.666088, Valid Acc: 0.8000
+Client 9 finished training
+Client 9 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_9/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 9 has no background tracks to train
+=== END CLIENT 9 TRAINING ===
+
+
+=== CLIENT 9 MODEL SAVING FOR ROUND 3 ===
+Client 9 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_9
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/clients/client_9
+Saved 0 background models
+=== END CLIENT 9 MODEL SAVING ===
+
+Performing disagreement-aware track-based model aggregation...
+Starting file-based aggregation for round 3
+Found 10 clients: [4, 5, 9, 3, 8, 7, 2, 0, 6, 1]
+Loaded disagreements: {}
+Round 3: No disagreements defined in the system
+No active disagreements for round 3, using standard aggregation
+Updated global model with parameters from 10 clients
+
+=== AGGREGATION TIMING SUMMARY FOR ROUND 3 ===
+  Disagreement loading: 0.0000s
+  Resolution time: 0.0000s
+  Aggregation time: 0.0263s
+  Track saving time: 0.0000s
+  Total time: 0.0264s
+  Has disagreements: False
+=== END TIMING SUMMARY ===
+
+Saved global model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/global_model_aggregated
+Evaluating global model and track-specific performance...
+Round 3 - MNIST Classification Metrics:
+  Overall Accuracy: 0.8910
+  Mean Precision: 0.8914
+  Mean Recall: 0.8910
+  Mean F1 Score: 0.8904
+Round 3 - Global model test accuracy: 0.8910
+Round 3 - Global model test loss: 0.524035
+Saved results for round 3 (plot mode: minimal)
+
+=== EVALUATING TRACK MODELS FOR ROUND 3 ===
+No tracks directory found for round 3
+Saved experiment results to results/fl_simulation_20250618_135529_mnist_s7/output/fl_results.json
+Saved timing metrics to results/fl_simulation_20250618_135529_mnist_s7/output/aggregation_timing_metrics.json
+Round 3 completed with disagreement resolution.
+
+--- Federated Learning Round 4/5 ---
+Analyzing disagreements and preparing track-specific models...
+
+=== SERVER PREPARATION FOR ROUND 4 ===
+  Using initiation_mechanism: shallow, lifting_mechanism: shallow, deep_lifting_finetune_rounds: 3
+Loaded disagreements: {}
+Round 4: No disagreements defined in the system
+Loading main global model from previous round 3's aggregated model: results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/global_model_aggregated
+Loaded model from round 3
+Loaded global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/global_model_aggregated
+Saved global model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/global_model_for_training
+Saved main global model for training in round 4 at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/global_model_for_training
+No active disagreements for round 4. Using standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_3/global_model_aggregated
+=== END SERVER PREPARATION FOR ROUND 4 ===\n
+Updated track models based on disagreement changes from round 3
+Starting disagreement-aware multi-track client training...
+Client 0: Loading track models and training with disagreement resolution...
+
+=== CLIENT 0 MODEL LOADING FOR ROUND 4 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/global_model_for_training
+=== END CLIENT 0 MODEL LOADING ===
+
+
+=== CLIENT 0 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 0 starting training for 1 epochs
+Client 0 - Epoch 1/1 - Train Loss: 0.618174, Train Acc: 0.7958, Valid Loss: 0.448770, Valid Acc: 0.8667
+Client 0 finished training
+Client 0 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_0/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 0 has no background tracks to train
+=== END CLIENT 0 TRAINING ===
+
+
+=== CLIENT 0 MODEL SAVING FOR ROUND 4 ===
+Client 0 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_0
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_0
+Saved 0 background models
+=== END CLIENT 0 MODEL SAVING ===
+
+Client 1: Loading track models and training with disagreement resolution...
+
+=== CLIENT 1 MODEL LOADING FOR ROUND 4 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/global_model_for_training
+=== END CLIENT 1 MODEL LOADING ===
+
+
+=== CLIENT 1 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 1 starting training for 1 epochs
+Client 1 - Epoch 1/1 - Train Loss: 0.642488, Train Acc: 0.7812, Valid Loss: 0.476622, Valid Acc: 0.8167
+Client 1 finished training
+Client 1 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_1/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 1 has no background tracks to train
+=== END CLIENT 1 TRAINING ===
+
+
+=== CLIENT 1 MODEL SAVING FOR ROUND 4 ===
+Client 1 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_1
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_1
+Saved 0 background models
+=== END CLIENT 1 MODEL SAVING ===
+
+Client 2: Loading track models and training with disagreement resolution...
+
+=== CLIENT 2 MODEL LOADING FOR ROUND 4 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/global_model_for_training
+=== END CLIENT 2 MODEL LOADING ===
+
+
+=== CLIENT 2 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 2 starting training for 1 epochs
+Client 2 - Epoch 1/1 - Train Loss: 0.629554, Train Acc: 0.8125, Valid Loss: 0.445691, Valid Acc: 0.8917
+Client 2 finished training
+Client 2 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_2/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 2 has no background tracks to train
+=== END CLIENT 2 TRAINING ===
+
+
+=== CLIENT 2 MODEL SAVING FOR ROUND 4 ===
+Client 2 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_2
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_2
+Saved 0 background models
+=== END CLIENT 2 MODEL SAVING ===
+
+Client 3: Loading track models and training with disagreement resolution...
+
+=== CLIENT 3 MODEL LOADING FOR ROUND 4 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/global_model_for_training
+=== END CLIENT 3 MODEL LOADING ===
+
+
+=== CLIENT 3 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 3 starting training for 1 epochs
+Client 3 - Epoch 1/1 - Train Loss: 0.778940, Train Acc: 0.7625, Valid Loss: 0.381312, Valid Acc: 0.9000
+Client 3 finished training
+Client 3 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_3/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 3 has no background tracks to train
+=== END CLIENT 3 TRAINING ===
+
+
+=== CLIENT 3 MODEL SAVING FOR ROUND 4 ===
+Client 3 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_3
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_3
+Saved 0 background models
+=== END CLIENT 3 MODEL SAVING ===
+
+Client 4: Loading track models and training with disagreement resolution...
+
+=== CLIENT 4 MODEL LOADING FOR ROUND 4 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/global_model_for_training
+=== END CLIENT 4 MODEL LOADING ===
+
+
+=== CLIENT 4 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 4 starting training for 1 epochs
+Client 4 - Epoch 1/1 - Train Loss: 0.623655, Train Acc: 0.8125, Valid Loss: 0.419079, Valid Acc: 0.8750
+Client 4 finished training
+Client 4 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_4/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 4 has no background tracks to train
+=== END CLIENT 4 TRAINING ===
+
+
+=== CLIENT 4 MODEL SAVING FOR ROUND 4 ===
+Client 4 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_4
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_4
+Saved 0 background models
+=== END CLIENT 4 MODEL SAVING ===
+
+Client 5: Loading track models and training with disagreement resolution...
+
+=== CLIENT 5 MODEL LOADING FOR ROUND 4 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/global_model_for_training
+=== END CLIENT 5 MODEL LOADING ===
+
+
+=== CLIENT 5 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 5 starting training for 1 epochs
+Client 5 - Epoch 1/1 - Train Loss: 0.829813, Train Acc: 0.8104, Valid Loss: 0.578868, Valid Acc: 0.8250
+Client 5 finished training
+Client 5 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_5/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 5 has no background tracks to train
+=== END CLIENT 5 TRAINING ===
+
+
+=== CLIENT 5 MODEL SAVING FOR ROUND 4 ===
+Client 5 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_5
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_5
+Saved 0 background models
+=== END CLIENT 5 MODEL SAVING ===
+
+Client 6: Loading track models and training with disagreement resolution...
+
+=== CLIENT 6 MODEL LOADING FOR ROUND 4 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/global_model_for_training
+=== END CLIENT 6 MODEL LOADING ===
+
+
+=== CLIENT 6 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 6 starting training for 1 epochs
+Client 6 - Epoch 1/1 - Train Loss: 0.661387, Train Acc: 0.7875, Valid Loss: 0.468795, Valid Acc: 0.8667
+Client 6 finished training
+Client 6 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_6/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 6 has no background tracks to train
+=== END CLIENT 6 TRAINING ===
+
+
+=== CLIENT 6 MODEL SAVING FOR ROUND 4 ===
+Client 6 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_6
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_6
+Saved 0 background models
+=== END CLIENT 6 MODEL SAVING ===
+
+Client 7: Loading track models and training with disagreement resolution...
+
+=== CLIENT 7 MODEL LOADING FOR ROUND 4 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/global_model_for_training
+=== END CLIENT 7 MODEL LOADING ===
+
+
+=== CLIENT 7 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 7 starting training for 1 epochs
+Client 7 - Epoch 1/1 - Train Loss: 0.589527, Train Acc: 0.8229, Valid Loss: 0.347152, Valid Acc: 0.9000
+Client 7 finished training
+Client 7 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_7/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 7 has no background tracks to train
+=== END CLIENT 7 TRAINING ===
+
+
+=== CLIENT 7 MODEL SAVING FOR ROUND 4 ===
+Client 7 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_7
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_7
+Saved 0 background models
+=== END CLIENT 7 MODEL SAVING ===
+
+Client 8: Loading track models and training with disagreement resolution...
+
+=== CLIENT 8 MODEL LOADING FOR ROUND 4 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/global_model_for_training
+=== END CLIENT 8 MODEL LOADING ===
+
+
+=== CLIENT 8 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 8 starting training for 1 epochs
+Client 8 - Epoch 1/1 - Train Loss: 0.591813, Train Acc: 0.7896, Valid Loss: 0.546819, Valid Acc: 0.7833
+Client 8 finished training
+Client 8 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_8/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 8 has no background tracks to train
+=== END CLIENT 8 TRAINING ===
+
+
+=== CLIENT 8 MODEL SAVING FOR ROUND 4 ===
+Client 8 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_8
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_8
+Saved 0 background models
+=== END CLIENT 8 MODEL SAVING ===
+
+Client 9: Loading track models and training with disagreement resolution...
+
+=== CLIENT 9 MODEL LOADING FOR ROUND 4 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/global_model_for_training
+=== END CLIENT 9 MODEL LOADING ===
+
+
+=== CLIENT 9 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 9 starting training for 1 epochs
+Client 9 - Epoch 1/1 - Train Loss: 0.562137, Train Acc: 0.8250, Valid Loss: 0.501713, Valid Acc: 0.8417
+Client 9 finished training
+Client 9 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_9/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 9 has no background tracks to train
+=== END CLIENT 9 TRAINING ===
+
+
+=== CLIENT 9 MODEL SAVING FOR ROUND 4 ===
+Client 9 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_9
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/clients/client_9
+Saved 0 background models
+=== END CLIENT 9 MODEL SAVING ===
+
+Performing disagreement-aware track-based model aggregation...
+Starting file-based aggregation for round 4
+Found 10 clients: [4, 5, 9, 3, 8, 7, 2, 0, 6, 1]
+Loaded disagreements: {}
+Round 4: No disagreements defined in the system
+No active disagreements for round 4, using standard aggregation
+Updated global model with parameters from 10 clients
+
+=== AGGREGATION TIMING SUMMARY FOR ROUND 4 ===
+  Disagreement loading: 0.0000s
+  Resolution time: 0.0000s
+  Aggregation time: 0.0269s
+  Track saving time: 0.0000s
+  Total time: 0.0270s
+  Has disagreements: False
+=== END TIMING SUMMARY ===
+
+Saved global model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/global_model_aggregated
+Evaluating global model and track-specific performance...
+Round 4 - MNIST Classification Metrics:
+  Overall Accuracy: 0.9083
+  Mean Precision: 0.9092
+  Mean Recall: 0.9083
+  Mean F1 Score: 0.9080
+Round 4 - Global model test accuracy: 0.9083
+Round 4 - Global model test loss: 0.364946
+Saved results for round 4 (plot mode: minimal)
+
+=== EVALUATING TRACK MODELS FOR ROUND 4 ===
+No tracks directory found for round 4
+Saved experiment results to results/fl_simulation_20250618_135529_mnist_s7/output/fl_results.json
+Saved timing metrics to results/fl_simulation_20250618_135529_mnist_s7/output/aggregation_timing_metrics.json
+Round 4 completed with disagreement resolution.
+
+--- Federated Learning Round 5/5 ---
+Analyzing disagreements and preparing track-specific models...
+
+=== SERVER PREPARATION FOR ROUND 5 ===
+  Using initiation_mechanism: shallow, lifting_mechanism: shallow, deep_lifting_finetune_rounds: 3
+Loaded disagreements: {}
+Round 5: No disagreements defined in the system
+Loading main global model from previous round 4's aggregated model: results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/global_model_aggregated
+Loaded model from round 4
+Loaded global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/global_model_aggregated
+Saved global model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/global_model_for_training
+Saved main global model for training in round 5 at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/global_model_for_training
+No active disagreements for round 5. Using standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_4/global_model_aggregated
+=== END SERVER PREPARATION FOR ROUND 5 ===\n
+Updated track models based on disagreement changes from round 4
+Starting disagreement-aware multi-track client training...
+Client 0: Loading track models and training with disagreement resolution...
+
+=== CLIENT 0 MODEL LOADING FOR ROUND 5 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/global_model_for_training
+=== END CLIENT 0 MODEL LOADING ===
+
+
+=== CLIENT 0 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 0 starting training for 1 epochs
+Client 0 - Epoch 1/1 - Train Loss: 0.465723, Train Acc: 0.8542, Valid Loss: 0.398285, Valid Acc: 0.8833
+Client 0 finished training
+Client 0 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_0/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 0 has no background tracks to train
+=== END CLIENT 0 TRAINING ===
+
+
+=== CLIENT 0 MODEL SAVING FOR ROUND 5 ===
+Client 0 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_0
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_0
+Saved 0 background models
+=== END CLIENT 0 MODEL SAVING ===
+
+Client 1: Loading track models and training with disagreement resolution...
+
+=== CLIENT 1 MODEL LOADING FOR ROUND 5 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/global_model_for_training
+=== END CLIENT 1 MODEL LOADING ===
+
+
+=== CLIENT 1 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 1 starting training for 1 epochs
+Client 1 - Epoch 1/1 - Train Loss: 0.413980, Train Acc: 0.8938, Valid Loss: 0.328073, Valid Acc: 0.8833
+Client 1 finished training
+Client 1 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_1/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 1 has no background tracks to train
+=== END CLIENT 1 TRAINING ===
+
+
+=== CLIENT 1 MODEL SAVING FOR ROUND 5 ===
+Client 1 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_1
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_1
+Saved 0 background models
+=== END CLIENT 1 MODEL SAVING ===
+
+Client 2: Loading track models and training with disagreement resolution...
+
+=== CLIENT 2 MODEL LOADING FOR ROUND 5 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/global_model_for_training
+=== END CLIENT 2 MODEL LOADING ===
+
+
+=== CLIENT 2 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 2 starting training for 1 epochs
+Client 2 - Epoch 1/1 - Train Loss: 0.436110, Train Acc: 0.8792, Valid Loss: 0.315459, Valid Acc: 0.9167
+Client 2 finished training
+Client 2 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_2/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 2 has no background tracks to train
+=== END CLIENT 2 TRAINING ===
+
+
+=== CLIENT 2 MODEL SAVING FOR ROUND 5 ===
+Client 2 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_2
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_2
+Saved 0 background models
+=== END CLIENT 2 MODEL SAVING ===
+
+Client 3: Loading track models and training with disagreement resolution...
+
+=== CLIENT 3 MODEL LOADING FOR ROUND 5 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/global_model_for_training
+=== END CLIENT 3 MODEL LOADING ===
+
+
+=== CLIENT 3 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 3 starting training for 1 epochs
+Client 3 - Epoch 1/1 - Train Loss: 0.561500, Train Acc: 0.8417, Valid Loss: 0.262245, Valid Acc: 0.9667
+Client 3 finished training
+Client 3 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_3/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 3 has no background tracks to train
+=== END CLIENT 3 TRAINING ===
+
+
+=== CLIENT 3 MODEL SAVING FOR ROUND 5 ===
+Client 3 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_3
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_3
+Saved 0 background models
+=== END CLIENT 3 MODEL SAVING ===
+
+Client 4: Loading track models and training with disagreement resolution...
+
+=== CLIENT 4 MODEL LOADING FOR ROUND 5 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/global_model_for_training
+=== END CLIENT 4 MODEL LOADING ===
+
+
+=== CLIENT 4 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 4 starting training for 1 epochs
+Client 4 - Epoch 1/1 - Train Loss: 0.436526, Train Acc: 0.8708, Valid Loss: 0.325363, Valid Acc: 0.8917
+Client 4 finished training
+Client 4 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_4/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 4 has no background tracks to train
+=== END CLIENT 4 TRAINING ===
+
+
+=== CLIENT 4 MODEL SAVING FOR ROUND 5 ===
+Client 4 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_4
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_4
+Saved 0 background models
+=== END CLIENT 4 MODEL SAVING ===
+
+Client 5: Loading track models and training with disagreement resolution...
+
+=== CLIENT 5 MODEL LOADING FOR ROUND 5 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/global_model_for_training
+=== END CLIENT 5 MODEL LOADING ===
+
+
+=== CLIENT 5 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 5 starting training for 1 epochs
+Client 5 - Epoch 1/1 - Train Loss: 0.462911, Train Acc: 0.8708, Valid Loss: 0.407577, Valid Acc: 0.8667
+Client 5 finished training
+Client 5 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_5/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 5 has no background tracks to train
+=== END CLIENT 5 TRAINING ===
+
+
+=== CLIENT 5 MODEL SAVING FOR ROUND 5 ===
+Client 5 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_5
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_5
+Saved 0 background models
+=== END CLIENT 5 MODEL SAVING ===
+
+Client 6: Loading track models and training with disagreement resolution...
+
+=== CLIENT 6 MODEL LOADING FOR ROUND 5 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/global_model_for_training
+=== END CLIENT 6 MODEL LOADING ===
+
+
+=== CLIENT 6 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 6 starting training for 1 epochs
+Client 6 - Epoch 1/1 - Train Loss: 0.438076, Train Acc: 0.8667, Valid Loss: 0.366009, Valid Acc: 0.8667
+Client 6 finished training
+Client 6 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_6/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 6 has no background tracks to train
+=== END CLIENT 6 TRAINING ===
+
+
+=== CLIENT 6 MODEL SAVING FOR ROUND 5 ===
+Client 6 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_6
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_6
+Saved 0 background models
+=== END CLIENT 6 MODEL SAVING ===
+
+Client 7: Loading track models and training with disagreement resolution...
+
+=== CLIENT 7 MODEL LOADING FOR ROUND 5 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/global_model_for_training
+=== END CLIENT 7 MODEL LOADING ===
+
+
+=== CLIENT 7 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 7 starting training for 1 epochs
+Client 7 - Epoch 1/1 - Train Loss: 0.515084, Train Acc: 0.8333, Valid Loss: 0.394959, Valid Acc: 0.9083
+Client 7 finished training
+Client 7 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_7/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 7 has no background tracks to train
+=== END CLIENT 7 TRAINING ===
+
+
+=== CLIENT 7 MODEL SAVING FOR ROUND 5 ===
+Client 7 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_7
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_7
+Saved 0 background models
+=== END CLIENT 7 MODEL SAVING ===
+
+Client 8: Loading track models and training with disagreement resolution...
+
+=== CLIENT 8 MODEL LOADING FOR ROUND 5 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/global_model_for_training
+=== END CLIENT 8 MODEL LOADING ===
+
+
+=== CLIENT 8 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 8 starting training for 1 epochs
+Client 8 - Epoch 1/1 - Train Loss: 0.478632, Train Acc: 0.8417, Valid Loss: 0.480593, Valid Acc: 0.8167
+Client 8 finished training
+Client 8 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_8/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 8 has no background tracks to train
+=== END CLIENT 8 TRAINING ===
+
+
+=== CLIENT 8 MODEL SAVING FOR ROUND 5 ===
+Client 8 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_8
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_8
+Saved 0 background models
+=== END CLIENT 8 MODEL SAVING ===
+
+Client 9: Loading track models and training with disagreement resolution...
+
+=== CLIENT 9 MODEL LOADING FOR ROUND 5 ===
+No tracks directory found at results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/global_model_for_training
+=== END CLIENT 9 MODEL LOADING ===
+
+
+=== CLIENT 9 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 9 starting training for 1 epochs
+Client 9 - Epoch 1/1 - Train Loss: 0.493493, Train Acc: 0.8313, Valid Loss: 0.411573, Valid Acc: 0.8833
+Client 9 finished training
+Client 9 saved training results to results/fl_simulation_20250618_135529_mnist_s7/output/clients/client_9/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 9 has no background tracks to train
+=== END CLIENT 9 TRAINING ===
+
+
+=== CLIENT 9 MODEL SAVING FOR ROUND 5 ===
+Client 9 saved model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_9
+Saved primary model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/clients/client_9
+Saved 0 background models
+=== END CLIENT 9 MODEL SAVING ===
+
+Performing disagreement-aware track-based model aggregation...
+Starting file-based aggregation for round 5
+Found 10 clients: [4, 5, 9, 3, 8, 7, 2, 0, 6, 1]
+Loaded disagreements: {}
+Round 5: No disagreements defined in the system
+No active disagreements for round 5, using standard aggregation
+Updated global model with parameters from 10 clients
+
+=== AGGREGATION TIMING SUMMARY FOR ROUND 5 ===
+  Disagreement loading: 0.0000s
+  Resolution time: 0.0000s
+  Aggregation time: 0.0312s
+  Track saving time: 0.0000s
+  Total time: 0.0314s
+  Has disagreements: False
+=== END TIMING SUMMARY ===
+
+Saved global model to results/fl_simulation_20250618_135529_mnist_s7/model_storage/round_5/global_model_aggregated
+Evaluating global model and track-specific performance...
+Round 5 - MNIST Classification Metrics:
+  Overall Accuracy: 0.9257
+  Mean Precision: 0.9265
+  Mean Recall: 0.9257
+  Mean F1 Score: 0.9256
+Round 5 - Global model test accuracy: 0.9257
+Round 5 - Global model test loss: 0.286370
+Creating timing plots with data from 5 rounds
+Saved timing plots for round 5
+Summary: Avg total time: 0.030s, Avg aggregation time: 0.030s, Avg resolution time: 0.000ms
+Saved results for round 5 (plot mode: last round)
+
+=== EVALUATING TRACK MODELS FOR ROUND 5 ===
+No tracks directory found for round 5
+Saved experiment results to results/fl_simulation_20250618_135529_mnist_s7/output/fl_results.json
+Saved timing metrics to results/fl_simulation_20250618_135529_mnist_s7/output/aggregation_timing_metrics.json
+Round 5 completed with disagreement resolution.
+
+Federated learning with disagreement resolution completed!
