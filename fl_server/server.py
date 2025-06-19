@@ -310,6 +310,14 @@ class FederatedServer:
         # Save initial results
         self._save_experiment_results()
 
+    def set_total_running_time(self, total_time_seconds):
+        """Set the total running time for the federated learning process.
+
+        Args:
+            total_time_seconds: Total time in seconds for the complete FL process
+        """
+        self.results["total_running_time"] = total_time_seconds
+
     def _save_experiment_results(self):
         """Save experiment results to a JSON file."""
         # Check if we have a results directory

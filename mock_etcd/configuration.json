@@ -1,6 +1,6 @@
 {
   "experiment": {
-    "type": "n_cmapss",
+    "type": "mnist",
     "fl_rounds": 5,
     "client_ids": [
       0,
@@ -8,7 +8,21 @@
       2,
       3,
       4,
-      5
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
     ],
     "iid": true
   },
@@ -33,12 +47,12 @@
   },
   "training": {
     "batch_size": 64,
-    "local_epochs": 10,
+    "local_epochs": 1,
     "learning_rate": 0.001
   },
   "disagreement": {
-    "initiation_mechanism": "deep_rewind",
-    "lifting_mechanism": "deep_incr_finetune",
+    "initiation_mechanism": "shallow",
+    "lifting_mechanism": "shallow",
     "deep_lifting_finetune_rounds": 3
   },
   "results": {

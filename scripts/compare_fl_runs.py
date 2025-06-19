@@ -117,6 +117,34 @@ class FLRunComparator:
         desc = self._get_scenario_description(scenario, clients)
         return f"S{scenario} {desc}"
 
+    def _calculate_directory_size(self, directory_path):
+        """Calculate the total size of a directory in MiB.
+
+        Args:
+            directory_path: Path to the directory
+
+        Returns:
+            float: Size in MiB, or None if directory doesn't exist
+        """
+        try:
+            if not os.path.exists(directory_path):
+                return None
+
+            total_size = 0
+            for dirpath, dirnames, filenames in os.walk(directory_path):
+                for filename in filenames:
+                    filepath = os.path.join(dirpath, filename)
+                    try:
+                        total_size += os.path.getsize(filepath)
+                    except (OSError, IOError):
+                        # Skip files that can't be accessed
+                        continue
+
+            # Convert bytes to MiB
+            return total_size / (1024 * 1024)
+        except Exception:
+            return None
+
     def load_run(self, run_path, run_name=None):
         """Load a federated learning run from results directory."""
         run_path = Path(run_path)
@@ -154,6 +182,10 @@ class FLRunComparator:
         else:
             print(f"Warning: No timing metrics found in {run_path}")
             run_data["timing_metrics"] = []
+
+        # Calculate model storage directory size
+        model_storage_path = run_path / "model_storage"
+        run_data["model_storage_size_mib"] = self._calculate_directory_size(model_storage_path)
 
         # Extract scenario info from directory name
         dir_name = run_path.name
@@ -193,6 +225,9 @@ class FLRunComparator:
         """Extract summary metrics from the run data."""
         fl_results = run_data.get("fl_results", {})
         timing_metrics = run_data.get("timing_metrics", [])
+
+        # Extract total running time from fl_results
+        run_data["total_running_time"] = fl_results.get("total_running_time")
 
         # Performance metrics
         rounds_data = fl_results.get("rounds", [])
@@ -652,6 +687,104 @@ class FLRunComparator:
             print(f"✓ Saved combined metrics comparison to {output_dir}/combined_metrics_comparison.png")
         plt.show()
 
+    def compare_storage_and_time(self, save_plots=True, output_dir=None):
+        """Compare total running time and model storage size across runs."""
+        if len(self.scenario_runs) < 2:
+            print("Need at least 2 scenarios to compare")
+            return
+
+        if output_dir is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_dir = f'results/comparisons/comparison_{timestamp}'
+
+        if save_plots:
+            os.makedirs(output_dir, exist_ok=True)
+
+        # Use averaged scenario data
+        averaged_data = self.get_averaged_scenario_data()
+        max_runs = max(self.num_runs_per_scenario.values()) if self.num_runs_per_scenario else 0
+
+        plt.figure(figsize=(15, 6))
+
+        # Subplot 1: Total Running Time
+        plt.subplot(1, 2, 1)
+        values = []
+        labels = []
+        colors = []
+
+        for scenario, run_data in averaged_data.items():
+            value = run_data.get('total_running_time')
+            if value is not None:
+                values.append(value)
+                clients = run_data.get('num_clients', 'Unknown')
+                labels.append(self._generate_chart_label(scenario, clients))
+
+                # Color by scenario
+                if scenario is not None:
+                    colors.append(plt.cm.Set1(scenario % 10))
+                else:
+                    colors.append('gray')
+
+        if values:
+            bars = plt.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
+            plt.xticks(range(len(values)), labels, rotation=45, ha='center')
+            plt.tick_params(axis='x', pad=1)
+            plt.ylabel('Total Running Time (seconds)')
+            plt.title(f'Total Running Time Comparison\n(across {max_runs} runs)')
+            plt.grid(True, axis='y', alpha=0.3)
+
+            # Add value labels on bars
+            for bar, value in zip(bars, values):
+                height = bar.get_height()
+                plt.annotate(f'{value:.1f}s',
+                            xy=(bar.get_x() + bar.get_width() / 2, height),
+                            xytext=(0, 3),
+                            textcoords="offset points",
+                            ha='center', va='bottom', fontsize=9)
+
+        # Subplot 2: Model Storage Size
+        plt.subplot(1, 2, 2)
+        values = []
+        labels = []
+        colors = []
+
+        for scenario, run_data in averaged_data.items():
+            value = run_data.get('model_storage_size_mib')
+            if value is not None:
+                values.append(value)
+                clients = run_data.get('num_clients', 'Unknown')
+                labels.append(self._generate_chart_label(scenario, clients))
+
+                # Color by scenario (same as time plot)
+                if scenario is not None:
+                    colors.append(plt.cm.Set1(scenario % 10))
+                else:
+                    colors.append('gray')
+
+        if values:
+            bars = plt.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
+            plt.xticks(range(len(values)), labels, rotation=45, ha='center')
+            plt.tick_params(axis='x', pad=1)
+            plt.ylabel('Model Storage Size (MiB)')
+            plt.title(f'Model Storage Size Comparison\n(across {max_runs} runs)')
+            plt.grid(True, axis='y', alpha=0.3)
+
+            # Add value labels on bars
+            for bar, value in zip(bars, values):
+                height = bar.get_height()
+                plt.annotate(f'{value:.1f}MiB',
+                            xy=(bar.get_x() + bar.get_width() / 2, height),
+                            xytext=(0, 3),
+                            textcoords="offset points",
+                            ha='center', va='bottom', fontsize=9)
+
+        plt.tight_layout()
+        if save_plots:
+            plt.savefig(os.path.join(output_dir, 'storage_and_time_comparison.png'),
+                       bbox_inches='tight', dpi=150)
+            print(f"✓ Saved storage and time comparison to {output_dir}/storage_and_time_comparison.png")
+        plt.show()
+
     def print_summary(self):
         """Print a summary comparison of all loaded runs."""
         if not self.runs:
@@ -689,13 +822,16 @@ class FLRunComparator:
             elif avg_track_accuracy:
                 print(f"   Final Accuracy: {avg_track_accuracy:.4f}")
 
-            # Timing
-            total_time = run_data.get('avg_total_time')
+            # Timing and Storage
+            total_time = run_data.get('total_running_time')
+            storage_size = run_data.get('model_storage_size_mib')
             resolution_time = run_data.get('avg_resolution_time_ms')
             overhead = run_data.get('disagreement_overhead_pct')
 
             if total_time:
-                print(f"   Avg Total Time: {total_time:.3f}s")
+                print(f"   Total Running Time: {total_time:.1f}s")
+            if storage_size:
+                print(f"   Model Storage Size: {storage_size:.1f}MiB")
             if resolution_time:
                 print(f"   Avg Resolution Time: {resolution_time:.3f}ms")
             if overhead is not None:
@@ -725,7 +861,7 @@ class FLRunComparator:
             'final_accuracy', 'final_loss', 'final_precision', 'final_recall', 'final_f1',
             'final_avg_track_accuracy', 'final_avg_track_precision', 'final_avg_track_recall', 'final_avg_track_f1',
             'avg_total_time', 'avg_aggregation_time', 'avg_resolution_time_ms',
-            'disagreement_overhead_pct', 'total_rounds'
+            'disagreement_overhead_pct', 'total_rounds', 'total_running_time', 'model_storage_size_mib'
         ]
 
         # Average numeric metrics
@@ -835,6 +971,7 @@ def main():
         comparator.compare_timing(save_plots=True, output_dir=args.output_dir)
         comparator.compare_round_progression(save_plots=True, output_dir=args.output_dir)
         comparator.compare_combined_metrics(save_plots=True, output_dir=args.output_dir)
+        comparator.compare_storage_and_time(save_plots=True, output_dir=args.output_dir)
 
         print(f"\n✅ All plots saved to {args.output_dir}/")
 

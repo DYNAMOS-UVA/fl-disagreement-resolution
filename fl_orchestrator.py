@@ -3,6 +3,7 @@
 import os
 import argparse
 import json
+import time
 import fl_module
 
 from fl_client import FederatedClient
@@ -147,6 +148,9 @@ class FederatedOrchestrator:
            d. Server aggregates models using disagreement-aware track algorithm
            e. Server evaluates global model and individual track performance
         """
+        # Start timing the entire federated learning process
+        fl_start_time = time.time()
+
         print(f"Starting federated learning with {self.fl_rounds} rounds...")
 
         # Initialize and save the initial global model
@@ -217,7 +221,15 @@ class FederatedOrchestrator:
 
             print(f"Round {fl_round} completed with disagreement resolution.")
 
-        print("\nFederated learning with disagreement resolution completed!")
+        # Calculate total running time
+        total_running_time = time.time() - fl_start_time
+
+        # Add timing information to server results and save final results
+        self.server.set_total_running_time(total_running_time)
+        self.server._save_experiment_results()
+
+        print(f"\nFederated learning with disagreement resolution completed!")
+        print(f"Total running time: {total_running_time:.2f} seconds")
 
 
 def main():
