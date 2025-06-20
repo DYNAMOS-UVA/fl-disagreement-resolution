@@ -156,7 +156,7 @@ class FLRunComparator:
 
         # Load main results
         fl_results_path = run_path / "output" / "fl_results.json"
-        timing_metrics_path = run_path / "output" / "aggregation_timing_metrics.json"
+        timing_metrics_path = run_path / "output" / "timing_metrics.json"
 
         run_data = {
             "name": run_name,
@@ -178,7 +178,15 @@ class FLRunComparator:
         if timing_metrics_path.exists():
             with open(timing_metrics_path, 'r') as f:
                 timing_data = json.load(f)
-                run_data["timing_metrics"] = timing_data
+                # Handle new timing metrics structure
+                if isinstance(timing_data, dict) and "aggregation_timing_history" in timing_data:
+                    run_data["timing_metrics"] = timing_data["aggregation_timing_history"]
+                    run_data["total_running_time"] = timing_data.get("total_running_time_seconds")
+                    run_data["round_timing_metrics"] = timing_data.get("round_timing_history", [])
+                else:
+                    # Handle old format (direct list)
+                    run_data["timing_metrics"] = timing_data if isinstance(timing_data, list) else []
+                    run_data["round_timing_metrics"] = []
         else:
             print(f"Warning: No timing metrics found in {run_path}")
             run_data["timing_metrics"] = []
@@ -226,8 +234,9 @@ class FLRunComparator:
         fl_results = run_data.get("fl_results", {})
         timing_metrics = run_data.get("timing_metrics", [])
 
-        # Extract total running time from fl_results
-        run_data["total_running_time"] = fl_results.get("total_running_time")
+        # Extract total running time from fl_results (fallback if not in timing metrics)
+        if "total_running_time" not in run_data:
+            run_data["total_running_time"] = fl_results.get("total_running_time")
 
         # Performance metrics
         rounds_data = fl_results.get("rounds", [])
@@ -304,6 +313,37 @@ class FLRunComparator:
                 run_data["disagreement_overhead_pct"] = ((avg_with - avg_without) / avg_without) * 100
             else:
                 run_data["disagreement_overhead_pct"] = None
+
+                # Round timing metrics summary
+        round_timing_metrics = run_data.get("round_timing_metrics", [])
+        if round_timing_metrics:
+            track_init_times = [entry["track_model_initialization_time_seconds"] for entry in round_timing_metrics]
+            client_training_times = [entry["total_client_training_time_seconds"] for entry in round_timing_metrics]
+            total_round_times = [entry["total_round_time_seconds"] for entry in round_timing_metrics]
+
+            # Extract aggregation timing data from round timing
+            aggregation_times = [entry.get("aggregation_time_seconds", 0) for entry in round_timing_metrics]
+            resolution_times = [entry.get("resolution_time_seconds", 0) for entry in round_timing_metrics]
+            total_aggregation_times = [entry.get("total_aggregation_time_seconds", 0) for entry in round_timing_metrics]
+
+            run_data["avg_track_init_time"] = np.mean(track_init_times)
+            run_data["avg_client_training_time"] = np.mean(client_training_times)
+            run_data["avg_total_round_time"] = np.mean(total_round_times)
+            run_data["avg_round_aggregation_time"] = np.mean(aggregation_times)
+            run_data["avg_round_resolution_time"] = np.mean(resolution_times)
+            run_data["avg_round_total_aggregation_time"] = np.mean(total_aggregation_times)
+
+            # Calculate individual client training statistics
+            all_client_times = []
+            for round_entry in round_timing_metrics:
+                client_times = round_entry.get("client_training_times", {})
+                for client_id, client_data in client_times.items():
+                    all_client_times.append(client_data.get("training_time_seconds", 0))
+
+            if all_client_times:
+                run_data["avg_individual_client_training_time"] = np.mean(all_client_times)
+                run_data["max_individual_client_training_time"] = np.max(all_client_times)
+                run_data["min_individual_client_training_time"] = np.min(all_client_times)
 
     def _calculate_average_track_performance(self, rounds_data, experiment_type=None):
         """Calculate average performance across all tracks (including global) for each round.
@@ -566,7 +606,7 @@ class FLRunComparator:
         plt.show()
 
     def compare_combined_metrics(self, save_plots=True, output_dir=None):
-        """Create a combined plot with resolution time, aggregation time, and accuracy progression."""
+        """Create a comprehensive 4x2 grid comparison with all timing metrics and performance."""
         if len(self.scenario_runs) < 2:
             print("Need at least 2 scenarios to compare")
             return
@@ -580,79 +620,106 @@ class FLRunComparator:
 
         # Use averaged scenario data
         averaged_data = self.get_averaged_scenario_data()
-
-        # Determine total number of runs across all scenarios for title
-        total_runs = sum(self.num_runs_per_scenario.values())
         max_runs = max(self.num_runs_per_scenario.values()) if self.num_runs_per_scenario else 0
 
-        plt.figure(figsize=(18, 6))
-
-        # Subplot 1: Average Resolution Time (ms)
-        plt.subplot(1, 3, 1)
-        values = []
-        labels = []
-
-        for scenario, run_data in averaged_data.items():
-            value = run_data.get('avg_resolution_time_ms')
-            if value is not None:
-                values.append(value)
-                clients = run_data.get('num_clients', 'Unknown')
-                labels.append(self._generate_chart_label(scenario, clients))
-
-        if values:
-            bars = plt.bar(range(len(values)), values, color='steelblue', alpha=0.7, edgecolor='navy', linewidth=1)
-            plt.xticks(range(len(values)), labels, rotation=45, ha='center')
-            plt.tick_params(axis='x', pad=1)
-            plt.ylabel('Average Resolution Time (ms)')
-            plt.title(f'Average Resolution Time Comparison\n(across {max_runs} runs)')
-            plt.grid(True, axis='y', alpha=0.3)
-
-            # Add value labels on bars
-            for bar, value in zip(bars, values):
-                height = bar.get_height()
-                plt.annotate(f'{value:.3f}ms',
-                            xy=(bar.get_x() + bar.get_width() / 2, height),
-                            xytext=(0, 3),
-                            textcoords="offset points",
-                            ha='center', va='bottom', fontsize=9)
-
-        # Subplot 2: Average Aggregation Time (s)
-        plt.subplot(1, 3, 2)
-        values = []
-        labels = []
-
-        for scenario, run_data in averaged_data.items():
-            value = run_data.get('avg_aggregation_time')
-            if value is not None:
-                values.append(value)
-                clients = run_data.get('num_clients', 'Unknown')
-                labels.append(self._generate_chart_label(scenario, clients))
-
-        if values:
-            bars = plt.bar(range(len(values)), values, color='steelblue', alpha=0.7, edgecolor='navy', linewidth=1)
-            plt.xticks(range(len(values)), labels, rotation=45, ha='center')
-            plt.tick_params(axis='x', pad=1)
-            plt.ylabel('Average Aggregation Time (s)')
-            plt.title(f'Average Aggregation Time Comparison\n(across {max_runs} runs)')
-            plt.grid(True, axis='y', alpha=0.3)
-
-            # Add value labels on bars
-            for bar, value in zip(bars, values):
-                height = bar.get_height()
-                plt.annotate(f'{value:.3f}s',
-                            xy=(bar.get_x() + bar.get_width() / 2, height),
-                            xytext=(0, 3),
-                            textcoords="offset points",
-                            ha='center', va='bottom', fontsize=9)
-
-        # Subplot 3: Accuracy Progression or RMSE Progression
-        plt.subplot(1, 3, 3)
-
-        # Detect experiment type from the first scenario
+        # Detect experiment type
         first_scenario_data = next(iter(averaged_data.values())) if averaged_data else {}
         experiment_type = first_scenario_data.get("experiment_type", "mnist")
 
-        for scenario, run_data in averaged_data.items():
+        # Create 4x2 grid
+        fig, axes = plt.subplots(2, 4, figsize=(20, 10))
+        fig.suptitle(f'Scalability comparison (across {max_runs} runs)', fontsize=16, fontweight='bold')
+
+                # Define custom color palette - vibrant and mixed up
+        custom_colors = ['#E91E63', '#00BCD4', '#4CAF50', '#3F51B5', '#607D8B', '#F44336', '#2E7D32', '#1976D2', '#AD1457', '#00695C']
+        # Colors: pink, cyan, green, indigo, blue-gray, red, dark green, blue, deep pink, teal
+
+        # Prepare common data for all plots
+        scenarios = []
+        labels = []
+        colors = []
+
+        for i, (scenario, run_data) in enumerate(averaged_data.items()):
+            scenarios.append(scenario)
+            clients = run_data.get('num_clients', 'Unknown')
+            labels.append(self._generate_chart_label(scenario, clients))
+            # Use custom color palette
+            colors.append(custom_colors[i % len(custom_colors)])
+
+        # Top row plots
+        # 1. Average Resolution Time
+        ax = axes[0, 0]
+        values = [averaged_data[s].get('avg_round_resolution_time', 0) * 1000 for s in scenarios]  # Convert to ms
+        if any(v > 0 for v in values):
+            bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
+            ax.set_xticks(range(len(values)))
+            ax.set_xticklabels(labels, rotation=45, ha='center', va='top')
+            ax.tick_params(axis='x', pad=-5)
+            ax.set_ylabel('Time (ms)')
+            ax.set_title('Avg Resolution Time')
+            ax.grid(True, axis='y', alpha=0.3)
+            # Add value labels
+            for bar, value in zip(bars, values):
+                height = bar.get_height()
+                ax.annotate(f'{value:.2f}ms', xy=(bar.get_x() + bar.get_width() / 2, height),
+                           xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
+
+        # 2. Average Track Model Initialization Time
+        ax = axes[0, 1]
+        values = [averaged_data[s].get('avg_track_init_time', 0) for s in scenarios]
+        if any(v > 0 for v in values):
+            bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
+            ax.set_xticks(range(len(values)))
+            ax.set_xticklabels(labels, rotation=45, ha='center', va='top')
+            ax.tick_params(axis='x', pad=-5)
+            ax.set_ylabel('Time (s)')
+            ax.set_title('Avg Track Model Init Time')
+            ax.grid(True, axis='y', alpha=0.3)
+            # Add value labels
+            for bar, value in zip(bars, values):
+                height = bar.get_height()
+                ax.annotate(f'{value:.3f}s', xy=(bar.get_x() + bar.get_width() / 2, height),
+                           xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
+
+        # 3. Average Client Training Time
+        ax = axes[0, 2]
+        values = [averaged_data[s].get('avg_client_training_time', 0) for s in scenarios]
+        if any(v > 0 for v in values):
+            bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
+            ax.set_xticks(range(len(values)))
+            ax.set_xticklabels(labels, rotation=45, ha='center', va='top')
+            ax.tick_params(axis='x', pad=-5)
+            ax.set_ylabel('Time (s)')
+            ax.set_title('Avg Client Training Time')
+            ax.grid(True, axis='y', alpha=0.3)
+            # Add value labels
+            for bar, value in zip(bars, values):
+                height = bar.get_height()
+                ax.annotate(f'{value:.2f}s', xy=(bar.get_x() + bar.get_width() / 2, height),
+                           xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
+
+        # 4. Average Aggregation Time
+        ax = axes[0, 3]
+        values = [averaged_data[s].get('avg_round_aggregation_time', 0) for s in scenarios]
+        if any(v > 0 for v in values):
+            bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
+            ax.set_xticks(range(len(values)))
+            ax.set_xticklabels(labels, rotation=45, ha='center', va='top')
+            ax.tick_params(axis='x', pad=-5)
+            ax.set_ylabel('Time (s)')
+            ax.set_title('Avg Aggregation Time')
+            ax.grid(True, axis='y', alpha=0.3)
+            # Add value labels
+            for bar, value in zip(bars, values):
+                height = bar.get_height()
+                ax.annotate(f'{value:.3f}s', xy=(bar.get_x() + bar.get_width() / 2, height),
+                           xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
+
+                # Bottom row plots
+        # 5. Accuracy Progression
+        ax = axes[1, 0]
+        for i, scenario in enumerate(scenarios):
+            run_data = averaged_data[scenario]
             avg_track_performance = run_data.get("avg_track_performance", {})
 
             if avg_track_performance:
@@ -662,30 +729,130 @@ class FLRunComparator:
                 clients = run_data.get('num_clients', 'Unknown')
                 label = self._generate_legend_label(scenario, clients)
 
-                plt.plot(rounds, values, marker='o', linewidth=2, markersize=6, label=label)
+                ax.plot(rounds, values, marker='o', linewidth=2, markersize=4,
+                       label=label, color=colors[i])
 
-        plt.xlabel('Round')
-
+        ax.set_xlabel('Round')
         if experiment_type == "n_cmapss":
-            plt.ylabel('Average Track RMSE')
-            plt.title(f'Average Track RMSE Progression\n(across {max_runs} runs)')
+            ax.set_ylabel('Average Track RMSE')
+            ax.set_title('Avg Track RMSE Progression')
         else:
-            plt.ylabel('Average Track Accuracy')
-            plt.title(f'Average Track Accuracy Progression\n(across {max_runs} runs)')
+            ax.set_ylabel('Average Track Accuracy')
+            ax.set_title('Avg Track Accuracy Progression')
 
-        plt.grid(True, alpha=0.3)
-        plt.legend()
-
+        ax.grid(True, alpha=0.3)
+        ax.legend(fontsize=7, loc='best')
         # Set x-axis to show only whole numbers
-        ax = plt.gca()
         ax.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
+
+        # 6. Model Storage Size
+        ax = axes[1, 1]
+        values = [averaged_data[s].get('model_storage_size_mib', 0) for s in scenarios]
+        if any(v > 0 for v in values):
+            bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
+            ax.set_xticks(range(len(values)))
+            ax.set_xticklabels(labels, rotation=45, ha='center', va='top')
+            ax.tick_params(axis='x', pad=-5)
+            ax.set_ylabel('Size (MiB)')
+            ax.set_title('Model Storage Size')
+            ax.grid(True, axis='y', alpha=0.3)
+            # Add value labels
+            for bar, value in zip(bars, values):
+                height = bar.get_height()
+                ax.annotate(f'{value:.1f}MiB', xy=(bar.get_x() + bar.get_width() / 2, height),
+                           xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
+
+        # 7. Average Total Round Time
+        ax = axes[1, 2]
+        values = [averaged_data[s].get('avg_total_round_time', 0) for s in scenarios]
+        if any(v > 0 for v in values):
+            bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
+            ax.set_xticks(range(len(values)))
+            ax.set_xticklabels(labels, rotation=45, ha='center', va='top')
+            ax.tick_params(axis='x', pad=-5)
+            ax.set_ylabel('Time (s)')
+            ax.set_title('Avg Total Round Time')
+            ax.grid(True, axis='y', alpha=0.3)
+            # Add value labels
+            for bar, value in zip(bars, values):
+                height = bar.get_height()
+                ax.annotate(f'{value:.2f}s', xy=(bar.get_x() + bar.get_width() / 2, height),
+                           xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
+
+        # 8. Cumulative Time Breakdown
+        ax = axes[1, 3]
+        self._plot_cumulative_time_breakdown(ax, averaged_data, scenarios, labels)
 
         plt.tight_layout()
         if save_plots:
-            plt.savefig(os.path.join(output_dir, 'combined_metrics_comparison.png'),
+            plt.savefig(os.path.join(output_dir, 'comprehensive_comparison.png'),
                        bbox_inches='tight', dpi=150)
-            print(f"✓ Saved combined metrics comparison to {output_dir}/combined_metrics_comparison.png")
+            print(f"✓ Saved comprehensive comparison to {output_dir}/comprehensive_comparison.png")
         plt.show()
+
+    def _plot_cumulative_time_breakdown(self, ax, averaged_data, scenarios, labels):
+        """Plot a stacked bar chart showing time breakdown for each scenario."""
+        # Prepare data for stacked bars
+        track_init_times = []
+        client_training_times = []
+        resolution_times = []
+        aggregation_times = []
+        other_times = []
+
+        for scenario in scenarios:
+            run_data = averaged_data[scenario]
+            total_time = run_data.get('total_running_time', 0)
+
+            # Get component times (multiply by number of rounds to get total time spent)
+            track_init = run_data.get('avg_track_init_time', 0) * run_data.get('total_rounds', 1)
+            client_training = run_data.get('avg_client_training_time', 0) * run_data.get('total_rounds', 1)
+            resolution = run_data.get('avg_round_resolution_time', 0) * run_data.get('total_rounds', 1)
+            aggregation = run_data.get('avg_round_aggregation_time', 0) * run_data.get('total_rounds', 1)
+
+            # Calculate "other" time (evaluation, overhead, etc.)
+            accounted_time = track_init + client_training + resolution + aggregation
+            other = max(0, total_time - accounted_time)
+
+            track_init_times.append(track_init)
+            client_training_times.append(client_training)
+            resolution_times.append(resolution)
+            aggregation_times.append(aggregation)
+            other_times.append(other)
+
+        # Create stacked bar chart
+        width = 0.8
+        x_pos = range(len(scenarios))
+
+                                # Stack the bars with distinct time breakdown colors and black borders
+        p1 = ax.bar(x_pos, track_init_times, width, label='Track Init', color='#4CAF50', alpha=0.8, edgecolor='black', linewidth=0.8)  # Green
+        p2 = ax.bar(x_pos, client_training_times, width, bottom=track_init_times,
+                   label='Client Training', color='#2196F3', alpha=0.8, edgecolor='black', linewidth=0.8)  # Blue
+
+        bottom2 = [t + c for t, c in zip(track_init_times, client_training_times)]
+        p3 = ax.bar(x_pos, resolution_times, width, bottom=bottom2,
+                   label='Resolution', color='#FF9800', alpha=0.8, edgecolor='black', linewidth=0.8)  # Orange
+
+        bottom3 = [b + r for b, r in zip(bottom2, resolution_times)]
+        p4 = ax.bar(x_pos, aggregation_times, width, bottom=bottom3,
+                   label='Aggregation', color='#F44336', alpha=0.8, edgecolor='black', linewidth=0.8)  # Red
+
+        bottom4 = [b + a for b, a in zip(bottom3, aggregation_times)]
+        p5 = ax.bar(x_pos, other_times, width, bottom=bottom4,
+                   label='Other', color='#9E9E9E', alpha=0.8, edgecolor='black', linewidth=0.8)  # Gray
+
+        ax.set_xticks(x_pos)
+        ax.set_xticklabels(labels, rotation=45, ha='center', va='top')
+        ax.tick_params(axis='x', pad=-5)
+        ax.set_ylabel('Time (s)')
+        ax.set_title('Total FL Run Time Breakdown')
+        ax.legend(loc='upper left', fontsize=8)
+        ax.grid(True, axis='y', alpha=0.3)
+
+        # Add total time labels on top of bars
+        totals = [sum(x) for x in zip(track_init_times, client_training_times, resolution_times, aggregation_times, other_times)]
+        for i, total in enumerate(totals):
+            ax.annotate(f'{total:.1f}s', xy=(i, total), xytext=(0, 3),
+                       textcoords="offset points", ha='center', va='bottom', fontsize=8)
 
     def compare_storage_and_time(self, save_plots=True, output_dir=None):
         """Compare total running time and model storage size across runs."""
@@ -861,7 +1028,10 @@ class FLRunComparator:
             'final_accuracy', 'final_loss', 'final_precision', 'final_recall', 'final_f1',
             'final_avg_track_accuracy', 'final_avg_track_precision', 'final_avg_track_recall', 'final_avg_track_f1',
             'avg_total_time', 'avg_aggregation_time', 'avg_resolution_time_ms',
-            'disagreement_overhead_pct', 'total_rounds', 'total_running_time', 'model_storage_size_mib'
+            'disagreement_overhead_pct', 'total_rounds', 'total_running_time', 'model_storage_size_mib',
+            'avg_track_init_time', 'avg_client_training_time', 'avg_total_round_time',
+            'avg_individual_client_training_time', 'max_individual_client_training_time', 'min_individual_client_training_time',
+            'avg_round_aggregation_time', 'avg_round_resolution_time', 'avg_round_total_aggregation_time'
         ]
 
         # Average numeric metrics

@@ -160,8 +160,15 @@ class FederatedOrchestrator:
         self.server.evaluate_model(fl_round=0)
         print("Initial model evaluation completed")
 
+        # Initialize round timing history
+        if not hasattr(self.server, 'round_timing_history'):
+            self.server.round_timing_history = []
+
         # Main federated learning loop
         for fl_round in range(1, self.fl_rounds + 1):
+            # Start timing the entire round
+            round_start_time = time.time()
+
             print(f"\n--- Federated Learning Round {fl_round}/{self.fl_rounds} ---")
 
             # 1. Server analyzes disagreements and prepares track-specific models
@@ -170,15 +177,19 @@ class FederatedOrchestrator:
             # Server creates directories and prepares models with disagreement resolution
             if fl_round == 1:
                 # For the first round, create initial tracks from global model
-                self.server.prepare_training_model(fl_round, use_initial=True)
+                training_model_dir, track_init_time = self.server.prepare_training_model(fl_round, use_initial=True)
                 print("Created initial track models from global_model_initial for round 1")
             else:
                 # For subsequent rounds, update tracks based on disagreement evolution
-                self.server.prepare_training_model(fl_round, use_initial=False)
+                training_model_dir, track_init_time = self.server.prepare_training_model(fl_round, use_initial=False)
                 print(f"Updated track models based on disagreement changes from round {fl_round-1}")
 
             # 2. Clients participate in disagreement-aware multi-track training
             print("Starting disagreement-aware multi-track client training...")
+
+            # Start timing client training phase
+            client_training_start_time = time.time()
+            client_training_times = {}
 
             # Get fully excluded clients from the server
             fully_excluded_clients_for_round = self.server.fully_excluded_clients_for_current_round
@@ -198,14 +209,29 @@ class FederatedOrchestrator:
                 client = self.clients[client_id]
                 print(f"Client {client_id}: Loading track models and training with disagreement resolution...")
 
+                # Time individual client training
+                client_start_time = time.time()
+
                 # Client loads primary track model and any background track models
                 client.load_track_models_for_round(fl_round)
 
                 # Client trains on primary track + participates in background tracks
-                client.train_with_disagreement_resolution(epochs=self.train_config.get("local_epochs", 5), round_num=fl_round)
+                training_results = client.train_with_disagreement_resolution(epochs=self.train_config.get("local_epochs", 5), round_num=fl_round)
 
                 # Client saves all trained models (primary + background) to filesystem
                 client.save_trained_track_models(fl_round)
+
+                # Record individual client training time
+                client_training_time = time.time() - client_start_time
+                client_training_times[client_id] = {
+                    "training_time_seconds": client_training_time,
+                    "epochs": self.train_config.get("local_epochs", 5),
+                    "total_training_time_from_results": training_results.get("training_time", {}).get("total_seconds", 0) if training_results else 0
+                }
+                print(f"Client {client_id} completed training in {client_training_time:.4f} seconds")
+
+            # Calculate total client training phase time
+            total_client_training_time = time.time() - client_training_start_time
 
             # 3. Server performs disagreement-aware track-based aggregation
             print("Performing disagreement-aware track-based model aggregation...")
@@ -219,7 +245,48 @@ class FederatedOrchestrator:
             # Server evaluates both global and track models, storing comprehensive metrics
             self.server.evaluate_model(fl_round=fl_round)
 
+            # Calculate total round time
+            total_round_time = time.time() - round_start_time
+
+            # Extract aggregation timing data for this round
+            aggregation_timing = None
+            if hasattr(self.server, 'aggregation_timing_history') and self.server.aggregation_timing_history:
+                # Get the most recent aggregation timing entry (should be for this round)
+                for timing_entry in reversed(self.server.aggregation_timing_history):
+                    if timing_entry.get("round") == fl_round:
+                        aggregation_timing = timing_entry
+                        break
+
+            # Store round timing metrics
+            round_timing = {
+                "round": fl_round,
+                "track_model_initialization_time_seconds": track_init_time,
+                "client_training_times": client_training_times,
+                "total_client_training_time_seconds": total_client_training_time,
+                "total_round_time_seconds": total_round_time,
+                "num_participating_clients": len(client_training_times)
+            }
+
+            # Add aggregation timing data if available
+            if aggregation_timing:
+                round_timing.update({
+                    "aggregation_time_seconds": aggregation_timing.get("aggregation_time_seconds", 0),
+                    "resolution_time_seconds": aggregation_timing.get("resolution_time_seconds", 0),
+                    "total_aggregation_time_seconds": aggregation_timing.get("total_aggregation_time_seconds", 0),
+                    "has_disagreements": aggregation_timing.get("has_disagreements", False)
+                })
+
+            self.server.round_timing_history.append(round_timing)
+
             print(f"Round {fl_round} completed with disagreement resolution.")
+            print(f"Round {fl_round} timing summary:")
+            print(f"  Track initialization: {track_init_time:.4f}s")
+            print(f"  Client training phase: {total_client_training_time:.4f}s")
+            if aggregation_timing:
+                print(f"  Resolution time: {aggregation_timing.get('resolution_time_seconds', 0):.4f}s")
+                print(f"  Aggregation time: {aggregation_timing.get('aggregation_time_seconds', 0):.4f}s")
+                print(f"  Total aggregation time: {aggregation_timing.get('total_aggregation_time_seconds', 0):.4f}s")
+            print(f"  Total round time: {total_round_time:.4f}s")
 
         # Calculate total running time
         total_running_time = time.time() - fl_start_time

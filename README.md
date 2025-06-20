@@ -35,7 +35,7 @@ The framework automatically generates detailed timing plots including:
 ### Timing Data Storage
 
 Timing metrics are automatically saved to:
-- `output/aggregation_timing_metrics.json` - Detailed timing data for each round
+- `output/timing_metrics.json` - Detailed timing data for each round including total running time
 - `output/fl_results.json` - Integrated timing metrics with other experiment results
 - `output/server/plots/` - Comprehensive timing visualization plots
 

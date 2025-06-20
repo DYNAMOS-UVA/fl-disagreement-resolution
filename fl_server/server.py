@@ -3,6 +3,7 @@
 import os
 import torch
 import json
+import time
 from datetime import datetime
 import glob
 
@@ -316,7 +317,12 @@ class FederatedServer:
         Args:
             total_time_seconds: Total time in seconds for the complete FL process
         """
-        self.results["total_running_time"] = total_time_seconds
+        # Store total running time in timing metrics instead of main results
+        if not hasattr(self, 'aggregation_timing_history'):
+            self.aggregation_timing_history = []
+
+        # Add total running time to timing metrics
+        self.total_running_time = total_time_seconds
 
     def _save_experiment_results(self):
         """Save experiment results to a JSON file."""
@@ -344,8 +350,16 @@ class FederatedServer:
 
         # Also save timing metrics separately for easier analysis
         if hasattr(self, 'aggregation_timing_history') and self.aggregation_timing_history:
-            timing_path = os.path.join(output_dir, "aggregation_timing_metrics.json")
-            serializable_timing = make_json_serializable(self.aggregation_timing_history)
+            timing_path = os.path.join(output_dir, "timing_metrics.json")
+
+            # Create timing metrics structure with total running time and round timing
+            timing_data = {
+                "total_running_time_seconds": getattr(self, 'total_running_time', None),
+                "aggregation_timing_history": self.aggregation_timing_history,
+                "round_timing_history": getattr(self, 'round_timing_history', [])
+            }
+
+            serializable_timing = make_json_serializable(timing_data)
             with open(timing_path, "w") as f:
                 json.dump(serializable_timing, f, indent=2)
             print(f"Saved timing metrics to {timing_path}")
@@ -378,11 +392,14 @@ class FederatedServer:
             use_initial: Whether to use the initial model (for round 1)
 
         Returns:
-            str: Path to the prepared model directory
+            tuple: (Path to the prepared model directory, preparation time in seconds)
         """
 
         if not self.results_dir:
-            return None # Return None if results_dir is not set
+            return None, 0.0 # Return None and 0 time if results_dir is not set
+
+        # Start timing the track model initialization
+        preparation_start_time = time.time()
 
         print(f"\n=== SERVER PREPARATION FOR ROUND {round_num} ===")
         self.fully_excluded_clients_for_current_round = set()
@@ -779,7 +796,12 @@ class FederatedServer:
                         print(f"      No clients require finetuning this round")
 
         print(f"=== END SERVER PREPARATION FOR ROUND {round_num} ===\\n")
-        return training_model_dir
+
+        # Calculate preparation time
+        preparation_time = time.time() - preparation_start_time
+        print(f"Track model initialization completed in {preparation_time:.4f} seconds")
+
+        return training_model_dir, preparation_time
 
     def get_client_model_path(self, round_num, client_id):
         """Get the path to the appropriate model for a specific client.
