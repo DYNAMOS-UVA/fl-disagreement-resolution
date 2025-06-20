@@ -653,8 +653,8 @@ class FLRunComparator:
         if any(v > 0 for v in values):
             bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
             ax.set_xticks(range(len(values)))
-            ax.set_xticklabels(labels, rotation=45, ha='center', va='top')
-            ax.tick_params(axis='x', pad=-5)
+            ax.set_xticklabels(labels, rotation=90, ha='center', va='top')
+            ax.tick_params(axis='x', pad=2)
             ax.set_ylabel('Time (ms)')
             ax.set_title('Avg Resolution Time')
             ax.grid(True, axis='y', alpha=0.3)
@@ -666,19 +666,19 @@ class FLRunComparator:
 
         # 2. Average Track Model Initialization Time
         ax = axes[0, 1]
-        values = [averaged_data[s].get('avg_track_init_time', 0) for s in scenarios]
+        values = [averaged_data[s].get('avg_track_init_time', 0) * 1000 for s in scenarios]  # Convert to ms
         if any(v > 0 for v in values):
             bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
             ax.set_xticks(range(len(values)))
-            ax.set_xticklabels(labels, rotation=45, ha='center', va='top')
-            ax.tick_params(axis='x', pad=-5)
-            ax.set_ylabel('Time (s)')
+            ax.set_xticklabels(labels, rotation=90, ha='center', va='top')
+            ax.tick_params(axis='x', pad=2)
+            ax.set_ylabel('Time (ms)')
             ax.set_title('Avg Track Model Init Time')
             ax.grid(True, axis='y', alpha=0.3)
             # Add value labels
             for bar, value in zip(bars, values):
                 height = bar.get_height()
-                ax.annotate(f'{value:.3f}s', xy=(bar.get_x() + bar.get_width() / 2, height),
+                ax.annotate(f'{value:.1f}ms', xy=(bar.get_x() + bar.get_width() / 2, height),
                            xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
 
         # 3. Average Client Training Time
@@ -687,8 +687,8 @@ class FLRunComparator:
         if any(v > 0 for v in values):
             bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
             ax.set_xticks(range(len(values)))
-            ax.set_xticklabels(labels, rotation=45, ha='center', va='top')
-            ax.tick_params(axis='x', pad=-5)
+            ax.set_xticklabels(labels, rotation=90, ha='center', va='top')
+            ax.tick_params(axis='x', pad=2)
             ax.set_ylabel('Time (s)')
             ax.set_title('Avg Client Training Time')
             ax.grid(True, axis='y', alpha=0.3)
@@ -704,8 +704,8 @@ class FLRunComparator:
         if any(v > 0 for v in values):
             bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
             ax.set_xticks(range(len(values)))
-            ax.set_xticklabels(labels, rotation=45, ha='center', va='top')
-            ax.tick_params(axis='x', pad=-5)
+            ax.set_xticklabels(labels, rotation=90, ha='center', va='top')
+            ax.tick_params(axis='x', pad=2)
             ax.set_ylabel('Time (s)')
             ax.set_title('Avg Aggregation Time')
             ax.grid(True, axis='y', alpha=0.3)
@@ -751,8 +751,8 @@ class FLRunComparator:
         if any(v > 0 for v in values):
             bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
             ax.set_xticks(range(len(values)))
-            ax.set_xticklabels(labels, rotation=45, ha='center', va='top')
-            ax.tick_params(axis='x', pad=-5)
+            ax.set_xticklabels(labels, rotation=90, ha='center', va='top')
+            ax.tick_params(axis='x', pad=2)
             ax.set_ylabel('Size (MiB)')
             ax.set_title('Model Storage Size')
             ax.grid(True, axis='y', alpha=0.3)
@@ -768,8 +768,8 @@ class FLRunComparator:
         if any(v > 0 for v in values):
             bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
             ax.set_xticks(range(len(values)))
-            ax.set_xticklabels(labels, rotation=45, ha='center', va='top')
-            ax.tick_params(axis='x', pad=-5)
+            ax.set_xticklabels(labels, rotation=90, ha='center', va='top')
+            ax.tick_params(axis='x', pad=2)
             ax.set_ylabel('Time (s)')
             ax.set_title('Avg Total Round Time')
             ax.grid(True, axis='y', alpha=0.3)
@@ -841,10 +841,10 @@ class FLRunComparator:
                    label='Other', color='#9E9E9E', alpha=0.8, edgecolor='black', linewidth=0.8)  # Gray
 
         ax.set_xticks(x_pos)
-        ax.set_xticklabels(labels, rotation=45, ha='center', va='top')
-        ax.tick_params(axis='x', pad=-5)
+        ax.set_xticklabels(labels, rotation=90, ha='center', va='top')
+        ax.tick_params(axis='x', pad=2)
         ax.set_ylabel('Time (s)')
-        ax.set_title('Total FL Run Time Breakdown')
+        ax.set_title('Avg Total FL Run Time Breakdown')
         ax.legend(loc='upper left', fontsize=8)
         ax.grid(True, axis='y', alpha=0.3)
 
