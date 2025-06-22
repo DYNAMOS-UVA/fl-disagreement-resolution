@@ -845,7 +845,7 @@ class FLRunComparator:
         ax.tick_params(axis='x', pad=2)
         ax.set_ylabel('Time (s)')
         ax.set_title('Avg Total FL Run Time Breakdown')
-        ax.legend(loc='upper left', fontsize=8)
+        ax.legend(loc='best', fontsize=8)
         ax.grid(True, axis='y', alpha=0.3)
 
         # Add total time labels on top of bars
