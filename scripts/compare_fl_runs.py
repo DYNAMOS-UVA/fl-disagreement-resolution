@@ -446,17 +446,21 @@ class FLRunComparator:
             plt.subplot(2, 2, i+1)
 
             values = []
+            errors = []
             labels = []
             colors = []
 
             for scenario, run_data in averaged_data.items():
                 # Try to get average track metric first, fallback to global metric
                 value = run_data.get(metric)
+                error = run_data.get(f'{metric}_std', 0)
                 if value is None:
                     value = run_data.get(fallback)
+                    error = run_data.get(f'{fallback}_std', 0)
 
                 if value is not None:
                     values.append(value)
+                    errors.append(error)
                     clients = run_data.get('num_clients', 'Unknown')
                     labels.append(self._generate_chart_label(scenario, clients))
 
@@ -467,18 +471,21 @@ class FLRunComparator:
                         colors.append('gray')
 
             if values:
-                bars = plt.bar(range(len(values)), values, color=colors, alpha=0.7)
+                bars = plt.bar(range(len(values)), values, yerr=errors, color=colors, alpha=0.7,
+                             capsize=5, error_kw={'elinewidth': 1, 'capthick': 1})
                 plt.xticks(range(len(values)), labels, rotation=45, ha='center')
                 plt.tick_params(axis='x', pad=1)
                 plt.ylabel(title)
                 plt.title(f'{title} Comparison\n(across {max_runs} runs)')
                 plt.grid(True, axis='y', alpha=0.3)
 
-                # Add value labels on bars
-                for bar, value in zip(bars, values):
+                # Add value labels on bars (above error bars)
+                for bar, value, error in zip(bars, values, errors):
                     height = bar.get_height()
+                    # Position label above error bar if error exists, otherwise above bar
+                    label_y = height + error if error > 0 else height
                     plt.annotate(f'{value:.4f}',
-                                xy=(bar.get_x() + bar.get_width() / 2, height),
+                                xy=(bar.get_x() + bar.get_width() / 2, label_y),
                                 xytext=(0, 3),
                                 textcoords="offset points",
                                 ha='center', va='bottom', fontsize=9)
@@ -517,36 +524,42 @@ class FLRunComparator:
             plt.subplot(1, 3, i+1)
 
             values = []
+            errors = []
             labels = []
 
             for scenario, run_data in averaged_data.items():
                 value = run_data.get(metric)
+                error = run_data.get(f'{metric}_std', 0)
                 if value is not None:
                     values.append(value)
+                    errors.append(error)
                     clients = run_data.get('num_clients', 'Unknown')
                     labels.append(self._generate_chart_label(scenario, clients))
 
             if values:
                 # Use blue colors for all bars
-                bars = plt.bar(range(len(values)), values, color='steelblue', alpha=0.7, edgecolor='navy', linewidth=1)
+                bars = plt.bar(range(len(values)), values, yerr=errors, color='steelblue', alpha=0.7, edgecolor='navy', linewidth=1,
+                             capsize=5, error_kw={'elinewidth': 1, 'capthick': 1})
                 plt.xticks(range(len(values)), labels, rotation=45, ha='center')
                 plt.tick_params(axis='x', pad=1)
                 plt.ylabel(title)
                 plt.title(f'{title} Comparison\n(across {max_runs} runs)')
                 plt.grid(True, axis='y', alpha=0.3)
 
-                # Add value labels on bars
-                for bar, value in zip(bars, values):
+                # Add value labels on bars (above error bars)
+                for bar, value, error in zip(bars, values, errors):
                     height = bar.get_height()
+                    # Position label above error bar if error exists, otherwise above bar
+                    label_y = height + error if error > 0 else height
                     if metric == 'avg_resolution_time_ms':
                         plt.annotate(f'{value:.3f}ms',
-                                    xy=(bar.get_x() + bar.get_width() / 2, height),
+                                    xy=(bar.get_x() + bar.get_width() / 2, label_y),
                                     xytext=(0, 3),
                                     textcoords="offset points",
                                     ha='center', va='bottom', fontsize=9)
                     else:
                         plt.annotate(f'{value:.3f}s',
-                                    xy=(bar.get_x() + bar.get_width() / 2, height),
+                                    xy=(bar.get_x() + bar.get_width() / 2, label_y),
                                     xytext=(0, 3),
                                     textcoords="offset points",
                                     ha='center', va='bottom', fontsize=9)
@@ -583,15 +596,18 @@ class FLRunComparator:
 
         for scenario, run_data in averaged_data.items():
             avg_track_performance = run_data.get("avg_track_performance", {})
+            std_track_performance = run_data.get("std_track_performance", {})
 
             if avg_track_performance:
                 rounds = list(avg_track_performance.keys())
                 values = list(avg_track_performance.values())
+                errors = [std_track_performance.get(round_num, 0) for round_num in rounds]
 
                 clients = run_data.get('num_clients', 'Unknown')
                 label = self._generate_legend_label(scenario, clients)
 
-                plt.plot(rounds, values, marker='o', linewidth=2, markersize=6, label=label)
+                plt.errorbar(rounds, values, yerr=errors, marker='o', linewidth=2, markersize=6,
+                           label=label, capsize=4, capthick=1)
 
         plt.xlabel('Round')
 
@@ -660,69 +676,85 @@ class FLRunComparator:
         # 1. Average Resolution Time
         ax = axes[0, 0]
         values = [averaged_data[s].get('avg_round_resolution_time', 0) * 1000 for s in scenarios]  # Convert to ms
+        errors = [averaged_data[s].get('avg_round_resolution_time_std', 0) * 1000 for s in scenarios]  # Convert to ms
         if any(v > 0 for v in values):
-            bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
+            bars = ax.bar(range(len(values)), values, yerr=errors, color=colors, alpha=0.7, edgecolor='black', linewidth=1,
+                         capsize=5, error_kw={'elinewidth': 1, 'capthick': 1})
             ax.set_xticks(range(len(values)))
             ax.set_xticklabels(labels, rotation=90, ha='center', va='top')
             ax.tick_params(axis='x', pad=2)
             ax.set_ylabel('Time (ms)')
             ax.set_title('Avg Resolution Time')
             ax.grid(True, axis='y', alpha=0.3)
-            # Add value labels
-            for bar, value in zip(bars, values):
+            # Add value labels (above error bars)
+            for bar, value, error in zip(bars, values, errors):
                 height = bar.get_height()
-                ax.annotate(f'{value:.2f}ms', xy=(bar.get_x() + bar.get_width() / 2, height),
+                # Position label above error bar if error exists, otherwise above bar
+                label_y = height + error if error > 0 else height
+                ax.annotate(f'{value:.2f}ms', xy=(bar.get_x() + bar.get_width() / 2, label_y),
                            xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
 
         # 2. Average Track Model Initialization Time
         ax = axes[0, 1]
         values = [averaged_data[s].get('avg_track_init_time', 0) * 1000 for s in scenarios]  # Convert to ms
+        errors = [averaged_data[s].get('avg_track_init_time_std', 0) * 1000 for s in scenarios]  # Convert to ms
         if any(v > 0 for v in values):
-            bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
+            bars = ax.bar(range(len(values)), values, yerr=errors, color=colors, alpha=0.7, edgecolor='black', linewidth=1,
+                         capsize=5, error_kw={'elinewidth': 1, 'capthick': 1})
             ax.set_xticks(range(len(values)))
             ax.set_xticklabels(labels, rotation=90, ha='center', va='top')
             ax.tick_params(axis='x', pad=2)
             ax.set_ylabel('Time (ms)')
             ax.set_title('Avg Track Model Init Time')
             ax.grid(True, axis='y', alpha=0.3)
-            # Add value labels
-            for bar, value in zip(bars, values):
+            # Add value labels (above error bars)
+            for bar, value, error in zip(bars, values, errors):
                 height = bar.get_height()
-                ax.annotate(f'{value:.1f}ms', xy=(bar.get_x() + bar.get_width() / 2, height),
+                # Position label above error bar if error exists, otherwise above bar
+                label_y = height + error if error > 0 else height
+                ax.annotate(f'{value:.1f}ms', xy=(bar.get_x() + bar.get_width() / 2, label_y),
                            xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
 
         # 3. Average Client Training Time
         ax = axes[0, 2]
         values = [averaged_data[s].get('avg_client_training_time', 0) for s in scenarios]
+        errors = [averaged_data[s].get('avg_client_training_time_std', 0) for s in scenarios]
         if any(v > 0 for v in values):
-            bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
+            bars = ax.bar(range(len(values)), values, yerr=errors, color=colors, alpha=0.7, edgecolor='black', linewidth=1,
+                         capsize=5, error_kw={'elinewidth': 1, 'capthick': 1})
             ax.set_xticks(range(len(values)))
             ax.set_xticklabels(labels, rotation=90, ha='center', va='top')
             ax.tick_params(axis='x', pad=2)
             ax.set_ylabel('Time (s)')
             ax.set_title('Avg Client Training Time')
             ax.grid(True, axis='y', alpha=0.3)
-            # Add value labels
-            for bar, value in zip(bars, values):
+            # Add value labels (above error bars)
+            for bar, value, error in zip(bars, values, errors):
                 height = bar.get_height()
-                ax.annotate(f'{value:.2f}s', xy=(bar.get_x() + bar.get_width() / 2, height),
+                # Position label above error bar if error exists, otherwise above bar
+                label_y = height + error if error > 0 else height
+                ax.annotate(f'{value:.2f}s', xy=(bar.get_x() + bar.get_width() / 2, label_y),
                            xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
 
         # 4. Average Aggregation Time
         ax = axes[0, 3]
         values = [averaged_data[s].get('avg_round_aggregation_time', 0) for s in scenarios]
+        errors = [averaged_data[s].get('avg_round_aggregation_time_std', 0) for s in scenarios]
         if any(v > 0 for v in values):
-            bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
+            bars = ax.bar(range(len(values)), values, yerr=errors, color=colors, alpha=0.7, edgecolor='black', linewidth=1,
+                         capsize=5, error_kw={'elinewidth': 1, 'capthick': 1})
             ax.set_xticks(range(len(values)))
             ax.set_xticklabels(labels, rotation=90, ha='center', va='top')
             ax.tick_params(axis='x', pad=2)
             ax.set_ylabel('Time (s)')
             ax.set_title('Avg Aggregation Time')
             ax.grid(True, axis='y', alpha=0.3)
-            # Add value labels
-            for bar, value in zip(bars, values):
+            # Add value labels (above error bars)
+            for bar, value, error in zip(bars, values, errors):
                 height = bar.get_height()
-                ax.annotate(f'{value:.3f}s', xy=(bar.get_x() + bar.get_width() / 2, height),
+                # Position label above error bar if error exists, otherwise above bar
+                label_y = height + error if error > 0 else height
+                ax.annotate(f'{value:.3f}s', xy=(bar.get_x() + bar.get_width() / 2, label_y),
                            xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
 
         # Bottom row plots
@@ -731,16 +763,18 @@ class FLRunComparator:
         for i, scenario in enumerate(scenarios):
             run_data = averaged_data[scenario]
             avg_track_performance = run_data.get("avg_track_performance", {})
+            std_track_performance = run_data.get("std_track_performance", {})
 
             if avg_track_performance:
                 rounds = list(avg_track_performance.keys())
                 values = list(avg_track_performance.values())
+                errors = [std_track_performance.get(round_num, 0) for round_num in rounds]
 
                 clients = run_data.get('num_clients', 'Unknown')
                 label = self._generate_legend_label(scenario, clients)
 
-                ax.plot(rounds, values, marker='o', linewidth=2, markersize=4,
-                       label=label, color=colors[i])
+                ax.errorbar(rounds, values, yerr=errors, marker='o', linewidth=2, markersize=4,
+                          label=label, color=colors[i], capsize=3, capthick=1)
 
         ax.set_xlabel('Round')
         if experiment_type == "n_cmapss":
@@ -758,35 +792,43 @@ class FLRunComparator:
         # 6. Model Storage Size
         ax = axes[1, 1]
         values = [averaged_data[s].get('model_storage_size_mib', 0) for s in scenarios]
+        errors = [averaged_data[s].get('model_storage_size_mib_std', 0) for s in scenarios]
         if any(v > 0 for v in values):
-            bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
+            bars = ax.bar(range(len(values)), values, yerr=errors, color=colors, alpha=0.7, edgecolor='black', linewidth=1,
+                         capsize=5, error_kw={'elinewidth': 1, 'capthick': 1})
             ax.set_xticks(range(len(values)))
             ax.set_xticklabels(labels, rotation=90, ha='center', va='top')
             ax.tick_params(axis='x', pad=2)
             ax.set_ylabel('Size (MiB)')
             ax.set_title('Model Storage Size')
             ax.grid(True, axis='y', alpha=0.3)
-            # Add value labels
-            for bar, value in zip(bars, values):
+            # Add value labels (above error bars)
+            for bar, value, error in zip(bars, values, errors):
                 height = bar.get_height()
-                ax.annotate(f'{value:.1f}MiB', xy=(bar.get_x() + bar.get_width() / 2, height),
+                # Position label above error bar if error exists, otherwise above bar
+                label_y = height + error if error > 0 else height
+                ax.annotate(f'{value:.1f}MiB', xy=(bar.get_x() + bar.get_width() / 2, label_y),
                            xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
 
         # 7. Average Total Round Time
         ax = axes[1, 2]
         values = [averaged_data[s].get('avg_total_round_time', 0) for s in scenarios]
+        errors = [averaged_data[s].get('avg_total_round_time_std', 0) for s in scenarios]
         if any(v > 0 for v in values):
-            bars = ax.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
+            bars = ax.bar(range(len(values)), values, yerr=errors, color=colors, alpha=0.7, edgecolor='black', linewidth=1,
+                         capsize=5, error_kw={'elinewidth': 1, 'capthick': 1})
             ax.set_xticks(range(len(values)))
             ax.set_xticklabels(labels, rotation=90, ha='center', va='top')
             ax.tick_params(axis='x', pad=2)
             ax.set_ylabel('Time (s)')
             ax.set_title('Avg Total Round Time')
             ax.grid(True, axis='y', alpha=0.3)
-            # Add value labels
-            for bar, value in zip(bars, values):
+            # Add value labels (above error bars)
+            for bar, value, error in zip(bars, values, errors):
                 height = bar.get_height()
-                ax.annotate(f'{value:.2f}s', xy=(bar.get_x() + bar.get_width() / 2, height),
+                # Position label above error bar if error exists, otherwise above bar
+                label_y = height + error if error > 0 else height
+                ax.annotate(f'{value:.2f}s', xy=(bar.get_x() + bar.get_width() / 2, label_y),
                            xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
 
         # 8. Cumulative Time Breakdown
@@ -810,10 +852,12 @@ class FLRunComparator:
         aggregation_times = []
         evaluation_times = []
         other_times = []
+        total_time_errors = []  # Standard deviations for total running time
 
         for scenario in scenarios:
             run_data = averaged_data[scenario]
             total_time = run_data.get('total_running_time', 0)
+            total_time_std = run_data.get('total_running_time_std', 0)
 
             # Get experiment initialization time (one-time cost)
             experiment_init = run_data.get('experiment_init_time', 0)
@@ -836,6 +880,7 @@ class FLRunComparator:
             aggregation_times.append(aggregation)
             evaluation_times.append(evaluation)
             other_times.append(other)
+            total_time_errors.append(total_time_std)
 
         # Create stacked bar chart
         width = 0.8
@@ -869,6 +914,11 @@ class FLRunComparator:
         p7 = ax.bar(x_pos, other_times, width, bottom=bottom6,
                    label='Other', color=plt.cm.Set1(8), alpha=0.8, edgecolor='black', linewidth=0.8)  # Brown
 
+        # Add error bars for total running time on top of stacked bars
+        totals = [sum(x) for x in zip(experiment_init_times, track_init_times, client_training_times, resolution_times, aggregation_times, evaluation_times, other_times)]
+        ax.errorbar(x_pos, totals, yerr=total_time_errors, fmt='none', capsize=4, capthick=1,
+                   ecolor='black', elinewidth=1.5, alpha=0.8)
+
         ax.set_xticks(x_pos)
         ax.set_xticklabels(labels, rotation=90, ha='center', va='top')
         ax.tick_params(axis='x', pad=2)
@@ -877,10 +927,11 @@ class FLRunComparator:
         ax.legend(loc='best', fontsize=8)
         ax.grid(True, axis='y', alpha=0.3)
 
-        # Add total time labels on top of bars
-        totals = [sum(x) for x in zip(experiment_init_times, track_init_times, client_training_times, resolution_times, aggregation_times, evaluation_times, other_times)]
-        for i, total in enumerate(totals):
-            ax.annotate(f'{total:.1f}s', xy=(i, total), xytext=(0, 3),
+        # Add total time labels on top of bars (adjust position to account for error bars)
+        for i, (total, error) in enumerate(zip(totals, total_time_errors)):
+            # Position label above error bar if error exists, otherwise above bar
+            label_y = total + error if error > 0 else total
+            ax.annotate(f'{total:.1f}s', xy=(i, label_y), xytext=(0, 3),
                        textcoords="offset points", ha='center', va='bottom', fontsize=8)
 
     def compare_storage_and_time(self, save_plots=True, output_dir=None):
@@ -905,13 +956,16 @@ class FLRunComparator:
         # Subplot 1: Total Running Time
         plt.subplot(1, 2, 1)
         values = []
+        errors = []
         labels = []
         colors = []
 
         for scenario, run_data in averaged_data.items():
             value = run_data.get('total_running_time')
+            error = run_data.get('total_running_time_std', 0)
             if value is not None:
                 values.append(value)
+                errors.append(error)
                 clients = run_data.get('num_clients', 'Unknown')
                 labels.append(self._generate_chart_label(scenario, clients))
 
@@ -922,18 +976,21 @@ class FLRunComparator:
                     colors.append('gray')
 
         if values:
-            bars = plt.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
+            bars = plt.bar(range(len(values)), values, yerr=errors, color=colors, alpha=0.7, edgecolor='black', linewidth=1,
+                         capsize=5, error_kw={'elinewidth': 1, 'capthick': 1})
             plt.xticks(range(len(values)), labels, rotation=45, ha='center')
             plt.tick_params(axis='x', pad=1)
             plt.ylabel('Total Running Time (seconds)')
             plt.title(f'Total Running Time Comparison\n(across {max_runs} runs)')
             plt.grid(True, axis='y', alpha=0.3)
 
-            # Add value labels on bars
-            for bar, value in zip(bars, values):
+            # Add value labels on bars (above error bars)
+            for bar, value, error in zip(bars, values, errors):
                 height = bar.get_height()
+                # Position label above error bar if error exists, otherwise above bar
+                label_y = height + error if error > 0 else height
                 plt.annotate(f'{value:.1f}s',
-                            xy=(bar.get_x() + bar.get_width() / 2, height),
+                            xy=(bar.get_x() + bar.get_width() / 2, label_y),
                             xytext=(0, 3),
                             textcoords="offset points",
                             ha='center', va='bottom', fontsize=9)
@@ -941,13 +998,16 @@ class FLRunComparator:
         # Subplot 2: Model Storage Size
         plt.subplot(1, 2, 2)
         values = []
+        errors = []
         labels = []
         colors = []
 
         for scenario, run_data in averaged_data.items():
             value = run_data.get('model_storage_size_mib')
+            error = run_data.get('model_storage_size_mib_std', 0)
             if value is not None:
                 values.append(value)
+                errors.append(error)
                 clients = run_data.get('num_clients', 'Unknown')
                 labels.append(self._generate_chart_label(scenario, clients))
 
@@ -958,18 +1018,21 @@ class FLRunComparator:
                     colors.append('gray')
 
         if values:
-            bars = plt.bar(range(len(values)), values, color=colors, alpha=0.7, edgecolor='black', linewidth=1)
+            bars = plt.bar(range(len(values)), values, yerr=errors, color=colors, alpha=0.7, edgecolor='black', linewidth=1,
+                         capsize=5, error_kw={'elinewidth': 1, 'capthick': 1})
             plt.xticks(range(len(values)), labels, rotation=45, ha='center')
             plt.tick_params(axis='x', pad=1)
             plt.ylabel('Model Storage Size (MiB)')
             plt.title(f'Model Storage Size Comparison\n(across {max_runs} runs)')
             plt.grid(True, axis='y', alpha=0.3)
 
-            # Add value labels on bars
-            for bar, value in zip(bars, values):
+            # Add value labels on bars (above error bars)
+            for bar, value, error in zip(bars, values, errors):
                 height = bar.get_height()
+                # Position label above error bar if error exists, otherwise above bar
+                label_y = height + error if error > 0 else height
                 plt.annotate(f'{value:.1f}MiB',
-                            xy=(bar.get_x() + bar.get_width() / 2, height),
+                            xy=(bar.get_x() + bar.get_width() / 2, label_y),
                             xytext=(0, 3),
                             textcoords="offset points",
                             ha='center', va='bottom', fontsize=9)
@@ -1063,11 +1126,13 @@ class FLRunComparator:
             'avg_round_aggregation_time', 'avg_round_resolution_time', 'avg_round_total_aggregation_time', 'avg_evaluation_time'
         ]
 
-        # Average numeric metrics
+        # Average numeric metrics and calculate standard deviations
         for metric in numeric_metrics:
             values = [run.get(metric) for run in scenario_runs if run.get(metric) is not None]
             if values:
                 avg_data[metric] = np.mean(values)
+                # Calculate standard deviation (0 if only one value)
+                avg_data[f'{metric}_std'] = np.std(values, ddof=1) if len(values) > 1 else 0.0
 
         # Sum integer metrics
         integer_sum_metrics = ['rounds_with_disagreements', 'total_timing_rounds']
@@ -1075,10 +1140,12 @@ class FLRunComparator:
             values = [run.get(metric, 0) for run in scenario_runs if run.get(metric) is not None]
             if values:
                 avg_data[metric] = int(np.mean(values))
+                # Also calculate std for integer metrics that might be used in plots
+                avg_data[f'{metric}_std'] = np.std(values, ddof=1) if len(values) > 1 else 0.0
 
         # Average track performance across rounds
         experiment_type = first_run.get("experiment_type", "mnist")
-        avg_data["avg_track_performance"] = self._average_track_performance_across_runs(scenario_runs, experiment_type)
+        avg_data["avg_track_performance"], avg_data["std_track_performance"] = self._average_track_performance_across_runs(scenario_runs, experiment_type)
 
         return avg_data
 
@@ -1096,8 +1163,9 @@ class FLRunComparator:
         if not all_rounds:
             return {}
 
-        # Average performance for each round
+        # Average performance for each round and calculate standard deviations
         avg_track_performance = {}
+        std_track_performance = {}
         for round_num in sorted(all_rounds):
             round_values = []
             for run in scenario_runs:
@@ -1107,8 +1175,9 @@ class FLRunComparator:
 
             if round_values:
                 avg_track_performance[round_num] = np.mean(round_values)
+                std_track_performance[round_num] = np.std(round_values, ddof=1) if len(round_values) > 1 else 0.0
 
-        return avg_track_performance
+        return avg_track_performance, std_track_performance
 
     def get_averaged_scenario_data(self):
         """Get averaged data for each scenario."""
