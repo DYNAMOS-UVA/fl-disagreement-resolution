@@ -1,0 +1,1844 @@
+Updated configuration in mock_etcd/configuration.json
+MNIST data already exists. Skipping setup.
+Use --force_setup_data to force recreation.
+Initialized global mnist model
+Loading MNIST test data from data/mnist/test/mnist_test.npz
+Loaded 10000 MNIST test samples
+Loaded MNIST test data with 10000 samples
+Saved experiment results to results/fl_simulation_20250624_220603_mnist_s4/output/fl_results.json
+Loading MNIST data from data/mnist/train/client_0/mnist_data.npz
+Client 0 loaded 600 MNIST samples
+Client 0 loaded 600 MNIST samples
+Loading MNIST data from data/mnist/train/client_1/mnist_data.npz
+Client 1 loaded 600 MNIST samples
+Client 1 loaded 600 MNIST samples
+Loading MNIST data from data/mnist/train/client_2/mnist_data.npz
+Client 2 loaded 600 MNIST samples
+Client 2 loaded 600 MNIST samples
+Loading MNIST data from data/mnist/train/client_3/mnist_data.npz
+Client 3 loaded 600 MNIST samples
+Client 3 loaded 600 MNIST samples
+Loading MNIST data from data/mnist/train/client_4/mnist_data.npz
+Client 4 loaded 600 MNIST samples
+Client 4 loaded 600 MNIST samples
+Loading MNIST data from data/mnist/train/client_5/mnist_data.npz
+Client 5 loaded 600 MNIST samples
+Client 5 loaded 600 MNIST samples
+Initialized disagreement-aware federated learning orchestrator
+  - 6 clients for mnist experiment
+  - Advanced disagreement resolution with multi-track model training
+  - Results directory: results/fl_simulation_20250624_220603_mnist_s4
+Starting federated learning with 5 rounds...
+Saved global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/global_model_initial
+Initialized and saved the initial global model
+Round 0 - MNIST Classification Metrics:
+  Overall Accuracy: 0.1012
+  Mean Precision: 0.0666
+  Mean Recall: 0.1012
+  Mean F1 Score: 0.0430
+Round 0 - Global model test accuracy: 0.1012
+Round 0 - Global model test loss: 2.307198
+Saved results for round 0 (plot mode: minimal)
+Saved experiment results to results/fl_simulation_20250624_220603_mnist_s4/output/fl_results.json
+Initial model evaluation completed
+
+--- Federated Learning Round 1/5 ---
+Analyzing disagreements and preparing track-specific models...
+
+=== SERVER PREPARATION FOR ROUND 1 ===
+  Using initiation_mechanism: shallow, lifting_mechanism: shallow, deep_lifting_finetune_rounds: 3
+Loaded disagreements: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Filtering disagreements for round 1...
+  Active: Client client_0 inbound disagreement with client client_1 (expires after round 3)
+Round 1: Found 1 clients with active disagreements
+Round 1 starting with initial global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/global_model_initial
+Loaded model from round 0
+Loaded global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/global_model_initial
+Creating initial tracks for round 1 from global initial model
+Creating model tracks for active disagreements: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Client 2 assigned to global track (no disagreements)
+Client 3 assigned to global track (no disagreements)
+Client 4 assigned to global track (no disagreements)
+Client 5 assigned to global track (no disagreements)
+Client 1 assigned to global track (no outbound exclusions)
+Clients not involved in disagreements: {2, 3, 4, 5}
+
+=== MODEL TRACK ASSIGNMENTS ===
+Total tracks created: 2
+
+Track 'track_0_no1':
+  Participating clients: [0, 2, 3, 4, 5]
+  Primary for clients: [0]
+
+Track 'global':
+  Participating clients: [0, 1, 2, 3, 4, 5]
+  Primary for clients: [1, 2, 3, 4, 5]
+
+Client primary track assignments:
+  Client 0 → Primary track: track_0_no1
+  Client 1 → Primary track: global
+  Client 2 → Primary track: global
+  Client 3 → Primary track: global
+  Client 4 → Primary track: global
+  Client 5 → Primary track: global
+
+Client background participations:
+  Client 0 (primary: track_0_no1) → Background participations: [2, 3, 4, 5]
+=== END TRACK ASSIGNMENTS ===
+
+Disagreement resolution completed in 0.0001 seconds
+Created initial track 'track_0_no1' for round 1
+Created initial track 'global' for round 1
+Saved global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/global_model_for_training
+Saved global model for training at results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/global_model_for_training
+=== END SERVER PREPARATION FOR ROUND 1 ===\n
+Track model initialization completed in 0.0113 seconds
+Created initial track models from global_model_initial for round 1
+Starting disagreement-aware multi-track client training...
+Client 0: Loading track models and training with disagreement resolution...
+
+=== CLIENT 0 MODEL LOADING FOR ROUND 1 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 0 is assigned to primary track: 'track_0_no1'
+Primary track 'track_0_no1' details:
+        Round: 1
+        Clients: [0, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks/track_0_no1
+This is a new track model created for round 1
+Client 0 will also train on background tracks: ['global']
+Successfully loaded background track model 'global' from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks/global
+=== END CLIENT 0 MODEL LOADING ===
+
+
+=== CLIENT 0 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 0 starting training for 1 epochs
+Client 0 - Epoch 1/1 - Train Loss: 2.007031, Train Acc: 0.3583, Valid Loss: 1.428566, Valid Acc: 0.6000
+Client 0 finished training
+Client 0 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_0/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 0 has 1 background tracks to train
+Training on background track: 'global'
+Client 0 starting training for 1 epochs
+Client 0 - Epoch 1/1 - Train Loss: 2.010954, Train Acc: 0.3604, Valid Loss: 1.428116, Valid Acc: 0.6583
+Client 0 finished training
+Background model 'global' training complete. Accuracy: N/A
+=== END CLIENT 0 TRAINING ===
+
+
+=== CLIENT 0 MODEL SAVING FOR ROUND 1 ===
+Client 0 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/clients/client_0
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/clients/client_0
+Saving trained background model for track: 'global'
+Saved 1 background models
+=== END CLIENT 0 MODEL SAVING ===
+
+Client 0 completed training in 0.1342 seconds
+Client 1: Loading track models and training with disagreement resolution...
+
+=== CLIENT 1 MODEL LOADING FOR ROUND 1 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 1 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 1
+        Clients: [0, 1, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks/global
+This is a new track model created for round 1
+Client 1 has no background tracks to train on
+=== END CLIENT 1 MODEL LOADING ===
+
+
+=== CLIENT 1 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 1 starting training for 1 epochs
+Client 1 - Epoch 1/1 - Train Loss: 2.035427, Train Acc: 0.3146, Valid Loss: 1.511627, Valid Acc: 0.5750
+Client 1 finished training
+Client 1 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_1/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 1 has no background tracks to train
+=== END CLIENT 1 TRAINING ===
+
+
+=== CLIENT 1 MODEL SAVING FOR ROUND 1 ===
+Client 1 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/clients/client_1
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/clients/client_1
+Saved 0 background models
+=== END CLIENT 1 MODEL SAVING ===
+
+Client 1 completed training in 0.0432 seconds
+Client 2: Loading track models and training with disagreement resolution...
+
+=== CLIENT 2 MODEL LOADING FOR ROUND 1 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 2 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 1
+        Clients: [0, 1, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks/global
+This is a new track model created for round 1
+Client 2 will also train on background tracks: ['track_0_no1']
+Successfully loaded background track model 'track_0_no1' from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks/track_0_no1
+=== END CLIENT 2 MODEL LOADING ===
+
+
+=== CLIENT 2 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 2 starting training for 1 epochs
+Client 2 - Epoch 1/1 - Train Loss: 2.051093, Train Acc: 0.2771, Valid Loss: 1.581629, Valid Acc: 0.4583
+Client 2 finished training
+Client 2 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_2/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 2 has 1 background tracks to train
+Training on background track: 'track_0_no1'
+Client 2 starting training for 1 epochs
+Client 2 - Epoch 1/1 - Train Loss: 2.054939, Train Acc: 0.3250, Valid Loss: 1.620403, Valid Acc: 0.5000
+Client 2 finished training
+Background model 'track_0_no1' training complete. Accuracy: N/A
+=== END CLIENT 2 TRAINING ===
+
+
+=== CLIENT 2 MODEL SAVING FOR ROUND 1 ===
+Client 2 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/clients/client_2
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/clients/client_2
+Saving trained background model for track: 'track_0_no1'
+Saved 1 background models
+=== END CLIENT 2 MODEL SAVING ===
+
+Client 2 completed training in 0.0886 seconds
+Client 3: Loading track models and training with disagreement resolution...
+
+=== CLIENT 3 MODEL LOADING FOR ROUND 1 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 3 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 1
+        Clients: [0, 1, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks/global
+This is a new track model created for round 1
+Client 3 will also train on background tracks: ['track_0_no1']
+Successfully loaded background track model 'track_0_no1' from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks/track_0_no1
+=== END CLIENT 3 MODEL LOADING ===
+
+
+=== CLIENT 3 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 3 starting training for 1 epochs
+Client 3 - Epoch 1/1 - Train Loss: 2.094940, Train Acc: 0.3146, Valid Loss: 1.635168, Valid Acc: 0.4667
+Client 3 finished training
+Client 3 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_3/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 3 has 1 background tracks to train
+Training on background track: 'track_0_no1'
+Client 3 starting training for 1 epochs
+Client 3 - Epoch 1/1 - Train Loss: 2.052881, Train Acc: 0.3583, Valid Loss: 1.574648, Valid Acc: 0.6083
+Client 3 finished training
+Background model 'track_0_no1' training complete. Accuracy: N/A
+=== END CLIENT 3 TRAINING ===
+
+
+=== CLIENT 3 MODEL SAVING FOR ROUND 1 ===
+Client 3 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/clients/client_3
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/clients/client_3
+Saving trained background model for track: 'track_0_no1'
+Saved 1 background models
+=== END CLIENT 3 MODEL SAVING ===
+
+Client 3 completed training in 0.0889 seconds
+Client 4: Loading track models and training with disagreement resolution...
+
+=== CLIENT 4 MODEL LOADING FOR ROUND 1 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 4 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 1
+        Clients: [0, 1, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks/global
+This is a new track model created for round 1
+Client 4 will also train on background tracks: ['track_0_no1']
+Successfully loaded background track model 'track_0_no1' from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks/track_0_no1
+=== END CLIENT 4 MODEL LOADING ===
+
+
+=== CLIENT 4 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 4 starting training for 1 epochs
+Client 4 - Epoch 1/1 - Train Loss: 2.025088, Train Acc: 0.2938, Valid Loss: 1.430453, Valid Acc: 0.7250
+Client 4 finished training
+Client 4 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_4/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 4 has 1 background tracks to train
+Training on background track: 'track_0_no1'
+Client 4 starting training for 1 epochs
+Client 4 - Epoch 1/1 - Train Loss: 2.076780, Train Acc: 0.3604, Valid Loss: 1.575780, Valid Acc: 0.6333
+Client 4 finished training
+Background model 'track_0_no1' training complete. Accuracy: N/A
+=== END CLIENT 4 TRAINING ===
+
+
+=== CLIENT 4 MODEL SAVING FOR ROUND 1 ===
+Client 4 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/clients/client_4
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/clients/client_4
+Saving trained background model for track: 'track_0_no1'
+Saved 1 background models
+=== END CLIENT 4 MODEL SAVING ===
+
+Client 4 completed training in 0.0889 seconds
+Client 5: Loading track models and training with disagreement resolution...
+
+=== CLIENT 5 MODEL LOADING FOR ROUND 1 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 5 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 1
+        Clients: [0, 1, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks/global
+This is a new track model created for round 1
+Client 5 will also train on background tracks: ['track_0_no1']
+Successfully loaded background track model 'track_0_no1' from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks/track_0_no1
+=== END CLIENT 5 MODEL LOADING ===
+
+
+=== CLIENT 5 TRAINING FOR ROUND 1 ===
+Training primary model...
+Client 5 starting training for 1 epochs
+Client 5 - Epoch 1/1 - Train Loss: 2.087831, Train Acc: 0.3417, Valid Loss: 1.620346, Valid Acc: 0.5583
+Client 5 finished training
+Client 5 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_5/training_results_round_1.json
+Primary model training complete. Accuracy: N/A
+Client 5 has 1 background tracks to train
+Training on background track: 'track_0_no1'
+Client 5 starting training for 1 epochs
+Client 5 - Epoch 1/1 - Train Loss: 2.037476, Train Acc: 0.2917, Valid Loss: 1.441354, Valid Acc: 0.7000
+Client 5 finished training
+Background model 'track_0_no1' training complete. Accuracy: N/A
+=== END CLIENT 5 TRAINING ===
+
+
+=== CLIENT 5 MODEL SAVING FOR ROUND 1 ===
+Client 5 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/clients/client_5
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/clients/client_5
+Saving trained background model for track: 'track_0_no1'
+Saved 1 background models
+=== END CLIENT 5 MODEL SAVING ===
+
+Client 5 completed training in 0.0897 seconds
+Performing disagreement-aware track-based model aggregation...
+Starting file-based aggregation for round 1
+Found 6 clients: [4, 5, 3, 2, 0, 1]
+Loaded disagreements: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Filtering disagreements for round 1...
+  Active: Client client_0 inbound disagreement with client client_1 (expires after round 3)
+Round 1: Found 1 clients with active disagreements
+Active disagreements found for round 1: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Creating model tracks for active disagreements: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Client 2 assigned to global track (no disagreements)
+Client 3 assigned to global track (no disagreements)
+Client 4 assigned to global track (no disagreements)
+Client 5 assigned to global track (no disagreements)
+Client 1 assigned to global track (no outbound exclusions)
+Clients not involved in disagreements: {2, 3, 4, 5}
+
+=== MODEL TRACK ASSIGNMENTS ===
+Total tracks created: 2
+
+Track 'track_0_no1':
+  Participating clients: [0, 2, 3, 4, 5]
+  Primary for clients: [0]
+
+Track 'global':
+  Participating clients: [0, 1, 2, 3, 4, 5]
+  Primary for clients: [1, 2, 3, 4, 5]
+
+Client primary track assignments:
+  Client 0 → Primary track: track_0_no1
+  Client 1 → Primary track: global
+  Client 2 → Primary track: global
+  Client 3 → Primary track: global
+  Client 4 → Primary track: global
+  Client 5 → Primary track: global
+
+Client background participations:
+  Client 0 (primary: track_0_no1) → Background participations: [2, 3, 4, 5]
+=== END TRACK ASSIGNMENTS ===
+
+Disagreement resolution completed in 0.0001 seconds
+
+=== AGGREGATION FOR ROUND 1 ===
+Found 6 clients: [4, 5, 3, 2, 0, 1]
+Loaded primary model from client 4
+Loaded background model from client 4 for track track_0_no1
+Loaded primary model from client 5
+Loaded background model from client 5 for track track_0_no1
+Loaded primary model from client 3
+Loaded background model from client 3 for track track_0_no1
+Loaded primary model from client 2
+Loaded background model from client 2 for track track_0_no1
+Loaded primary model from client 0
+Loaded background model from client 0 for track global
+Loaded primary model from client 1
+
+Aggregating 2 tracks:
+Loaded initial model parameters as fallback
+Created true global model with parameters from all 6 clients
+
+Aggregating track: 'track_0_no1' with clients: [0, 2, 3, 4, 5]
+  Including primary model from client 0 with adjusted weight 0.1667 (original: 0.1667)
+  Primary models aggregated: [0] with total weight 0.1667
+  Including background model from client 4 with adjusted weight 0.1667 (original: 0.1667)
+  Including background model from client 5 with adjusted weight 0.1667 (original: 0.1667)
+  Including background model from client 3 with adjusted weight 0.1667 (original: 0.1667)
+  Including background model from client 2 with adjusted weight 0.1667 (original: 0.1667)
+  Background models aggregated: [2, 3, 4, 5] with total weight 0.6667
+  Track 'track_0_no1' normalized with combined weight 0.8333
+  Track 'track_0_no1' aggregation complete.
+
+Aggregating track: 'global' with clients: [0, 1, 2, 3, 4, 5]
+  Including primary model from client 1 with adjusted weight 0.1667 (original: 0.1667)
+  Including primary model from client 2 with adjusted weight 0.1667 (original: 0.1667)
+  Including primary model from client 3 with adjusted weight 0.1667 (original: 0.1667)
+  Including primary model from client 4 with adjusted weight 0.1667 (original: 0.1667)
+  Including primary model from client 5 with adjusted weight 0.1667 (original: 0.1667)
+  Primary models aggregated: [1, 2, 3, 4, 5] with total weight 0.8333
+  Including background model from client 0 with adjusted weight 0.1667 (original: 0.1667)
+  Background models aggregated: [0] with total weight 0.1667
+  Track 'global' normalized with combined weight 1.0000
+  Track 'global' aggregation complete.
+Saved true global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/global_model_aggregated
+Saved track model: track_0_no1
+Saved track model: global
+Track saving completed in 0.0127 seconds
+
+Updated server's global model with parameters from true global model
+=== END AGGREGATION FOR ROUND 1 ===
+
+
+=== AGGREGATION TIMING SUMMARY FOR ROUND 1 ===
+  Disagreement loading: 0.0001s
+  Resolution time: 0.0001s
+  Aggregation time: 0.0660s
+  Track saving time: 0.0000s
+  Total time: 0.0663s
+  Has disagreements: True
+=== END TIMING SUMMARY ===
+
+Saved global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/global_model_aggregated
+Evaluating global model and track-specific performance...
+Round 1 - MNIST Classification Metrics:
+  Overall Accuracy: 0.5706
+  Mean Precision: 0.7822
+  Mean Recall: 0.5706
+  Mean F1 Score: 0.5226
+Round 1 - Global model test accuracy: 0.5706
+Round 1 - Global model test loss: 1.659316
+Saved results for round 1 (plot mode: minimal)
+
+=== EVALUATING TRACK MODELS FOR ROUND 1 ===
+Found 2 tracks to evaluate: ['track_0_no1', 'global']
+Evaluating track: track_0_no1
+Track 'track_0_no1' - Accuracy: 0.5304, F1: 0.4838
+Evaluating track: global
+Track 'global' - Accuracy: 0.5706, F1: 0.5226
+
+=== TRACK EVALUATION SUMMARY FOR ROUND 1 ===
+Global model - Accuracy: 0.570600
+track_0_no1 - Accuracy: 0.530400
+global - Accuracy: 0.570600
+=== END TRACK EVALUATION ===
+
+Saved experiment results to results/fl_simulation_20250624_220603_mnist_s4/output/fl_results.json
+Saved timing metrics to results/fl_simulation_20250624_220603_mnist_s4/output/timing_metrics.json
+Round 1 completed with disagreement resolution.
+Round 1 timing summary:
+  Track initialization: 0.0113s
+  Client training phase: 0.5336s
+  Resolution time: 0.0001s
+  Aggregation time: 0.0660s
+  Total aggregation time: 0.0663s
+  Evaluation time: 0.7546s
+  Total round time: 1.3690s
+
+--- Federated Learning Round 2/5 ---
+Analyzing disagreements and preparing track-specific models...
+
+=== SERVER PREPARATION FOR ROUND 2 ===
+  Using initiation_mechanism: shallow, lifting_mechanism: shallow, deep_lifting_finetune_rounds: 3
+Loaded disagreements: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Filtering disagreements for round 2...
+  Active: Client client_0 inbound disagreement with client client_1 (expires after round 3)
+Round 2: Found 1 clients with active disagreements
+Loading main global model from previous round 1's aggregated model: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/global_model_aggregated
+Loaded model from round 1
+Loaded global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/global_model_aggregated
+Saved global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/global_model_for_training
+Saved main global model for training in round 2 at results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/global_model_for_training
+Active disagreements found for round 2. Initiation mechanism: shallow
+Creating model tracks for active disagreements: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Client 2 assigned to global track (no disagreements)
+Client 3 assigned to global track (no disagreements)
+Client 4 assigned to global track (no disagreements)
+Client 5 assigned to global track (no disagreements)
+Client 1 assigned to global track (no outbound exclusions)
+Clients not involved in disagreements: {2, 3, 4, 5}
+
+=== MODEL TRACK ASSIGNMENTS ===
+Total tracks created: 2
+
+Track 'track_0_no1':
+  Participating clients: [0, 2, 3, 4, 5]
+  Primary for clients: [0]
+
+Track 'global':
+  Participating clients: [0, 1, 2, 3, 4, 5]
+  Primary for clients: [1, 2, 3, 4, 5]
+
+Client primary track assignments:
+  Client 0 → Primary track: track_0_no1
+  Client 1 → Primary track: global
+  Client 2 → Primary track: global
+  Client 3 → Primary track: global
+  Client 4 → Primary track: global
+  Client 5 → Primary track: global
+
+Client background participations:
+  Client 0 (primary: track_0_no1) → Background participations: [2, 3, 4, 5]
+=== END TRACK ASSIGNMENTS ===
+
+Disagreement resolution completed in 0.0001 seconds
+    No clients require finetuning in track 'track_0_no1'
+  Evaluating track: 'track_0_no1'. Existed previously: True
+    Track 'track_0_no1' existed and composition UNCHANGED.
+    Perform rewind for 'track_0_no1': False
+Loading model for track 'track_0_no1' from 'results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks/track_0_no1'.
+Loaded model from round 1
+Loaded global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks/track_0_no1
+Saved global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks/track_0_no1
+    No clients require finetuning in track 'global'
+  Evaluating track: 'global'. Existed previously: True
+    Track 'global' existed and composition UNCHANGED.
+    Perform rewind for 'global': False
+Loading model for track 'global' from 'results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks/global'.
+Loaded model from round 1
+Loaded global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_1/tracks/global
+Saved global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks/global
+Saved track metadata for round 2.
+=== END SERVER PREPARATION FOR ROUND 2 ===\n
+Track model initialization completed in 0.0152 seconds
+Updated track models based on disagreement changes from round 1
+Starting disagreement-aware multi-track client training...
+Client 0: Loading track models and training with disagreement resolution...
+
+=== CLIENT 0 MODEL LOADING FOR ROUND 2 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 0 is assigned to primary track: 'track_0_no1'
+Primary track 'track_0_no1' details:
+        Round: 2
+        Clients: [0, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks/track_0_no1
+This is a new track model created for round 2
+Client 0 will also train on background tracks: ['global']
+Successfully loaded background track model 'global' from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks/global
+=== END CLIENT 0 MODEL LOADING ===
+
+
+=== CLIENT 0 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 0 starting training for 1 epochs
+Client 0 - Epoch 1/1 - Train Loss: 1.242848, Train Acc: 0.6583, Valid Loss: 0.859050, Valid Acc: 0.7000
+Client 0 finished training
+Client 0 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_0/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 0 has 1 background tracks to train
+Training on background track: 'global'
+Client 0 starting training for 1 epochs
+Client 0 - Epoch 1/1 - Train Loss: 1.227220, Train Acc: 0.6438, Valid Loss: 0.869511, Valid Acc: 0.6917
+Client 0 finished training
+Background model 'global' training complete. Accuracy: N/A
+=== END CLIENT 0 TRAINING ===
+
+
+=== CLIENT 0 MODEL SAVING FOR ROUND 2 ===
+Client 0 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/clients/client_0
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/clients/client_0
+Saving trained background model for track: 'global'
+Saved 1 background models
+=== END CLIENT 0 MODEL SAVING ===
+
+Client 0 completed training in 0.0884 seconds
+Client 1: Loading track models and training with disagreement resolution...
+
+=== CLIENT 1 MODEL LOADING FOR ROUND 2 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 1 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 2
+        Clients: [0, 1, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks/global
+This is a new track model created for round 2
+Client 1 has no background tracks to train on
+=== END CLIENT 1 MODEL LOADING ===
+
+
+=== CLIENT 1 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 1 starting training for 1 epochs
+Client 1 - Epoch 1/1 - Train Loss: 1.224737, Train Acc: 0.6021, Valid Loss: 0.781307, Valid Acc: 0.7833
+Client 1 finished training
+Client 1 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_1/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 1 has no background tracks to train
+=== END CLIENT 1 TRAINING ===
+
+
+=== CLIENT 1 MODEL SAVING FOR ROUND 2 ===
+Client 1 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/clients/client_1
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/clients/client_1
+Saved 0 background models
+=== END CLIENT 1 MODEL SAVING ===
+
+Client 1 completed training in 0.0440 seconds
+Client 2: Loading track models and training with disagreement resolution...
+
+=== CLIENT 2 MODEL LOADING FOR ROUND 2 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 2 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 2
+        Clients: [0, 1, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks/global
+This is a new track model created for round 2
+Client 2 will also train on background tracks: ['track_0_no1']
+Successfully loaded background track model 'track_0_no1' from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks/track_0_no1
+=== END CLIENT 2 MODEL LOADING ===
+
+
+=== CLIENT 2 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 2 starting training for 1 epochs
+Client 2 - Epoch 1/1 - Train Loss: 1.148845, Train Acc: 0.6667, Valid Loss: 0.885346, Valid Acc: 0.7167
+Client 2 finished training
+Client 2 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_2/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 2 has 1 background tracks to train
+Training on background track: 'track_0_no1'
+Client 2 starting training for 1 epochs
+Client 2 - Epoch 1/1 - Train Loss: 1.170699, Train Acc: 0.6542, Valid Loss: 0.740600, Valid Acc: 0.8083
+Client 2 finished training
+Background model 'track_0_no1' training complete. Accuracy: N/A
+=== END CLIENT 2 TRAINING ===
+
+
+=== CLIENT 2 MODEL SAVING FOR ROUND 2 ===
+Client 2 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/clients/client_2
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/clients/client_2
+Saving trained background model for track: 'track_0_no1'
+Saved 1 background models
+=== END CLIENT 2 MODEL SAVING ===
+
+Client 2 completed training in 0.0884 seconds
+Client 3: Loading track models and training with disagreement resolution...
+
+=== CLIENT 3 MODEL LOADING FOR ROUND 2 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 3 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 2
+        Clients: [0, 1, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks/global
+This is a new track model created for round 2
+Client 3 will also train on background tracks: ['track_0_no1']
+Successfully loaded background track model 'track_0_no1' from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks/track_0_no1
+=== END CLIENT 3 MODEL LOADING ===
+
+
+=== CLIENT 3 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 3 starting training for 1 epochs
+Client 3 - Epoch 1/1 - Train Loss: 1.273045, Train Acc: 0.6458, Valid Loss: 0.716362, Valid Acc: 0.8083
+Client 3 finished training
+Client 3 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_3/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 3 has 1 background tracks to train
+Training on background track: 'track_0_no1'
+Client 3 starting training for 1 epochs
+Client 3 - Epoch 1/1 - Train Loss: 1.225160, Train Acc: 0.6604, Valid Loss: 0.924145, Valid Acc: 0.6750
+Client 3 finished training
+Background model 'track_0_no1' training complete. Accuracy: N/A
+=== END CLIENT 3 TRAINING ===
+
+
+=== CLIENT 3 MODEL SAVING FOR ROUND 2 ===
+Client 3 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/clients/client_3
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/clients/client_3
+Saving trained background model for track: 'track_0_no1'
+Saved 1 background models
+=== END CLIENT 3 MODEL SAVING ===
+
+Client 3 completed training in 0.0882 seconds
+Client 4: Loading track models and training with disagreement resolution...
+
+=== CLIENT 4 MODEL LOADING FOR ROUND 2 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 4 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 2
+        Clients: [0, 1, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks/global
+This is a new track model created for round 2
+Client 4 will also train on background tracks: ['track_0_no1']
+Successfully loaded background track model 'track_0_no1' from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks/track_0_no1
+=== END CLIENT 4 MODEL LOADING ===
+
+
+=== CLIENT 4 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 4 starting training for 1 epochs
+Client 4 - Epoch 1/1 - Train Loss: 1.170338, Train Acc: 0.6646, Valid Loss: 0.768440, Valid Acc: 0.7500
+Client 4 finished training
+Client 4 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_4/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 4 has 1 background tracks to train
+Training on background track: 'track_0_no1'
+Client 4 starting training for 1 epochs
+Client 4 - Epoch 1/1 - Train Loss: 1.190952, Train Acc: 0.6458, Valid Loss: 0.812533, Valid Acc: 0.7333
+Client 4 finished training
+Background model 'track_0_no1' training complete. Accuracy: N/A
+=== END CLIENT 4 TRAINING ===
+
+
+=== CLIENT 4 MODEL SAVING FOR ROUND 2 ===
+Client 4 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/clients/client_4
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/clients/client_4
+Saving trained background model for track: 'track_0_no1'
+Saved 1 background models
+=== END CLIENT 4 MODEL SAVING ===
+
+Client 4 completed training in 0.0891 seconds
+Client 5: Loading track models and training with disagreement resolution...
+
+=== CLIENT 5 MODEL LOADING FOR ROUND 2 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 5 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 2
+        Clients: [0, 1, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks/global
+This is a new track model created for round 2
+Client 5 will also train on background tracks: ['track_0_no1']
+Successfully loaded background track model 'track_0_no1' from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks/track_0_no1
+=== END CLIENT 5 MODEL LOADING ===
+
+
+=== CLIENT 5 TRAINING FOR ROUND 2 ===
+Training primary model...
+Client 5 starting training for 1 epochs
+Client 5 - Epoch 1/1 - Train Loss: 1.201266, Train Acc: 0.6479, Valid Loss: 0.694077, Valid Acc: 0.8250
+Client 5 finished training
+Client 5 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_5/training_results_round_2.json
+Primary model training complete. Accuracy: N/A
+Client 5 has 1 background tracks to train
+Training on background track: 'track_0_no1'
+Client 5 starting training for 1 epochs
+Client 5 - Epoch 1/1 - Train Loss: 1.243042, Train Acc: 0.6542, Valid Loss: 0.778186, Valid Acc: 0.7500
+Client 5 finished training
+Background model 'track_0_no1' training complete. Accuracy: N/A
+=== END CLIENT 5 TRAINING ===
+
+
+=== CLIENT 5 MODEL SAVING FOR ROUND 2 ===
+Client 5 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/clients/client_5
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/clients/client_5
+Saving trained background model for track: 'track_0_no1'
+Saved 1 background models
+=== END CLIENT 5 MODEL SAVING ===
+
+Client 5 completed training in 0.0894 seconds
+Performing disagreement-aware track-based model aggregation...
+Starting file-based aggregation for round 2
+Found 6 clients: [4, 5, 3, 2, 0, 1]
+Loaded disagreements: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Filtering disagreements for round 2...
+  Active: Client client_0 inbound disagreement with client client_1 (expires after round 3)
+Round 2: Found 1 clients with active disagreements
+Active disagreements found for round 2: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Creating model tracks for active disagreements: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Client 2 assigned to global track (no disagreements)
+Client 3 assigned to global track (no disagreements)
+Client 4 assigned to global track (no disagreements)
+Client 5 assigned to global track (no disagreements)
+Client 1 assigned to global track (no outbound exclusions)
+Clients not involved in disagreements: {2, 3, 4, 5}
+
+=== MODEL TRACK ASSIGNMENTS ===
+Total tracks created: 2
+
+Track 'track_0_no1':
+  Participating clients: [0, 2, 3, 4, 5]
+  Primary for clients: [0]
+
+Track 'global':
+  Participating clients: [0, 1, 2, 3, 4, 5]
+  Primary for clients: [1, 2, 3, 4, 5]
+
+Client primary track assignments:
+  Client 0 → Primary track: track_0_no1
+  Client 1 → Primary track: global
+  Client 2 → Primary track: global
+  Client 3 → Primary track: global
+  Client 4 → Primary track: global
+  Client 5 → Primary track: global
+
+Client background participations:
+  Client 0 (primary: track_0_no1) → Background participations: [2, 3, 4, 5]
+=== END TRACK ASSIGNMENTS ===
+
+Disagreement resolution completed in 0.0001 seconds
+
+=== AGGREGATION FOR ROUND 2 ===
+Found 6 clients: [4, 5, 3, 2, 0, 1]
+Loaded primary model from client 4
+Loaded background model from client 4 for track track_0_no1
+Loaded primary model from client 5
+Loaded background model from client 5 for track track_0_no1
+Loaded primary model from client 3
+Loaded background model from client 3 for track track_0_no1
+Loaded primary model from client 2
+Loaded background model from client 2 for track track_0_no1
+Loaded primary model from client 0
+Loaded background model from client 0 for track global
+Loaded primary model from client 1
+
+Aggregating 2 tracks:
+Loaded initial model parameters as fallback
+Created true global model with parameters from all 6 clients
+
+Aggregating track: 'track_0_no1' with clients: [0, 2, 3, 4, 5]
+  Including primary model from client 0 with adjusted weight 0.1667 (original: 0.1667)
+  Primary models aggregated: [0] with total weight 0.1667
+  Including background model from client 4 with adjusted weight 0.1667 (original: 0.1667)
+  Including background model from client 5 with adjusted weight 0.1667 (original: 0.1667)
+  Including background model from client 3 with adjusted weight 0.1667 (original: 0.1667)
+  Including background model from client 2 with adjusted weight 0.1667 (original: 0.1667)
+  Background models aggregated: [2, 3, 4, 5] with total weight 0.6667
+  Track 'track_0_no1' normalized with combined weight 0.8333
+  Track 'track_0_no1' aggregation complete.
+
+Aggregating track: 'global' with clients: [0, 1, 2, 3, 4, 5]
+  Including primary model from client 1 with adjusted weight 0.1667 (original: 0.1667)
+  Including primary model from client 2 with adjusted weight 0.1667 (original: 0.1667)
+  Including primary model from client 3 with adjusted weight 0.1667 (original: 0.1667)
+  Including primary model from client 4 with adjusted weight 0.1667 (original: 0.1667)
+  Including primary model from client 5 with adjusted weight 0.1667 (original: 0.1667)
+  Primary models aggregated: [1, 2, 3, 4, 5] with total weight 0.8333
+  Including background model from client 0 with adjusted weight 0.1667 (original: 0.1667)
+  Background models aggregated: [0] with total weight 0.1667
+  Track 'global' normalized with combined weight 1.0000
+  Track 'global' aggregation complete.
+Saved true global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/global_model_aggregated
+Saved track model: track_0_no1
+Saved track model: global
+Track saving completed in 0.0112 seconds
+
+Updated server's global model with parameters from true global model
+=== END AGGREGATION FOR ROUND 2 ===
+
+
+=== AGGREGATION TIMING SUMMARY FOR ROUND 2 ===
+  Disagreement loading: 0.0001s
+  Resolution time: 0.0001s
+  Aggregation time: 0.0483s
+  Track saving time: 0.0000s
+  Total time: 0.0485s
+  Has disagreements: True
+=== END TIMING SUMMARY ===
+
+Saved global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/global_model_aggregated
+Evaluating global model and track-specific performance...
+Round 2 - MNIST Classification Metrics:
+  Overall Accuracy: 0.8063
+  Mean Precision: 0.8263
+  Mean Recall: 0.8063
+  Mean F1 Score: 0.8015
+Round 2 - Global model test accuracy: 0.8063
+Round 2 - Global model test loss: 0.689472
+Only 1 rounds of track data found - need at least 2 to create progress plots
+Saved results for round 2 (plot mode: minimal)
+
+=== EVALUATING TRACK MODELS FOR ROUND 2 ===
+Found 2 tracks to evaluate: ['track_0_no1', 'global']
+Evaluating track: track_0_no1
+Track 'track_0_no1' - Accuracy: 0.8073, F1: 0.8031
+Evaluating track: global
+Track 'global' - Accuracy: 0.8063, F1: 0.8015
+
+=== TRACK EVALUATION SUMMARY FOR ROUND 2 ===
+Global model - Accuracy: 0.806300
+track_0_no1 - Accuracy: 0.807300
+global - Accuracy: 0.806300
+=== END TRACK EVALUATION ===
+
+Saved experiment results to results/fl_simulation_20250624_220603_mnist_s4/output/fl_results.json
+Saved timing metrics to results/fl_simulation_20250624_220603_mnist_s4/output/timing_metrics.json
+Round 2 completed with disagreement resolution.
+Round 2 timing summary:
+  Track initialization: 0.0152s
+  Client training phase: 0.4875s
+  Resolution time: 0.0001s
+  Aggregation time: 0.0483s
+  Total aggregation time: 0.0485s
+  Evaluation time: 0.7537s
+  Total round time: 1.3078s
+
+--- Federated Learning Round 3/5 ---
+Analyzing disagreements and preparing track-specific models...
+
+=== SERVER PREPARATION FOR ROUND 3 ===
+  Using initiation_mechanism: shallow, lifting_mechanism: shallow, deep_lifting_finetune_rounds: 3
+Loaded disagreements: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Filtering disagreements for round 3...
+  Active: Client client_0 inbound disagreement with client client_1 (expires after round 3)
+Round 3: Found 1 clients with active disagreements
+Loading main global model from previous round 2's aggregated model: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/global_model_aggregated
+Loaded model from round 2
+Loaded global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/global_model_aggregated
+Saved global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/global_model_for_training
+Saved main global model for training in round 3 at results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/global_model_for_training
+Active disagreements found for round 3. Initiation mechanism: shallow
+Creating model tracks for active disagreements: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Client 2 assigned to global track (no disagreements)
+Client 3 assigned to global track (no disagreements)
+Client 4 assigned to global track (no disagreements)
+Client 5 assigned to global track (no disagreements)
+Client 1 assigned to global track (no outbound exclusions)
+Clients not involved in disagreements: {2, 3, 4, 5}
+
+=== MODEL TRACK ASSIGNMENTS ===
+Total tracks created: 2
+
+Track 'track_0_no1':
+  Participating clients: [0, 2, 3, 4, 5]
+  Primary for clients: [0]
+
+Track 'global':
+  Participating clients: [0, 1, 2, 3, 4, 5]
+  Primary for clients: [1, 2, 3, 4, 5]
+
+Client primary track assignments:
+  Client 0 → Primary track: track_0_no1
+  Client 1 → Primary track: global
+  Client 2 → Primary track: global
+  Client 3 → Primary track: global
+  Client 4 → Primary track: global
+  Client 5 → Primary track: global
+
+Client background participations:
+  Client 0 (primary: track_0_no1) → Background participations: [2, 3, 4, 5]
+=== END TRACK ASSIGNMENTS ===
+
+Disagreement resolution completed in 0.0001 seconds
+    No clients require finetuning in track 'track_0_no1'
+  Evaluating track: 'track_0_no1'. Existed previously: True
+    Track 'track_0_no1' existed and composition UNCHANGED.
+    Perform rewind for 'track_0_no1': False
+Loading model for track 'track_0_no1' from 'results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks/track_0_no1'.
+Loaded model from round 2
+Loaded global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks/track_0_no1
+Saved global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks/track_0_no1
+    No clients require finetuning in track 'global'
+  Evaluating track: 'global'. Existed previously: True
+    Track 'global' existed and composition UNCHANGED.
+    Perform rewind for 'global': False
+Loading model for track 'global' from 'results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks/global'.
+Loaded model from round 2
+Loaded global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_2/tracks/global
+Saved global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks/global
+Saved track metadata for round 3.
+=== END SERVER PREPARATION FOR ROUND 3 ===\n
+Track model initialization completed in 0.0150 seconds
+Updated track models based on disagreement changes from round 2
+Starting disagreement-aware multi-track client training...
+Client 0: Loading track models and training with disagreement resolution...
+
+=== CLIENT 0 MODEL LOADING FOR ROUND 3 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 0 is assigned to primary track: 'track_0_no1'
+Primary track 'track_0_no1' details:
+        Round: 3
+        Clients: [0, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks/track_0_no1
+This is a new track model created for round 3
+Client 0 will also train on background tracks: ['global']
+Successfully loaded background track model 'global' from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks/global
+=== END CLIENT 0 MODEL LOADING ===
+
+
+=== CLIENT 0 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 0 starting training for 1 epochs
+Client 0 - Epoch 1/1 - Train Loss: 0.820389, Train Acc: 0.7250, Valid Loss: 0.536463, Valid Acc: 0.8500
+Client 0 finished training
+Client 0 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_0/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 0 has 1 background tracks to train
+Training on background track: 'global'
+Client 0 starting training for 1 epochs
+Client 0 - Epoch 1/1 - Train Loss: 0.905196, Train Acc: 0.7083, Valid Loss: 0.649045, Valid Acc: 0.7917
+Client 0 finished training
+Background model 'global' training complete. Accuracy: N/A
+=== END CLIENT 0 TRAINING ===
+
+
+=== CLIENT 0 MODEL SAVING FOR ROUND 3 ===
+Client 0 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/clients/client_0
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/clients/client_0
+Saving trained background model for track: 'global'
+Saved 1 background models
+=== END CLIENT 0 MODEL SAVING ===
+
+Client 0 completed training in 0.0893 seconds
+Client 1: Loading track models and training with disagreement resolution...
+
+=== CLIENT 1 MODEL LOADING FOR ROUND 3 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 1 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 3
+        Clients: [0, 1, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks/global
+This is a new track model created for round 3
+Client 1 has no background tracks to train on
+=== END CLIENT 1 MODEL LOADING ===
+
+
+=== CLIENT 1 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 1 starting training for 1 epochs
+Client 1 - Epoch 1/1 - Train Loss: 0.911958, Train Acc: 0.6875, Valid Loss: 0.568313, Valid Acc: 0.8417
+Client 1 finished training
+Client 1 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_1/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 1 has no background tracks to train
+=== END CLIENT 1 TRAINING ===
+
+
+=== CLIENT 1 MODEL SAVING FOR ROUND 3 ===
+Client 1 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/clients/client_1
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/clients/client_1
+Saved 0 background models
+=== END CLIENT 1 MODEL SAVING ===
+
+Client 1 completed training in 0.0434 seconds
+Client 2: Loading track models and training with disagreement resolution...
+
+=== CLIENT 2 MODEL LOADING FOR ROUND 3 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 2 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 3
+        Clients: [0, 1, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks/global
+This is a new track model created for round 3
+Client 2 will also train on background tracks: ['track_0_no1']
+Successfully loaded background track model 'track_0_no1' from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks/track_0_no1
+=== END CLIENT 2 MODEL LOADING ===
+
+
+=== CLIENT 2 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 2 starting training for 1 epochs
+Client 2 - Epoch 1/1 - Train Loss: 0.851605, Train Acc: 0.7333, Valid Loss: 0.703661, Valid Acc: 0.7833
+Client 2 finished training
+Client 2 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_2/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 2 has 1 background tracks to train
+Training on background track: 'track_0_no1'
+Client 2 starting training for 1 epochs
+Client 2 - Epoch 1/1 - Train Loss: 0.872623, Train Acc: 0.7208, Valid Loss: 0.621332, Valid Acc: 0.8583
+Client 2 finished training
+Background model 'track_0_no1' training complete. Accuracy: N/A
+=== END CLIENT 2 TRAINING ===
+
+
+=== CLIENT 2 MODEL SAVING FOR ROUND 3 ===
+Client 2 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/clients/client_2
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/clients/client_2
+Saving trained background model for track: 'track_0_no1'
+Saved 1 background models
+=== END CLIENT 2 MODEL SAVING ===
+
+Client 2 completed training in 0.0907 seconds
+Client 3: Loading track models and training with disagreement resolution...
+
+=== CLIENT 3 MODEL LOADING FOR ROUND 3 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 3 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 3
+        Clients: [0, 1, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks/global
+This is a new track model created for round 3
+Client 3 will also train on background tracks: ['track_0_no1']
+Successfully loaded background track model 'track_0_no1' from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks/track_0_no1
+=== END CLIENT 3 MODEL LOADING ===
+
+
+=== CLIENT 3 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 3 starting training for 1 epochs
+Client 3 - Epoch 1/1 - Train Loss: 0.973815, Train Acc: 0.6625, Valid Loss: 0.617051, Valid Acc: 0.8083
+Client 3 finished training
+Client 3 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_3/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 3 has 1 background tracks to train
+Training on background track: 'track_0_no1'
+Client 3 starting training for 1 epochs
+Client 3 - Epoch 1/1 - Train Loss: 0.910652, Train Acc: 0.7042, Valid Loss: 0.615127, Valid Acc: 0.8417
+Client 3 finished training
+Background model 'track_0_no1' training complete. Accuracy: N/A
+=== END CLIENT 3 TRAINING ===
+
+
+=== CLIENT 3 MODEL SAVING FOR ROUND 3 ===
+Client 3 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/clients/client_3
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/clients/client_3
+Saving trained background model for track: 'track_0_no1'
+Saved 1 background models
+=== END CLIENT 3 MODEL SAVING ===
+
+Client 3 completed training in 0.0912 seconds
+Client 4: Loading track models and training with disagreement resolution...
+
+=== CLIENT 4 MODEL LOADING FOR ROUND 3 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 4 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 3
+        Clients: [0, 1, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks/global
+This is a new track model created for round 3
+Client 4 will also train on background tracks: ['track_0_no1']
+Successfully loaded background track model 'track_0_no1' from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks/track_0_no1
+=== END CLIENT 4 MODEL LOADING ===
+
+
+=== CLIENT 4 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 4 starting training for 1 epochs
+Client 4 - Epoch 1/1 - Train Loss: 1.018818, Train Acc: 0.6750, Valid Loss: 0.783320, Valid Acc: 0.7917
+Client 4 finished training
+Client 4 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_4/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 4 has 1 background tracks to train
+Training on background track: 'track_0_no1'
+Client 4 starting training for 1 epochs
+Client 4 - Epoch 1/1 - Train Loss: 0.739355, Train Acc: 0.7688, Valid Loss: 0.566414, Valid Acc: 0.8583
+Client 4 finished training
+Background model 'track_0_no1' training complete. Accuracy: N/A
+=== END CLIENT 4 TRAINING ===
+
+
+=== CLIENT 4 MODEL SAVING FOR ROUND 3 ===
+Client 4 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/clients/client_4
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/clients/client_4
+Saving trained background model for track: 'track_0_no1'
+Saved 1 background models
+=== END CLIENT 4 MODEL SAVING ===
+
+Client 4 completed training in 0.0891 seconds
+Client 5: Loading track models and training with disagreement resolution...
+
+=== CLIENT 5 MODEL LOADING FOR ROUND 3 ===
+Found tracks directory at: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks
+Found 2 tracks: ['track_0_no1', 'global']
+Client 5 is assigned to primary track: 'global'
+Primary track 'global' details:
+        Round: 3
+        Clients: [0, 1, 2, 3, 4, 5]
+        Rewound this round: False
+        No clients currently finetuning
+Successfully loaded primary track model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks/global
+This is a new track model created for round 3
+Client 5 will also train on background tracks: ['track_0_no1']
+Successfully loaded background track model 'track_0_no1' from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/tracks/track_0_no1
+=== END CLIENT 5 MODEL LOADING ===
+
+
+=== CLIENT 5 TRAINING FOR ROUND 3 ===
+Training primary model...
+Client 5 starting training for 1 epochs
+Client 5 - Epoch 1/1 - Train Loss: 0.971302, Train Acc: 0.7063, Valid Loss: 0.684996, Valid Acc: 0.7417
+Client 5 finished training
+Client 5 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_5/training_results_round_3.json
+Primary model training complete. Accuracy: N/A
+Client 5 has 1 background tracks to train
+Training on background track: 'track_0_no1'
+Client 5 starting training for 1 epochs
+Client 5 - Epoch 1/1 - Train Loss: 0.739508, Train Acc: 0.7646, Valid Loss: 0.667800, Valid Acc: 0.8000
+Client 5 finished training
+Background model 'track_0_no1' training complete. Accuracy: N/A
+=== END CLIENT 5 TRAINING ===
+
+
+=== CLIENT 5 MODEL SAVING FOR ROUND 3 ===
+Client 5 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/clients/client_5
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/clients/client_5
+Saving trained background model for track: 'track_0_no1'
+Saved 1 background models
+=== END CLIENT 5 MODEL SAVING ===
+
+Client 5 completed training in 0.0888 seconds
+Performing disagreement-aware track-based model aggregation...
+Starting file-based aggregation for round 3
+Found 6 clients: [4, 5, 3, 2, 0, 1]
+Loaded disagreements: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Filtering disagreements for round 3...
+  Active: Client client_0 inbound disagreement with client client_1 (expires after round 3)
+Round 3: Found 1 clients with active disagreements
+Active disagreements found for round 3: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Creating model tracks for active disagreements: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Client 2 assigned to global track (no disagreements)
+Client 3 assigned to global track (no disagreements)
+Client 4 assigned to global track (no disagreements)
+Client 5 assigned to global track (no disagreements)
+Client 1 assigned to global track (no outbound exclusions)
+Clients not involved in disagreements: {2, 3, 4, 5}
+
+=== MODEL TRACK ASSIGNMENTS ===
+Total tracks created: 2
+
+Track 'track_0_no1':
+  Participating clients: [0, 2, 3, 4, 5]
+  Primary for clients: [0]
+
+Track 'global':
+  Participating clients: [0, 1, 2, 3, 4, 5]
+  Primary for clients: [1, 2, 3, 4, 5]
+
+Client primary track assignments:
+  Client 0 → Primary track: track_0_no1
+  Client 1 → Primary track: global
+  Client 2 → Primary track: global
+  Client 3 → Primary track: global
+  Client 4 → Primary track: global
+  Client 5 → Primary track: global
+
+Client background participations:
+  Client 0 (primary: track_0_no1) → Background participations: [2, 3, 4, 5]
+=== END TRACK ASSIGNMENTS ===
+
+Disagreement resolution completed in 0.0001 seconds
+
+=== AGGREGATION FOR ROUND 3 ===
+Found 6 clients: [4, 5, 3, 2, 0, 1]
+Loaded primary model from client 4
+Loaded background model from client 4 for track track_0_no1
+Loaded primary model from client 5
+Loaded background model from client 5 for track track_0_no1
+Loaded primary model from client 3
+Loaded background model from client 3 for track track_0_no1
+Loaded primary model from client 2
+Loaded background model from client 2 for track track_0_no1
+Loaded primary model from client 0
+Loaded background model from client 0 for track global
+Loaded primary model from client 1
+
+Aggregating 2 tracks:
+Loaded initial model parameters as fallback
+Created true global model with parameters from all 6 clients
+
+Aggregating track: 'track_0_no1' with clients: [0, 2, 3, 4, 5]
+  Including primary model from client 0 with adjusted weight 0.1667 (original: 0.1667)
+  Primary models aggregated: [0] with total weight 0.1667
+  Including background model from client 4 with adjusted weight 0.1667 (original: 0.1667)
+  Including background model from client 5 with adjusted weight 0.1667 (original: 0.1667)
+  Including background model from client 3 with adjusted weight 0.1667 (original: 0.1667)
+  Including background model from client 2 with adjusted weight 0.1667 (original: 0.1667)
+  Background models aggregated: [2, 3, 4, 5] with total weight 0.6667
+  Track 'track_0_no1' normalized with combined weight 0.8333
+  Track 'track_0_no1' aggregation complete.
+
+Aggregating track: 'global' with clients: [0, 1, 2, 3, 4, 5]
+  Including primary model from client 1 with adjusted weight 0.1667 (original: 0.1667)
+  Including primary model from client 2 with adjusted weight 0.1667 (original: 0.1667)
+  Including primary model from client 3 with adjusted weight 0.1667 (original: 0.1667)
+  Including primary model from client 4 with adjusted weight 0.1667 (original: 0.1667)
+  Including primary model from client 5 with adjusted weight 0.1667 (original: 0.1667)
+  Primary models aggregated: [1, 2, 3, 4, 5] with total weight 0.8333
+  Including background model from client 0 with adjusted weight 0.1667 (original: 0.1667)
+  Background models aggregated: [0] with total weight 0.1667
+  Track 'global' normalized with combined weight 1.0000
+  Track 'global' aggregation complete.
+Saved true global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/global_model_aggregated
+Saved track model: track_0_no1
+Saved track model: global
+Track saving completed in 0.0115 seconds
+
+Updated server's global model with parameters from true global model
+=== END AGGREGATION FOR ROUND 3 ===
+
+
+=== AGGREGATION TIMING SUMMARY FOR ROUND 3 ===
+  Disagreement loading: 0.0001s
+  Resolution time: 0.0001s
+  Aggregation time: 0.0484s
+  Track saving time: 0.0000s
+  Total time: 0.0486s
+  Has disagreements: True
+=== END TIMING SUMMARY ===
+
+Saved global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/global_model_aggregated
+Evaluating global model and track-specific performance...
+Round 3 - MNIST Classification Metrics:
+  Overall Accuracy: 0.8464
+  Mean Precision: 0.8619
+  Mean Recall: 0.8464
+  Mean F1 Score: 0.8437
+Round 3 - Global model test accuracy: 0.8464
+Round 3 - Global model test loss: 0.602182
+Creating track progress plots with data from 2 rounds
+Saved 0 track progress plots for round 3
+Saved results for round 3 (plot mode: minimal)
+
+=== EVALUATING TRACK MODELS FOR ROUND 3 ===
+Found 2 tracks to evaluate: ['track_0_no1', 'global']
+Evaluating track: track_0_no1
+Track 'track_0_no1' - Accuracy: 0.8249, F1: 0.8205
+Evaluating track: global
+Track 'global' - Accuracy: 0.8464, F1: 0.8437
+
+=== TRACK EVALUATION SUMMARY FOR ROUND 3 ===
+Global model - Accuracy: 0.846400
+track_0_no1 - Accuracy: 0.824900
+global - Accuracy: 0.846400
+=== END TRACK EVALUATION ===
+
+Saved experiment results to results/fl_simulation_20250624_220603_mnist_s4/output/fl_results.json
+Saved timing metrics to results/fl_simulation_20250624_220603_mnist_s4/output/timing_metrics.json
+Round 3 completed with disagreement resolution.
+Round 3 timing summary:
+  Track initialization: 0.0150s
+  Client training phase: 0.4926s
+  Resolution time: 0.0001s
+  Aggregation time: 0.0484s
+  Total aggregation time: 0.0486s
+  Evaluation time: 0.7548s
+  Total round time: 1.3153s
+
+--- Federated Learning Round 4/5 ---
+Analyzing disagreements and preparing track-specific models...
+
+=== SERVER PREPARATION FOR ROUND 4 ===
+  Using initiation_mechanism: shallow, lifting_mechanism: shallow, deep_lifting_finetune_rounds: 3
+Loaded disagreements: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Filtering disagreements for round 4...
+  Inactive: Client client_0 inbound disagreement with client client_1 (expired)
+Round 4: All disagreements have expired or not yet started
+Loading main global model from previous round 3's aggregated model: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/global_model_aggregated
+Loaded model from round 3
+Loaded global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/global_model_aggregated
+Saved global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/global_model_for_training
+Saved main global model for training in round 4 at results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/global_model_for_training
+No active disagreements for round 4. Using standard global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_3/global_model_aggregated
+=== END SERVER PREPARATION FOR ROUND 4 ===\n
+Track model initialization completed in 0.0053 seconds
+Updated track models based on disagreement changes from round 3
+Starting disagreement-aware multi-track client training...
+Client 0: Loading track models and training with disagreement resolution...
+
+=== CLIENT 0 MODEL LOADING FOR ROUND 4 ===
+No tracks directory found at results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/global_model_for_training
+=== END CLIENT 0 MODEL LOADING ===
+
+
+=== CLIENT 0 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 0 starting training for 1 epochs
+Client 0 - Epoch 1/1 - Train Loss: 0.634698, Train Acc: 0.8000, Valid Loss: 0.406333, Valid Acc: 0.8583
+Client 0 finished training
+Client 0 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_0/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 0 has no background tracks to train
+=== END CLIENT 0 TRAINING ===
+
+
+=== CLIENT 0 MODEL SAVING FOR ROUND 4 ===
+Client 0 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/clients/client_0
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/clients/client_0
+Saved 0 background models
+=== END CLIENT 0 MODEL SAVING ===
+
+Client 0 completed training in 0.0431 seconds
+Client 1: Loading track models and training with disagreement resolution...
+
+=== CLIENT 1 MODEL LOADING FOR ROUND 4 ===
+No tracks directory found at results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/global_model_for_training
+=== END CLIENT 1 MODEL LOADING ===
+
+
+=== CLIENT 1 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 1 starting training for 1 epochs
+Client 1 - Epoch 1/1 - Train Loss: 0.593209, Train Acc: 0.7937, Valid Loss: 0.355465, Valid Acc: 0.8917
+Client 1 finished training
+Client 1 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_1/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 1 has no background tracks to train
+=== END CLIENT 1 TRAINING ===
+
+
+=== CLIENT 1 MODEL SAVING FOR ROUND 4 ===
+Client 1 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/clients/client_1
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/clients/client_1
+Saved 0 background models
+=== END CLIENT 1 MODEL SAVING ===
+
+Client 1 completed training in 0.0434 seconds
+Client 2: Loading track models and training with disagreement resolution...
+
+=== CLIENT 2 MODEL LOADING FOR ROUND 4 ===
+No tracks directory found at results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/global_model_for_training
+=== END CLIENT 2 MODEL LOADING ===
+
+
+=== CLIENT 2 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 2 starting training for 1 epochs
+Client 2 - Epoch 1/1 - Train Loss: 0.596327, Train Acc: 0.8187, Valid Loss: 0.443706, Valid Acc: 0.8917
+Client 2 finished training
+Client 2 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_2/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 2 has no background tracks to train
+=== END CLIENT 2 TRAINING ===
+
+
+=== CLIENT 2 MODEL SAVING FOR ROUND 4 ===
+Client 2 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/clients/client_2
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/clients/client_2
+Saved 0 background models
+=== END CLIENT 2 MODEL SAVING ===
+
+Client 2 completed training in 0.0430 seconds
+Client 3: Loading track models and training with disagreement resolution...
+
+=== CLIENT 3 MODEL LOADING FOR ROUND 4 ===
+No tracks directory found at results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/global_model_for_training
+=== END CLIENT 3 MODEL LOADING ===
+
+
+=== CLIENT 3 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 3 starting training for 1 epochs
+Client 3 - Epoch 1/1 - Train Loss: 0.728909, Train Acc: 0.7521, Valid Loss: 0.360792, Valid Acc: 0.9333
+Client 3 finished training
+Client 3 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_3/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 3 has no background tracks to train
+=== END CLIENT 3 TRAINING ===
+
+
+=== CLIENT 3 MODEL SAVING FOR ROUND 4 ===
+Client 3 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/clients/client_3
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/clients/client_3
+Saved 0 background models
+=== END CLIENT 3 MODEL SAVING ===
+
+Client 3 completed training in 0.0431 seconds
+Client 4: Loading track models and training with disagreement resolution...
+
+=== CLIENT 4 MODEL LOADING FOR ROUND 4 ===
+No tracks directory found at results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/global_model_for_training
+=== END CLIENT 4 MODEL LOADING ===
+
+
+=== CLIENT 4 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 4 starting training for 1 epochs
+Client 4 - Epoch 1/1 - Train Loss: 0.591743, Train Acc: 0.8313, Valid Loss: 0.409810, Valid Acc: 0.8500
+Client 4 finished training
+Client 4 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_4/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 4 has no background tracks to train
+=== END CLIENT 4 TRAINING ===
+
+
+=== CLIENT 4 MODEL SAVING FOR ROUND 4 ===
+Client 4 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/clients/client_4
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/clients/client_4
+Saved 0 background models
+=== END CLIENT 4 MODEL SAVING ===
+
+Client 4 completed training in 0.0430 seconds
+Client 5: Loading track models and training with disagreement resolution...
+
+=== CLIENT 5 MODEL LOADING FOR ROUND 4 ===
+No tracks directory found at results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/global_model_for_training
+=== END CLIENT 5 MODEL LOADING ===
+
+
+=== CLIENT 5 TRAINING FOR ROUND 4 ===
+Training primary model...
+Client 5 starting training for 1 epochs
+Client 5 - Epoch 1/1 - Train Loss: 0.688574, Train Acc: 0.7792, Valid Loss: 0.524525, Valid Acc: 0.8083
+Client 5 finished training
+Client 5 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_5/training_results_round_4.json
+Primary model training complete. Accuracy: N/A
+Client 5 has no background tracks to train
+=== END CLIENT 5 TRAINING ===
+
+
+=== CLIENT 5 MODEL SAVING FOR ROUND 4 ===
+Client 5 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/clients/client_5
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/clients/client_5
+Saved 0 background models
+=== END CLIENT 5 MODEL SAVING ===
+
+Client 5 completed training in 0.0531 seconds
+Performing disagreement-aware track-based model aggregation...
+Starting file-based aggregation for round 4
+Found 6 clients: [4, 5, 3, 2, 0, 1]
+Loaded disagreements: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Filtering disagreements for round 4...
+  Inactive: Client client_0 inbound disagreement with client client_1 (expired)
+Round 4: All disagreements have expired or not yet started
+No active disagreements for round 4, using standard aggregation
+Updated global model with parameters from 6 clients
+
+=== AGGREGATION TIMING SUMMARY FOR ROUND 4 ===
+  Disagreement loading: 0.0001s
+  Resolution time: 0.0000s
+  Aggregation time: 0.0169s
+  Track saving time: 0.0000s
+  Total time: 0.0170s
+  Has disagreements: False
+=== END TIMING SUMMARY ===
+
+Saved global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/global_model_aggregated
+Evaluating global model and track-specific performance...
+Round 4 - MNIST Classification Metrics:
+  Overall Accuracy: 0.9001
+  Mean Precision: 0.9017
+  Mean Recall: 0.9001
+  Mean F1 Score: 0.9000
+Round 4 - Global model test accuracy: 0.9001
+Round 4 - Global model test loss: 0.394922
+Creating track progress plots with data from 3 rounds
+No tracks directory for round 4 - disagreements likely expired
+Saved 0 track progress plots for round 4
+Saved results for round 4 (plot mode: minimal)
+
+=== EVALUATING TRACK MODELS FOR ROUND 4 ===
+No tracks directory found for round 4
+Disagreements have expired in round 4, evaluating only the global model
+Global model - Accuracy: 0.9001, F1: 0.9000
+
+=== TRACK EVALUATION SUMMARY FOR ROUND 4 ===
+Global model - Accuracy: 0.900100
+global - Accuracy: 0.900100
+=== END TRACK EVALUATION ===
+
+Saved experiment results to results/fl_simulation_20250624_220603_mnist_s4/output/fl_results.json
+Saved timing metrics to results/fl_simulation_20250624_220603_mnist_s4/output/timing_metrics.json
+Round 4 completed with disagreement resolution.
+Round 4 timing summary:
+  Track initialization: 0.0053s
+  Client training phase: 0.2688s
+  Resolution time: 0.0000s
+  Aggregation time: 0.0169s
+  Total aggregation time: 0.0170s
+  Evaluation time: 0.5142s
+  Total round time: 0.8076s
+
+--- Federated Learning Round 5/5 ---
+Analyzing disagreements and preparing track-specific models...
+
+=== SERVER PREPARATION FOR ROUND 5 ===
+  Using initiation_mechanism: shallow, lifting_mechanism: shallow, deep_lifting_finetune_rounds: 3
+Loaded disagreements: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Filtering disagreements for round 5...
+  Inactive: Client client_0 inbound disagreement with client client_1 (expired)
+Round 5: All disagreements have expired or not yet started
+Loading main global model from previous round 4's aggregated model: results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/global_model_aggregated
+Loaded model from round 4
+Loaded global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/global_model_aggregated
+Saved global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/global_model_for_training
+Saved main global model for training in round 5 at results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/global_model_for_training
+No active disagreements for round 5. Using standard global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_4/global_model_aggregated
+=== END SERVER PREPARATION FOR ROUND 5 ===\n
+Track model initialization completed in 0.0051 seconds
+Updated track models based on disagreement changes from round 4
+Starting disagreement-aware multi-track client training...
+Client 0: Loading track models and training with disagreement resolution...
+
+=== CLIENT 0 MODEL LOADING FOR ROUND 5 ===
+No tracks directory found at results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/global_model_for_training
+=== END CLIENT 0 MODEL LOADING ===
+
+
+=== CLIENT 0 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 0 starting training for 1 epochs
+Client 0 - Epoch 1/1 - Train Loss: 0.522247, Train Acc: 0.8354, Valid Loss: 0.475261, Valid Acc: 0.8250
+Client 0 finished training
+Client 0 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_0/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 0 has no background tracks to train
+=== END CLIENT 0 TRAINING ===
+
+
+=== CLIENT 0 MODEL SAVING FOR ROUND 5 ===
+Client 0 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/clients/client_0
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/clients/client_0
+Saved 0 background models
+=== END CLIENT 0 MODEL SAVING ===
+
+Client 0 completed training in 0.0436 seconds
+Client 1: Loading track models and training with disagreement resolution...
+
+=== CLIENT 1 MODEL LOADING FOR ROUND 5 ===
+No tracks directory found at results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/global_model_for_training
+=== END CLIENT 1 MODEL LOADING ===
+
+
+=== CLIENT 1 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 1 starting training for 1 epochs
+Client 1 - Epoch 1/1 - Train Loss: 0.504627, Train Acc: 0.8521, Valid Loss: 0.332581, Valid Acc: 0.8667
+Client 1 finished training
+Client 1 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_1/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 1 has no background tracks to train
+=== END CLIENT 1 TRAINING ===
+
+
+=== CLIENT 1 MODEL SAVING FOR ROUND 5 ===
+Client 1 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/clients/client_1
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/clients/client_1
+Saved 0 background models
+=== END CLIENT 1 MODEL SAVING ===
+
+Client 1 completed training in 0.0435 seconds
+Client 2: Loading track models and training with disagreement resolution...
+
+=== CLIENT 2 MODEL LOADING FOR ROUND 5 ===
+No tracks directory found at results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/global_model_for_training
+=== END CLIENT 2 MODEL LOADING ===
+
+
+=== CLIENT 2 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 2 starting training for 1 epochs
+Client 2 - Epoch 1/1 - Train Loss: 0.461974, Train Acc: 0.8771, Valid Loss: 0.366248, Valid Acc: 0.9083
+Client 2 finished training
+Client 2 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_2/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 2 has no background tracks to train
+=== END CLIENT 2 TRAINING ===
+
+
+=== CLIENT 2 MODEL SAVING FOR ROUND 5 ===
+Client 2 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/clients/client_2
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/clients/client_2
+Saved 0 background models
+=== END CLIENT 2 MODEL SAVING ===
+
+Client 2 completed training in 0.0438 seconds
+Client 3: Loading track models and training with disagreement resolution...
+
+=== CLIENT 3 MODEL LOADING FOR ROUND 5 ===
+No tracks directory found at results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/global_model_for_training
+=== END CLIENT 3 MODEL LOADING ===
+
+
+=== CLIENT 3 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 3 starting training for 1 epochs
+Client 3 - Epoch 1/1 - Train Loss: 0.604790, Train Acc: 0.8000, Valid Loss: 0.337427, Valid Acc: 0.9250
+Client 3 finished training
+Client 3 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_3/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 3 has no background tracks to train
+=== END CLIENT 3 TRAINING ===
+
+
+=== CLIENT 3 MODEL SAVING FOR ROUND 5 ===
+Client 3 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/clients/client_3
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/clients/client_3
+Saved 0 background models
+=== END CLIENT 3 MODEL SAVING ===
+
+Client 3 completed training in 0.0434 seconds
+Client 4: Loading track models and training with disagreement resolution...
+
+=== CLIENT 4 MODEL LOADING FOR ROUND 5 ===
+No tracks directory found at results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/global_model_for_training
+=== END CLIENT 4 MODEL LOADING ===
+
+
+=== CLIENT 4 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 4 starting training for 1 epochs
+Client 4 - Epoch 1/1 - Train Loss: 0.508674, Train Acc: 0.8479, Valid Loss: 0.420963, Valid Acc: 0.8583
+Client 4 finished training
+Client 4 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_4/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 4 has no background tracks to train
+=== END CLIENT 4 TRAINING ===
+
+
+=== CLIENT 4 MODEL SAVING FOR ROUND 5 ===
+Client 4 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/clients/client_4
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/clients/client_4
+Saved 0 background models
+=== END CLIENT 4 MODEL SAVING ===
+
+Client 4 completed training in 0.0440 seconds
+Client 5: Loading track models and training with disagreement resolution...
+
+=== CLIENT 5 MODEL LOADING FOR ROUND 5 ===
+No tracks directory found at results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/tracks, will use standard global model
+Successfully loaded standard global model from results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/global_model_for_training
+=== END CLIENT 5 MODEL LOADING ===
+
+
+=== CLIENT 5 TRAINING FOR ROUND 5 ===
+Training primary model...
+Client 5 starting training for 1 epochs
+Client 5 - Epoch 1/1 - Train Loss: 0.448170, Train Acc: 0.8562, Valid Loss: 0.429844, Valid Acc: 0.8667
+Client 5 finished training
+Client 5 saved training results to results/fl_simulation_20250624_220603_mnist_s4/output/clients/client_5/training_results_round_5.json
+Primary model training complete. Accuracy: N/A
+Client 5 has no background tracks to train
+=== END CLIENT 5 TRAINING ===
+
+
+=== CLIENT 5 MODEL SAVING FOR ROUND 5 ===
+Client 5 saved model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/clients/client_5
+Saved primary model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/clients/client_5
+Saved 0 background models
+=== END CLIENT 5 MODEL SAVING ===
+
+Client 5 completed training in 0.0433 seconds
+Performing disagreement-aware track-based model aggregation...
+Starting file-based aggregation for round 5
+Found 6 clients: [4, 5, 3, 2, 0, 1]
+Loaded disagreements: {'client_0': [{'type': 'inbound', 'target': 'client_1', 'active_rounds': {'start': 1, 'end': 3}}]}
+Filtering disagreements for round 5...
+  Inactive: Client client_0 inbound disagreement with client client_1 (expired)
+Round 5: All disagreements have expired or not yet started
+No active disagreements for round 5, using standard aggregation
+Updated global model with parameters from 6 clients
+
+=== AGGREGATION TIMING SUMMARY FOR ROUND 5 ===
+  Disagreement loading: 0.0001s
+  Resolution time: 0.0000s
+  Aggregation time: 0.0173s
+  Track saving time: 0.0000s
+  Total time: 0.0175s
+  Has disagreements: False
+=== END TIMING SUMMARY ===
+
+Saved global model to results/fl_simulation_20250624_220603_mnist_s4/model_storage/round_5/global_model_aggregated
+Evaluating global model and track-specific performance...
+Round 5 - MNIST Classification Metrics:
+  Overall Accuracy: 0.9163
+  Mean Precision: 0.9171
+  Mean Recall: 0.9163
+  Mean F1 Score: 0.9161
+Round 5 - Global model test accuracy: 0.9163
+Round 5 - Global model test loss: 0.337230
+Creating track progress plots with data from 4 rounds
+No tracks directory for round 5 - disagreements likely expired
+Saved 5 track progress plots for round 5
+Creating timing plots with data from 5 rounds
+Saved timing plots for round 5
+Summary: Avg total time: 0.040s, Avg aggregation time: 0.039s, Avg resolution time: 0.060ms
+Saved results for round 5 (plot mode: last round)
+
+=== EVALUATING TRACK MODELS FOR ROUND 5 ===
+No tracks directory found for round 5
+Disagreements have expired in round 5, evaluating only the global model
+Global model - Accuracy: 0.9163, F1: 0.9161
+
+=== TRACK EVALUATION SUMMARY FOR ROUND 5 ===
+Global model - Accuracy: 0.916300
+global - Accuracy: 0.916300
+=== END TRACK EVALUATION ===
+
+Saved experiment results to results/fl_simulation_20250624_220603_mnist_s4/output/fl_results.json
+Saved timing metrics to results/fl_simulation_20250624_220603_mnist_s4/output/timing_metrics.json
+Round 5 completed with disagreement resolution.
+Round 5 timing summary:
+  Track initialization: 0.0051s
+  Client training phase: 0.2616s
+  Resolution time: 0.0000s
+  Aggregation time: 0.0173s
+  Total aggregation time: 0.0175s
+  Evaluation time: 4.2482s
+  Total round time: 4.5348s
+Saved experiment results to results/fl_simulation_20250624_220603_mnist_s4/output/fl_results.json
+Saved timing metrics to results/fl_simulation_20250624_220603_mnist_s4/output/timing_metrics.json
+
+Federated learning with disagreement resolution completed!
+Experiment initialization time: 0.46 seconds
+Total running time: 9.79 seconds

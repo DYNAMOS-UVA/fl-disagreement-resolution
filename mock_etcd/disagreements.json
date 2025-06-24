@@ -1,98 +1,27 @@
 {
-  "client_0": [
-    {
-      "type": "inbound",
-      "target": "client_1",
-      "active_rounds": {
-        "start": 1,
-        "end": null
-      }
-    }
-  ],
   "client_1": [
     {
       "type": "inbound",
-      "target": "client_2",
+      "target": "client_0",
       "active_rounds": {
-        "start": 1,
+        "start": 3,
         "end": null
       }
     }
   ],
   "client_2": [
     {
-      "type": "inbound",
-      "target": "client_3",
+      "type": "full",
       "active_rounds": {
         "start": 1,
-        "end": null
-      }
-    }
-  ],
-  "client_3": [
-    {
-      "type": "inbound",
-      "target": "client_4",
-      "active_rounds": {
-        "start": 1,
-        "end": null
+        "end": 7
       }
     }
   ],
   "client_4": [
     {
-      "type": "inbound",
+      "type": "outbound",
       "target": "client_5",
-      "active_rounds": {
-        "start": 1,
-        "end": null
-      }
-    }
-  ],
-  "client_5": [
-    {
-      "type": "inbound",
-      "target": "client_6",
-      "active_rounds": {
-        "start": 1,
-        "end": null
-      }
-    }
-  ],
-  "client_6": [
-    {
-      "type": "inbound",
-      "target": "client_7",
-      "active_rounds": {
-        "start": 1,
-        "end": null
-      }
-    }
-  ],
-  "client_7": [
-    {
-      "type": "inbound",
-      "target": "client_8",
-      "active_rounds": {
-        "start": 1,
-        "end": null
-      }
-    }
-  ],
-  "client_8": [
-    {
-      "type": "inbound",
-      "target": "client_9",
-      "active_rounds": {
-        "start": 1,
-        "end": null
-      }
-    }
-  ],
-  "client_9": [
-    {
-      "type": "inbound",
-      "target": "client_0",
       "active_rounds": {
         "start": 1,
         "end": null
