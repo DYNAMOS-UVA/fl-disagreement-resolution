@@ -355,8 +355,10 @@ class FederatedServer:
             # Create timing metrics structure with total running time and round timing
             timing_data = {
                 "total_running_time_seconds": getattr(self, 'total_running_time', None),
+                "experiment_init_time_seconds": getattr(self, 'experiment_init_time', None),
                 "aggregation_timing_history": self.aggregation_timing_history,
-                "round_timing_history": getattr(self, 'round_timing_history', [])
+                "round_timing_history": getattr(self, 'round_timing_history', []),
+                "evaluation_timing_history": getattr(self, 'evaluation_timing_history', [])
             }
 
             serializable_timing = make_json_serializable(timing_data)

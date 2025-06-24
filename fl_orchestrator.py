@@ -153,6 +153,9 @@ class FederatedOrchestrator:
 
         print(f"Starting federated learning with {self.fl_rounds} rounds...")
 
+        # Start timing experiment initialization
+        experiment_init_start_time = time.time()
+
         # Initialize and save the initial global model
         self.server.initialize_model(round_num=0)
 
@@ -160,9 +163,16 @@ class FederatedOrchestrator:
         self.server.evaluate_model(fl_round=0)
         print("Initial model evaluation completed")
 
+        # Calculate experiment initialization time
+        experiment_init_time = time.time() - experiment_init_start_time
+
         # Initialize round timing history
         if not hasattr(self.server, 'round_timing_history'):
             self.server.round_timing_history = []
+
+        # Initialize evaluation timing history
+        if not hasattr(self.server, 'evaluation_timing_history'):
+            self.server.evaluation_timing_history = []
 
         # Main federated learning loop
         for fl_round in range(1, self.fl_rounds + 1):
@@ -242,8 +252,20 @@ class FederatedOrchestrator:
             # 4. Server evaluates global model and individual track performance
             print("Evaluating global model and track-specific performance...")
 
+            # Start timing evaluation phase
+            evaluation_start_time = time.time()
+
             # Server evaluates both global and track models, storing comprehensive metrics
             self.server.evaluate_model(fl_round=fl_round)
+
+            # Calculate evaluation time
+            evaluation_time = time.time() - evaluation_start_time
+
+            # Store evaluation timing
+            self.server.evaluation_timing_history.append({
+                "round": fl_round,
+                "evaluation_time_seconds": evaluation_time
+            })
 
             # Calculate total round time
             total_round_time = time.time() - round_start_time
@@ -263,6 +285,7 @@ class FederatedOrchestrator:
                 "track_model_initialization_time_seconds": track_init_time,
                 "client_training_times": client_training_times,
                 "total_client_training_time_seconds": total_client_training_time,
+                "evaluation_time_seconds": evaluation_time,
                 "total_round_time_seconds": total_round_time,
                 "num_participating_clients": len(client_training_times)
             }
@@ -286,6 +309,7 @@ class FederatedOrchestrator:
                 print(f"  Resolution time: {aggregation_timing.get('resolution_time_seconds', 0):.4f}s")
                 print(f"  Aggregation time: {aggregation_timing.get('aggregation_time_seconds', 0):.4f}s")
                 print(f"  Total aggregation time: {aggregation_timing.get('total_aggregation_time_seconds', 0):.4f}s")
+            print(f"  Evaluation time: {evaluation_time:.4f}s")
             print(f"  Total round time: {total_round_time:.4f}s")
 
         # Calculate total running time
@@ -293,9 +317,11 @@ class FederatedOrchestrator:
 
         # Add timing information to server results and save final results
         self.server.set_total_running_time(total_running_time)
+        self.server.experiment_init_time = experiment_init_time
         self.server._save_experiment_results()
 
         print(f"\nFederated learning with disagreement resolution completed!")
+        print(f"Experiment initialization time: {experiment_init_time:.2f} seconds")
         print(f"Total running time: {total_running_time:.2f} seconds")
 
 

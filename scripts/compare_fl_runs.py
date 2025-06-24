@@ -183,13 +183,19 @@ class FLRunComparator:
                     run_data["timing_metrics"] = timing_data["aggregation_timing_history"]
                     run_data["total_running_time"] = timing_data.get("total_running_time_seconds")
                     run_data["round_timing_metrics"] = timing_data.get("round_timing_history", [])
+                    run_data["experiment_init_time"] = timing_data.get("experiment_init_time_seconds")
+                    run_data["evaluation_timing_metrics"] = timing_data.get("evaluation_timing_history", [])
                 else:
                     # Handle old format (direct list)
                     run_data["timing_metrics"] = timing_data if isinstance(timing_data, list) else []
                     run_data["round_timing_metrics"] = []
+                    run_data["experiment_init_time"] = None
+                    run_data["evaluation_timing_metrics"] = []
         else:
             print(f"Warning: No timing metrics found in {run_path}")
             run_data["timing_metrics"] = []
+            run_data["experiment_init_time"] = None
+            run_data["evaluation_timing_metrics"] = []
 
         # Calculate model storage directory size
         model_storage_path = run_path / "model_storage"
@@ -314,7 +320,7 @@ class FLRunComparator:
             else:
                 run_data["disagreement_overhead_pct"] = None
 
-                # Round timing metrics summary
+        # Round timing metrics summary
         round_timing_metrics = run_data.get("round_timing_metrics", [])
         if round_timing_metrics:
             track_init_times = [entry["track_model_initialization_time_seconds"] for entry in round_timing_metrics]
@@ -326,12 +332,16 @@ class FLRunComparator:
             resolution_times = [entry.get("resolution_time_seconds", 0) for entry in round_timing_metrics]
             total_aggregation_times = [entry.get("total_aggregation_time_seconds", 0) for entry in round_timing_metrics]
 
+            # Extract evaluation timing data from round timing
+            evaluation_times = [entry.get("evaluation_time_seconds", 0) for entry in round_timing_metrics]
+
             run_data["avg_track_init_time"] = np.mean(track_init_times)
             run_data["avg_client_training_time"] = np.mean(client_training_times)
             run_data["avg_total_round_time"] = np.mean(total_round_times)
             run_data["avg_round_aggregation_time"] = np.mean(aggregation_times)
             run_data["avg_round_resolution_time"] = np.mean(resolution_times)
             run_data["avg_round_total_aggregation_time"] = np.mean(total_aggregation_times)
+            run_data["avg_evaluation_time"] = np.mean(evaluation_times)
 
             # Calculate individual client training statistics
             all_client_times = []
@@ -630,7 +640,7 @@ class FLRunComparator:
         fig, axes = plt.subplots(2, 4, figsize=(20, 10))
         fig.suptitle(f'Scalability comparison (across {max_runs} runs)', fontsize=16, fontweight='bold')
 
-                # Define custom color palette - vibrant and mixed up
+        # Define custom color palette - vibrant and mixed up
         custom_colors = ['#E91E63', '#00BCD4', '#4CAF50', '#3F51B5', '#607D8B', '#F44336', '#2E7D32', '#1976D2', '#AD1457', '#00695C']
         # Colors: pink, cyan, green, indigo, blue-gray, red, dark green, blue, deep pink, teal
 
@@ -715,7 +725,7 @@ class FLRunComparator:
                 ax.annotate(f'{value:.3f}s', xy=(bar.get_x() + bar.get_width() / 2, height),
                            xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
 
-                # Bottom row plots
+        # Bottom row plots
         # 5. Accuracy Progression
         ax = axes[1, 0]
         for i, scenario in enumerate(scenarios):
@@ -793,52 +803,71 @@ class FLRunComparator:
     def _plot_cumulative_time_breakdown(self, ax, averaged_data, scenarios, labels):
         """Plot a stacked bar chart showing time breakdown for each scenario."""
         # Prepare data for stacked bars
+        experiment_init_times = []
         track_init_times = []
         client_training_times = []
         resolution_times = []
         aggregation_times = []
+        evaluation_times = []
         other_times = []
 
         for scenario in scenarios:
             run_data = averaged_data[scenario]
             total_time = run_data.get('total_running_time', 0)
 
+            # Get experiment initialization time (one-time cost)
+            experiment_init = run_data.get('experiment_init_time', 0)
+
             # Get component times (multiply by number of rounds to get total time spent)
             track_init = run_data.get('avg_track_init_time', 0) * run_data.get('total_rounds', 1)
             client_training = run_data.get('avg_client_training_time', 0) * run_data.get('total_rounds', 1)
             resolution = run_data.get('avg_round_resolution_time', 0) * run_data.get('total_rounds', 1)
             aggregation = run_data.get('avg_round_aggregation_time', 0) * run_data.get('total_rounds', 1)
+            evaluation = run_data.get('avg_evaluation_time', 0) * run_data.get('total_rounds', 1)
 
-            # Calculate "other" time (evaluation, overhead, etc.)
-            accounted_time = track_init + client_training + resolution + aggregation
+            # Calculate "other" time (remaining unaccounted time)
+            accounted_time = experiment_init + track_init + client_training + resolution + aggregation + evaluation
             other = max(0, total_time - accounted_time)
 
+            experiment_init_times.append(experiment_init)
             track_init_times.append(track_init)
             client_training_times.append(client_training)
             resolution_times.append(resolution)
             aggregation_times.append(aggregation)
+            evaluation_times.append(evaluation)
             other_times.append(other)
 
         # Create stacked bar chart
         width = 0.8
         x_pos = range(len(scenarios))
 
-                                # Stack the bars with distinct time breakdown colors and black borders
-        p1 = ax.bar(x_pos, track_init_times, width, label='Track Init', color='#4CAF50', alpha=0.8, edgecolor='black', linewidth=0.8)  # Green
-        p2 = ax.bar(x_pos, client_training_times, width, bottom=track_init_times,
-                   label='Client Training', color='#2196F3', alpha=0.8, edgecolor='black', linewidth=0.8)  # Blue
+        # Stack the bars with distinct time breakdown colors and black borders
+        # Using colors that match the rest of the comparison plots with specific colors for main components
+        p1 = ax.bar(x_pos, experiment_init_times, width, label='Experiment Init', color=plt.cm.Set1(7), alpha=0.8, edgecolor='black', linewidth=0.8)  # Gray
 
-        bottom2 = [t + c for t, c in zip(track_init_times, client_training_times)]
-        p3 = ax.bar(x_pos, resolution_times, width, bottom=bottom2,
-                   label='Resolution', color='#FF9800', alpha=0.8, edgecolor='black', linewidth=0.8)  # Orange
+        bottom1 = experiment_init_times
+        p2 = ax.bar(x_pos, track_init_times, width, bottom=bottom1,
+                   label='Track Init', color=plt.cm.Set1(4), alpha=0.8, edgecolor='black', linewidth=0.8)  # Orange
 
-        bottom3 = [b + r for b, r in zip(bottom2, resolution_times)]
-        p4 = ax.bar(x_pos, aggregation_times, width, bottom=bottom3,
-                   label='Aggregation', color='#F44336', alpha=0.8, edgecolor='black', linewidth=0.8)  # Red
+        bottom2 = [e + t for e, t in zip(bottom1, track_init_times)]
+        p3 = ax.bar(x_pos, client_training_times, width, bottom=bottom2,
+                   label='Client Training', color=plt.cm.Set1(2), alpha=0.8, edgecolor='black', linewidth=0.8)  # Green - largest component
 
-        bottom4 = [b + a for b, a in zip(bottom3, aggregation_times)]
-        p5 = ax.bar(x_pos, other_times, width, bottom=bottom4,
-                   label='Other', color='#9E9E9E', alpha=0.8, edgecolor='black', linewidth=0.8)  # Gray
+        bottom3 = [b + c for b, c in zip(bottom2, client_training_times)]
+        p4 = ax.bar(x_pos, resolution_times, width, bottom=bottom3,
+                   label='Resolution', color=plt.cm.Set1(3), alpha=0.8, edgecolor='black', linewidth=0.8)  # Purple
+
+        bottom4 = [b + r for b, r in zip(bottom3, resolution_times)]
+        p5 = ax.bar(x_pos, aggregation_times, width, bottom=bottom4,
+                   label='Aggregation', color=plt.cm.Set1(0), alpha=0.8, edgecolor='black', linewidth=0.8)  # Red - large component
+
+        bottom5 = [b + a for b, a in zip(bottom4, aggregation_times)]
+        p6 = ax.bar(x_pos, evaluation_times, width, bottom=bottom5,
+                   label='Evaluation', color=plt.cm.Set1(1), alpha=0.8, edgecolor='black', linewidth=0.8)  # Bright Blue - large component
+
+        bottom6 = [b + e for b, e in zip(bottom5, evaluation_times)]
+        p7 = ax.bar(x_pos, other_times, width, bottom=bottom6,
+                   label='Other', color=plt.cm.Set1(8), alpha=0.8, edgecolor='black', linewidth=0.8)  # Brown
 
         ax.set_xticks(x_pos)
         ax.set_xticklabels(labels, rotation=90, ha='center', va='top')
@@ -849,7 +878,7 @@ class FLRunComparator:
         ax.grid(True, axis='y', alpha=0.3)
 
         # Add total time labels on top of bars
-        totals = [sum(x) for x in zip(track_init_times, client_training_times, resolution_times, aggregation_times, other_times)]
+        totals = [sum(x) for x in zip(experiment_init_times, track_init_times, client_training_times, resolution_times, aggregation_times, evaluation_times, other_times)]
         for i, total in enumerate(totals):
             ax.annotate(f'{total:.1f}s', xy=(i, total), xytext=(0, 3),
                        textcoords="offset points", ha='center', va='bottom', fontsize=8)
@@ -1029,9 +1058,9 @@ class FLRunComparator:
             'final_avg_track_accuracy', 'final_avg_track_precision', 'final_avg_track_recall', 'final_avg_track_f1',
             'avg_total_time', 'avg_aggregation_time', 'avg_resolution_time_ms',
             'disagreement_overhead_pct', 'total_rounds', 'total_running_time', 'model_storage_size_mib',
-            'avg_track_init_time', 'avg_client_training_time', 'avg_total_round_time',
+            'experiment_init_time', 'avg_track_init_time', 'avg_client_training_time', 'avg_total_round_time',
             'avg_individual_client_training_time', 'max_individual_client_training_time', 'min_individual_client_training_time',
-            'avg_round_aggregation_time', 'avg_round_resolution_time', 'avg_round_total_aggregation_time'
+            'avg_round_aggregation_time', 'avg_round_resolution_time', 'avg_round_total_aggregation_time', 'avg_evaluation_time'
         ]
 
         # Average numeric metrics
