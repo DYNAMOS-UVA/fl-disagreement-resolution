@@ -1,8 +1,15 @@
 {
   "experiment": {
     "type": "n_cmapss",
-    "fl_rounds": 10,
-    "client_ids": [0, 1, 2, 3, 4, 5],
+    "fl_rounds": 5,
+    "client_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
     "iid": true
   },
   "data": {
@@ -14,7 +21,11 @@
       "n_cmapss": "data/n-cmapss/test",
       "mnist": "data/mnist/test"
     },
-    "test_units": [11, 14, 15],
+    "test_units": [
+      11,
+      14,
+      15
+    ],
     "client_sample_size": 1000,
     "test_sample_size": 500,
     "setup_data": true,

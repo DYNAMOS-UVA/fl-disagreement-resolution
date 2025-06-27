@@ -124,7 +124,7 @@ def extract_clients_and_tracks(round_data: Dict[int, Dict]) -> Tuple[List[str], 
 
 def build_contribution_matrix(round_data: Dict[int, Dict], clients: List[str], tracks: List[str]) -> Tuple[np.ndarray, List[Tuple[int, str]]]:
     """
-    Build a binary matrix showing client contributions to tracks across rounds.
+    Build a matrix showing client contributions to tracks across rounds.
 
     Args:
         round_data: Dictionary mapping round numbers to track metadata
@@ -133,6 +133,7 @@ def build_contribution_matrix(round_data: Dict[int, Dict], clients: List[str], t
 
     Returns:
         Tuple of (contribution matrix, column info list)
+        Matrix values: 0=no participation, 1=participation, 2=inactive track
     """
     rounds = sorted(round_data.keys())
     matrix = np.zeros((len(clients), len(rounds) * len(tracks)), dtype=int)
@@ -143,14 +144,22 @@ def build_contribution_matrix(round_data: Dict[int, Dict], clients: List[str], t
             col_info.append((round_num, track))
             col_idx = ri * len(tracks) + ti
 
-            # Get clients that contributed to this track in this round
+            # Get tracks that are active in this round
             round_tracks = round_data[round_num].get('tracks', {})
-            contributing_clients = set(str(c) for c in round_tracks.get(track, []))
 
-            # Set matrix values
-            for ci, client in enumerate(clients):
-                if client in contributing_clients:
-                    matrix[ci, col_idx] = 1
+            # Check if this track is active in this round
+            if track not in round_tracks:
+                # Track is inactive - set all clients for this track to 2 (inactive)
+                for ci, client in enumerate(clients):
+                    matrix[ci, col_idx] = 2
+            else:
+                # Track is active - set participation based on contributing clients
+                contributing_clients = set(str(c) for c in round_tracks.get(track, []))
+                for ci, client in enumerate(clients):
+                    if client in contributing_clients:
+                        matrix[ci, col_idx] = 1
+                    else:
+                        matrix[ci, col_idx] = 0
 
     return matrix, col_info
 
@@ -162,7 +171,7 @@ def create_visualization(matrix: np.ndarray, col_info: List[Tuple[int, str]],
     Create and display the track contribution visualization.
 
     Args:
-        matrix: Binary contribution matrix
+        matrix: Contribution matrix (0=no participation, 1=participation, 2=inactive track)
         col_info: List of (round, track) tuples for each column
         clients: List of client IDs
         tracks: List of track names
@@ -174,8 +183,8 @@ def create_visualization(matrix: np.ndarray, col_info: List[Tuple[int, str]],
     n_rounds = len(rounds)
     total_cols = len(col_info)
 
-    # Define Slate-Mint discrete colormap
-    cmap = ListedColormap(['#ECEFF1', '#40916C'])  # 0: light slate, 1: muted mint
+    # Define 3-color discrete colormap: no participation, participation, inactive track
+    cmap = ListedColormap(['#ECEFF1', '#40916C', '#9E9E9E'])  # 0: light slate, 1: muted mint, 2: grey
 
     # Calculate figure size based on data dimensions
     fig_width = max(8, min(20, total_cols * 0.4))
@@ -183,7 +192,7 @@ def create_visualization(matrix: np.ndarray, col_info: List[Tuple[int, str]],
 
     # Plot heatmap with rectangular cells (not square)
     fig, ax = plt.subplots(figsize=(fig_width, fig_height))
-    ax.imshow(matrix, aspect='auto', cmap=cmap, vmin=0, vmax=1)  # Changed to 'auto' aspect
+    ax.imshow(matrix, aspect='auto', cmap=cmap, vmin=0, vmax=2)  # Updated to handle 3 states
 
     # Setup ticks: major for rounds, minor for tracks
     # Major ticks (center of each round group) and labels
@@ -239,6 +248,13 @@ def create_visualization(matrix: np.ndarray, col_info: List[Tuple[int, str]],
         Patch(facecolor='#40916C', edgecolor='black', linewidth=0.5, label='Participates'),
         Patch(facecolor='#ECEFF1', edgecolor='black', linewidth=0.5, label='No participation')
     ]
+
+    # Only add "Inactive track" to legend if there are actually inactive tracks in the matrix
+    if np.any(matrix == 2):
+        legend_elements.append(
+            Patch(facecolor='#9E9E9E', edgecolor='black', linewidth=0.5, label='Inactive track')
+        )
+
     legend = ax.legend(handles=legend_elements, loc='lower right',
                        frameon=True, fontsize=6, handlelength=0.6, handletextpad=0.2,
                        columnspacing=0.3, borderpad=0.2)

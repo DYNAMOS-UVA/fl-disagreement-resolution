@@ -401,7 +401,6 @@ class FederatedClient:
                 # This model will be saved when save_trained_track_models is called
                 bg_track['trained'] = True
 
-                # Fix the formatting error by checking if accuracy is a number before formatting
                 bg_accuracy = bg_results.get('accuracy', 'N/A')
                 bg_accuracy_str = f"{bg_accuracy:.4f}" if isinstance(bg_accuracy, (float, int)) else bg_accuracy
                 print(f"Background model '{bg_track['name']}' training complete. Accuracy: {bg_accuracy_str}")
