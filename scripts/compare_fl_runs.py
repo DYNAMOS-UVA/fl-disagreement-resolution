@@ -821,7 +821,7 @@ class FLRunComparator:
             ax.set_xticklabels(labels, rotation=90, ha='center', va='top')
             ax.tick_params(axis='x', pad=2)
             ax.set_ylabel('Time (s)')
-            ax.set_title('Avg Total Round Time')
+            ax.set_title('Avg Round Time')
             ax.grid(True, axis='y', alpha=0.3)
             # Add value labels (above error bars)
             for bar, value, error in zip(bars, values, errors):
