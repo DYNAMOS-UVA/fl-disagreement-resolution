@@ -5,6 +5,21 @@
 > [!Note]
 > The entire system, its motivation, and experimental results are described in detail in [the accompanying master's thesis](docs/FL_Disagreement_Resolution_Thesis_DaanRosendal.pdf).
 
+## 📖 Citation
+
+If you use this work in your research, please cite it as:
+
+```bibtex
+@mastersthesis{rosendal2025fldisagreementresolution,
+  author  = {Daan Rosendal},
+  title   = {Resolution Strategies for Client-Level Disagreement Scenarios in Federated Learning},
+  school  = {University of Amsterdam},
+  year    = {2025},
+  type    = {Master's thesis},
+  url     = {https://github.com/DaanRosendal/fl-disagreement-resolution}
+}
+```
+
 ## 📄 Description
 
 This project addresses a critical limitation in standard Federated Learning (FL): the assumption of unconditional collaboration amongst all clients. In real-world scenarios (e.g., competing companies, regulatory constraints), clients may need to exclude each other's data or model updates due to client-level disagreements.
