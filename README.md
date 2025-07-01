@@ -27,6 +27,7 @@ Our solution introduces a robust multi-track resolution approach that creates an
 ### Setup instructions
 
 1. **Install uv** (if not already installed):
+
    ```bash
    # On macOS and Linux
    curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -36,18 +37,21 @@ Our solution introduces a robust multi-track resolution approach that creates an
    ```
 
 2. **Clone the repository**:
+
    ```bash
    git clone https://github.com/DaanRosendal/fl-disagreement-resolution.git
    cd fl-disagreement-resolution
    ```
 
 3. **Create virtual environment and install dependencies**:
+
    ```bash
    uv venv
    uv sync
    ```
 
 4. **Activate the virtual environment** (optional, as `uv run` handles this automatically):
+
    ```bash
    # On Unix/macOS
    source .venv/bin/activate
@@ -56,6 +60,12 @@ Our solution introduces a robust multi-track resolution approach that creates an
    .venv\Scripts\activate
    ```
 
+## 📊 Data preparation
+
+**MNIST**: Handled automatically by using the `-s` flag on first run.
+
+**N-CMAPSS**: Requires manual preparation using the [N-CMAPSS Data Preparation repository](https://github.com/DaanRosendal/N-CMAPSS_DL). After preparation, organise your `data/n-cmapss/` folder as shown in the [project structure](#-project-structure) below (≤6 clients only).
+
 ## 🚀 Usage
 
 ### Running basic experiments
@@ -63,10 +73,13 @@ Our solution introduces a robust multi-track resolution approach that creates an
 Run a simple federated learning experiment with disagreement resolution:
 
 ```bash
-# Run scenario 1 with MNIST dataset
+# First run with MNIST - automatically sets up data
+uv run scripts/run_fl.py -S 1 -e mnist -r 5 -l 1 -s
+
+# Subsequent MNIST runs (data already prepared)
 uv run scripts/run_fl.py -S 1 -e mnist -r 5 -l 1
 
-# Run scenario 3 with N-CMAPSS dataset
+# Run scenario 3 with N-CMAPSS dataset (requires manual data preparation first)
 uv run scripts/run_fl.py -S 3 -e n_cmapss -r 5 -l 1
 
 # Run all scenarios with MNIST dataset
@@ -86,7 +99,7 @@ uv run scripts/run_fl.py -S 1 -e mnist -c 6 -s -i
 - `-c, --clients <ids>`: Number of clients or specific client IDs
 - `-r, --rounds <num>`: Number of FL rounds (default: 3)
 - `-l, --local-epochs <num>`: Local training epochs (default: 5)
-- `-s, --setup-data`: Set up MNIST data (first run only)
+- `-s, --setup-data`: Set up MNIST data (first run only, not needed for N-CMAPSS)
 - `-i, --iid`: Use IID data distribution
 - `--verbose-plots`: Generate comprehensive visualisations
 
@@ -201,20 +214,24 @@ uv run scripts/gather_simulation_outputs.py
 ## 📦 Dependencies / Technologies Used
 
 **Core Framework:**
+
 - **Python 3.12+**: Main programming language
 - **PyTorch 2.7+**: Deep learning framework for model training
 - **NumPy 2.2+**: Numerical computing for data handling
 
 **Machine Learning:**
+
 - **scikit-learn 1.6+**: ML utilities and metrics
 - **torchvision 0.22+**: Computer vision datasets and transforms
 
 **Visualisation & analysis:**
+
 - **matplotlib 3.10+**: Plotting and visualisation
 - **seaborn 0.13+**: Statistical data visualisation
 - **brokenaxes 0.6+**: Advanced plot formatting
 
 **Datasets:**
+
 - **MNIST**: Classic handwritten digit recognition
 - **N-CMAPSS**: NASA Commercial Modular Aero-Propulsion System Simulation for predictive maintenance of aircraft engines
 
@@ -309,7 +326,28 @@ fl-disagreement-resolution/
 │           ├── inbound-*.drawio     # Inbound exclusion patterns
 │           └── outbound-*.drawio    # Outbound exclusion patterns
 │
-├── 📁 data/                         # Dataset storage (created during setup)
+├── 📁 data/                         # Dataset storage
+│   ├── 📁 MNIST/                    # MNIST dataset (auto-downloaded)
+│   │   └── 📁 raw/                  # Raw MNIST files
+│   └── 📁 n-cmapss/                 # N-CMAPSS dataset (manual preparation required)
+│       ├── 📁 test/                 # Test data (.npz files)
+│       │   ├── Unit11_win50_str1_smp10.npz
+│       │   ├── Unit14_win50_str1_smp10.npz
+│       │   └── Unit15_win50_str1_smp10.npz
+│       └── 📁 train/                # Training data organised by client
+│           ├── 📁 client_0/         # Client 0 training data
+│           │   └── Unit2_win50_str1_smp10.npz
+│           ├── 📁 client_1/         # Client 1 training data
+│           │   └── Unit5_win50_str1_smp10.npz
+│           ├── 📁 client_2/         # Client 2 training data
+│           │   └── Unit10_win50_str1_smp10.npz
+│           ├── 📁 client_3/         # Client 3 training data
+│           │   └── Unit16_win50_str1_smp10.npz
+│           ├── 📁 client_4/         # Client 4 training data
+│           │   └── Unit18_win50_str1_smp10.npz
+│           └── 📁 client_5/         # Client 5 training data
+│               └── Unit20_win50_str1_smp10.npz
+│
 ├── 📁 logs/                         # Runtime logs and debugging output
 ├── fl_orchestrator.py               # High-level orchestration coordinator
 ├── pyproject.toml                   # Python project configuration and dependencies
@@ -323,5 +361,6 @@ fl-disagreement-resolution/
 **🎯 Ready to explore federated learning with realistic client disagreements? Start with scenario 1:**
 
 ```bash
+# First run - sets up MNIST data automatically with IID data distribution
 uv run scripts/run_fl.py -S 1 -e mnist -r 5 -l 1 -s -i
 ```
