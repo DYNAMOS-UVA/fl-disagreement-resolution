@@ -119,14 +119,13 @@ def run_test(scenario_input, experiment="mnist", fl_rounds=5, local_epochs=1, cl
         # For custom scenario paths, pass the full path
         scenario_arg = scenario_input
 
-    # Get the script directory and find run_fl.py
     script_dir = os.path.dirname(os.path.abspath(__file__))
     run_fl_script = os.path.join(script_dir, "run_fl.py")
 
     cmd = [
         "python3", run_fl_script,
         "-e", experiment,
-        "-c", str(num_clients),  # Use the determined client count/list
+        "-c", str(num_clients),
         "-r", str(fl_rounds),
         "-l", str(local_epochs),
         "-i",
@@ -175,7 +174,7 @@ def verify_tracks(results_dir, scenario):
         print("✅ Empty scenario test passed - all clients use global track by default")
         return True
 
-    # Add debugging to check for round directories
+    # Check for round directories
     model_storage_dir = os.path.join(results_dir, "model_storage")
     round_dirs = [d for d in os.listdir(model_storage_dir) if d.startswith("round_")]
     max_round = max([int(d.split("_")[1]) for d in round_dirs])
@@ -195,21 +194,18 @@ def verify_tracks(results_dir, scenario):
         if "disagreements" in scenario:
             # Handle different disagreement formats
             if scenario["disagreements"] and isinstance(next(iter(scenario["disagreements"].values())), list):
-                # New format: list of disagreements per client
+                # List of disagreements per client
                 for client_id, disagreement_list in scenario["disagreements"].items():
                     for disagreement in disagreement_list:
                         disagreement_type = disagreement.get("type")
                         target_id = disagreement.get("target")
 
-                        # For "full" exclusions, target_id is not applicable and should not cause skipping.
-                        # Other types might require a target_id, but for checking activity,
-                        # we only skip if it's NOT a "full" type AND target_id is missing.
                         if disagreement_type == "full":
                             # This is a full exclusion, proceed regardless of target_id
                             pass
                         elif not target_id:
                             # This is NOT a full exclusion, and target_id is missing, so skip.
-                            print(f"  Skipping disagreement for client {client_id} due to missing target_id (type: {disagreement_type})") # Added for debugging
+                            print(f"  Skipping disagreement for client {client_id} due to missing target_id (type: {disagreement_type})")
                             continue
 
                         # Check if this disagreement is active in this round
@@ -223,7 +219,7 @@ def verify_tracks(results_dir, scenario):
                                 active_disagreements[client_id] = []
                             active_disagreements[client_id].append(disagreement)
             else:
-                # Old format: dictionary of disagreements per client
+                # Dictionary of disagreements per client
                 for client_id, disagreements in scenario["disagreements"].items():
                     for target_id, details in disagreements.items():
                         if "rounds" in details:
@@ -238,7 +234,7 @@ def verify_tracks(results_dir, scenario):
                                 active_disagreements[client_id] = {}
                             active_disagreements[client_id][target_id] = details
 
-        # Check if tracks directory exists
+        # Check if tracks directory exists, otherwise there are no active disagreements
         if not os.path.exists(tracks_dir):
             print(f"\n=== Round {round_num} ===")
             print(f"No tracks directory found for round {round_num}")
@@ -340,7 +336,7 @@ def verify_tracks(results_dir, scenario):
 
         # Check if track names match expected
         tracks_match = True
-        # Convert both to sets for easier comparison (ignoring order)
+        # Convert both to sets for easier comparison
         expected_track_names = set(expected_tracks.keys())
         actual_track_names = set(track_metadata.get("tracks", {}).keys())
 
@@ -548,7 +544,7 @@ def main():
             print("Error: No scenarios found in mock_etcd/scenarios/")
             return 1
 
-        # Skip scenario 0
+        # Skip scenario 0 (serves as a no-disagreements test scenario)
         scenario_paths = [path for path in scenario_paths if not os.path.basename(path) == "scenario0.json"]
 
         print(f"Running all {len(scenario_paths)} scenarios (skipping scenario0)...")
@@ -569,11 +565,10 @@ def main():
             elif status == 'skipped':
                 results[scenario_name] = f"⏭️  Skipped: {message}"
                 skipped_count += 1
-            else:  # failed
+            else:
                 results[scenario_name] = f"❌ Failed: {message}"
                 failed_count += 1
 
-        # Print summary
         total_scenarios = len(scenario_paths)
         print("\n" + "=" * 80)
         print(f"SCENARIO TEST SUMMARY: {success_count} passed, {skipped_count} skipped, {failed_count} failed (out of {total_scenarios} total)")
@@ -608,8 +603,8 @@ def main():
             return 0
         elif status == 'skipped':
             print(f"\n⏭️  Scenario skipped: {message}")
-            return 0  # Skipped scenarios should not cause the script to exit with error
-        else:  # failed
+            return 0
+        else:
             print(f"\n❌ Scenario failed: {message}")
             return 1
 

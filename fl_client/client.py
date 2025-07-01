@@ -154,7 +154,6 @@ class FederatedClient:
         model_path = os.path.join(model_dir, "model.pt")
         torch.save(self.model.state_dict(), model_path)
 
-        # Save model metadata
         metadata = {
             "client_id": self.client_id,
             "experiment_type": self.experiment_type,
@@ -237,7 +236,6 @@ class FederatedClient:
                             try:
                                 with open(track_metadata_path, 'r') as f:
                                     primary_track_metadata = json.load(f)
-                                # Format the track metadata for better readability
                                 track_info = f"Primary track '{primary_track}' details:"
                                 track_info += f"\n        Round: {primary_track_metadata.get('round', 'N/A')}"
                                 track_info += f"\n        Clients: {primary_track_metadata.get('client_ids', [])}"
@@ -250,7 +248,7 @@ class FederatedClient:
                                     if client_ft_status:
                                         track_info += f"\n        This client's finetuning: {client_ft_status}"
                                 else:
-                                    track_info += f"\n        No clients currently finetuning"
+                                    track_info += "\n        No clients currently finetuning"
                                 print(track_info)
                             except Exception as e:
                                 print(f"Error reading track metadata: {e}")
@@ -374,7 +372,6 @@ class FederatedClient:
 
         save_training_results(self, training_results, round_num)
 
-        # Fix the formatting error by checking if accuracy is a number before formatting
         accuracy = training_results.get('accuracy', 'N/A')
         accuracy_str = f"{accuracy:.4f}" if isinstance(accuracy, (float, int)) else accuracy
         print(f"Primary model training complete. Accuracy: {accuracy_str}")
@@ -394,11 +391,6 @@ class FederatedClient:
 
                 # Train on this background track
                 bg_results = train_model(self, epochs)
-
-                # Don't save background training results to avoid confusion
-                # But save the trained background model when saving models later
-
-                # This model will be saved when save_trained_track_models is called
                 bg_track['trained'] = True
 
                 bg_accuracy = bg_results.get('accuracy', 'N/A')
@@ -432,7 +424,6 @@ class FederatedClient:
 
         print(f"\n=== CLIENT {self.client_id} MODEL SAVING FOR ROUND {round_num} ===")
 
-        # Get directory structure from configuration
         structure = self._get_structure_config()
 
         # Create the client directory for this round

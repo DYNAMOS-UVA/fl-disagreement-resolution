@@ -200,7 +200,6 @@ def setup_federated_data(num_clients=6, samples_per_client=1000, iid=False, data
         data_dir=data_dir
     )
 
-    # Prepare test data
     prepare_mnist_test_data(test_dataset, data_dir)
 
     print(f"MNIST data setup completed for federated learning with {num_clients} clients")

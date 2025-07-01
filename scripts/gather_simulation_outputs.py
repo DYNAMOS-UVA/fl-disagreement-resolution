@@ -4,13 +4,11 @@ Script to gather output files from FL simulation results folder
 and organize them by scenario.
 """
 
-import os
 import shutil
 import re
 import argparse
 import sys
 from pathlib import Path
-from collections import defaultdict
 
 
 def usage():
@@ -115,7 +113,7 @@ def main():
 
     parser = argparse.ArgumentParser(
         description="Gather output files from FL simulation results folder and organize them by scenario.",
-        add_help=False)  # We'll handle help manually
+        add_help=False)  # We handle help manually
 
     parser.add_argument(
         "--collect",
@@ -145,7 +143,7 @@ def main():
     collect_performance = args.collect in ["model_performance", "both"]
 
     # Find all simulation directories
-    print(f"Scanning for simulation output files...")
+    print("Scanning for simulation output files...")
     print(f"Collection mode: {args.collect}")
     if collect_contributions:
         print("  - Will collect track contributions plots")
@@ -173,7 +171,7 @@ def main():
     print(f"Total files copied: {len(copied_files)}")
 
     # Print summary by file type
-    print(f"\nSummary:")
+    print("\nSummary:")
     contrib_files = [f for f in copied_files if "track_contributions" in f]
     metrics_files = [f for f in copied_files if "track_metrics_comparison" in f]
 

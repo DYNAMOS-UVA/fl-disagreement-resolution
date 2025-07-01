@@ -49,9 +49,9 @@ class FederatedOrchestrator:
         # Initialize clients
         self.clients = self._init_clients()
 
-        print(f"Initialized disagreement-aware federated learning orchestrator")
+        print("Initialized disagreement-aware federated learning orchestrator")
         print(f"  - {len(self.client_ids_in_experiment)} clients for {self.experiment_type} experiment")
-        print(f"  - Advanced disagreement resolution with multi-track model training")
+        print("  - Advanced disagreement resolution with multi-track model training")
         print(f"  - Results directory: {self.results_dir}")
 
     def _setup_data_if_needed(self):
@@ -148,12 +148,10 @@ class FederatedOrchestrator:
            d. Server aggregates models using disagreement-aware track algorithm
            e. Server evaluates global model and individual track performance
         """
-        # Start timing the entire federated learning process
         fl_start_time = time.time()
 
         print(f"Starting federated learning with {self.fl_rounds} rounds...")
 
-        # Start timing experiment initialization
         experiment_init_start_time = time.time()
 
         # Initialize and save the initial global model
@@ -163,7 +161,6 @@ class FederatedOrchestrator:
         self.server.evaluate_model(fl_round=0)
         print("Initial model evaluation completed")
 
-        # Calculate experiment initialization time
         experiment_init_time = time.time() - experiment_init_start_time
 
         # Initialize round timing history
@@ -246,19 +243,16 @@ class FederatedOrchestrator:
             # 3. Server performs disagreement-aware track-based aggregation
             print("Performing disagreement-aware track-based model aggregation...")
 
-            # Server aggregates models using sophisticated track algorithm
             self.server.aggregate_with_disagreement_resolution(fl_round)
 
             # 4. Server evaluates global model and individual track performance
             print("Evaluating global model and track-specific performance...")
 
-            # Start timing evaluation phase
             evaluation_start_time = time.time()
 
-            # Server evaluates both global and track models, storing comprehensive metrics
+            # Server evaluates both global and track models
             self.server.evaluate_model(fl_round=fl_round)
 
-            # Calculate evaluation time
             evaluation_time = time.time() - evaluation_start_time
 
             # Store evaluation timing
@@ -320,7 +314,7 @@ class FederatedOrchestrator:
         self.server.experiment_init_time = experiment_init_time
         self.server._save_experiment_results()
 
-        print(f"\nFederated learning with disagreement resolution completed!")
+        print("\nFederated learning with disagreement resolution completed!")
         print(f"Experiment initialization time: {experiment_init_time:.2f} seconds")
         print(f"Total running time: {total_running_time:.2f} seconds")
 

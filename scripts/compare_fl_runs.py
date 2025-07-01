@@ -88,7 +88,7 @@ class FLRunComparator:
             if scenario_num == 25:
                 return f"({clients} clients,\nno excl.)"
             elif scenario_num == 26:
-                return f"(ring of 5,\nnext 1)"
+                return "(ring of 5,\nnext 1)"
             else:
                 # S27 = ring of 10, S28 = ring of 15
                 ring_size = (scenario_num - 25) * 5
@@ -97,11 +97,11 @@ class FLRunComparator:
         # Handle scenarios 29-31 (ring patterns with next exclusions)
         elif 29 <= scenario_num <= 31:
             if scenario_num == 29:
-                return f"(ring of 10,\nnext 2)"
+                return "(ring of 10,\nnext 2)"
             elif scenario_num == 30:
-                return f"(ring of 10,\nnext 3)"
+                return "(ring of 10,\nnext 3)"
             elif scenario_num == 31:
-                return f"(ring of 10,\nnext 4)"
+                return "(ring of 10,\nnext 4)"
 
         # Fallback for other scenarios
         else:
@@ -178,7 +178,7 @@ class FLRunComparator:
         if timing_metrics_path.exists():
             with open(timing_metrics_path, 'r') as f:
                 timing_data = json.load(f)
-                # Handle new timing metrics structure
+                # Handle timing metrics structure
                 if isinstance(timing_data, dict) and "aggregation_timing_history" in timing_data:
                     run_data["timing_metrics"] = timing_data["aggregation_timing_history"]
                     run_data["total_running_time"] = timing_data.get("total_running_time_seconds")
@@ -186,7 +186,6 @@ class FLRunComparator:
                     run_data["experiment_init_time"] = timing_data.get("experiment_init_time_seconds")
                     run_data["evaluation_timing_metrics"] = timing_data.get("evaluation_timing_history", [])
                 else:
-                    # Handle old format (direct list)
                     run_data["timing_metrics"] = timing_data if isinstance(timing_data, list) else []
                     run_data["round_timing_metrics"] = []
                     run_data["experiment_init_time"] = None
@@ -451,7 +450,7 @@ class FLRunComparator:
             colors = []
 
             for scenario, run_data in averaged_data.items():
-                # Try to get average track metric first, fallback to global metric
+                # Try to get average track metric first, otherwise fallback to global metric
                 value = run_data.get(metric)
                 error = run_data.get(f'{metric}_std', 0)
                 if value is None:
@@ -516,7 +515,7 @@ class FLRunComparator:
 
         plt.figure(figsize=(18, 6))
 
-        # Timing metrics comparison - 3 most important metrics in horizontal layout
+        # Timing metrics comparison
         timing_metrics = ['avg_total_time', 'avg_resolution_time_ms', 'avg_aggregation_time']
         timing_titles = ['Avg Total Time (s)', 'Avg Resolution Time (ms)', 'Avg Aggregation Time (s)']
 
@@ -537,7 +536,6 @@ class FLRunComparator:
                     labels.append(self._generate_chart_label(scenario, clients))
 
             if values:
-                # Use blue colors for all bars
                 bars = plt.bar(range(len(values)), values, yerr=errors, color='steelblue', alpha=0.7, edgecolor='navy', linewidth=1,
                              capsize=5, error_kw={'elinewidth': 1, 'capthick': 1})
                 plt.xticks(range(len(values)), labels, rotation=45, ha='center')
@@ -656,7 +654,7 @@ class FLRunComparator:
         fig, axes = plt.subplots(2, 4, figsize=(20, 10))
         fig.suptitle(f'Scalability comparison (across {max_runs} runs)', fontsize=16, fontweight='bold')
 
-        # Define custom color palette - vibrant and mixed up
+        # Define custom color palette
         custom_colors = ['#E91E63', '#00BCD4', '#4CAF50', '#3F51B5', '#607D8B', '#F44336', '#2E7D32', '#1976D2', '#AD1457', '#00695C']
         # Colors: pink, cyan, green, indigo, blue-gray, red, dark green, blue, deep pink, teal
 
@@ -886,6 +884,7 @@ class FLRunComparator:
         width = 0.8
         x_pos = range(len(scenarios))
 
+        # TODO: check if these unused variables (p1-p7, bottom1-bottom6) can be safely removed
         # Stack the bars with distinct time breakdown colors and black borders
         # Using colors that match the rest of the comparison plots with specific colors for main components
         p1 = ax.bar(x_pos, experiment_init_times, width, label='Experiment Init', color=plt.cm.Set1(7), alpha=0.8, edgecolor='black', linewidth=0.8)  # Gray
@@ -1197,7 +1196,7 @@ def main():
 
     parser = argparse.ArgumentParser(
         description='Compare Federated Learning Runs - Automatically averages multiple runs of the same scenario',
-        add_help=False)  # We'll handle help manually
+        add_help=False) # We handle help manually
 
     parser.add_argument('runs', nargs='+', help='Paths to FL simulation result directories (multiple runs of the same scenario will be averaged)')
 
@@ -1232,7 +1231,7 @@ def main():
     comparator.print_summary()
 
     if not args.no_plots:
-        print(f"\n📈 Generating comparison plots (averaged by scenario)...")
+        print("\n📈 Generating comparison plots (averaged by scenario)...")
 
         # Generate comparisons
         comparator.compare_performance(save_plots=True, output_dir=args.output_dir)

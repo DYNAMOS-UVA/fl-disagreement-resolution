@@ -31,11 +31,10 @@ class BaseModel(nn.Module):
         for param, new_param in zip(self.parameters(), parameters):
             param.data = new_param.clone()
 
-# N-CMAPSS RUL prediction model
 class RULPredictor(BaseModel):
     """N-CMAPSS RUL prediction model.
 
-    A simple MLP model for predicting Remaining Useful Life (RUL)
+    An MLP model for predicting Remaining Useful Life (RUL)
     from N-CMAPSS sensor data.
     """
 
@@ -70,9 +69,8 @@ class RULPredictor(BaseModel):
         x = self.fc2(x)
         return x
 
-# Simple CNN model for MNIST
 class MNISTClassifier(BaseModel):
-    """Simple CNN model for MNIST image classification."""
+    """CNN model for MNIST image classification."""
 
     def __init__(self):
         """Initialize the MNIST classifier model."""
@@ -105,7 +103,6 @@ class MNISTClassifier(BaseModel):
         x = self.fc2(x)
         return x
 
-# Factory function to create model based on experiment type
 def create_model(experiment_type, **kwargs):
     """Factory function to create model based on experiment type.
 

@@ -17,14 +17,12 @@ def main():
 
     args = parser.parse_args()
 
-    # Set default data directory based on experiment type if not provided
     if args.data_dir is None:
         if args.experiment == "n_cmapss":
             args.data_dir = "data/n-cmapss/train"
         elif args.experiment == "mnist":
             args.data_dir = "data/mnist/train"
 
-    # Create and run client
     client = FederatedClient(
         client_id=args.client_id,
         experiment_type=args.experiment,

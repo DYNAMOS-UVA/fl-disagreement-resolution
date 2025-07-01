@@ -12,7 +12,7 @@ import argparse
 import sys
 import glob
 from pathlib import Path
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import ListedColormap
@@ -110,7 +110,7 @@ def extract_clients_and_tracks(round_data: Dict[int, Dict]) -> Tuple[List[str], 
         # Extract tracks from tracks mapping
         all_tracks.update(data.get('tracks', {}).keys())
 
-    # Convert to sorted lists, with 'global' track first if present
+    # Convert to sorted lists
     clients = sorted(all_clients, key=lambda x: int(x))
     tracks = sorted(all_tracks)
 
@@ -180,7 +180,6 @@ def create_visualization(matrix: np.ndarray, col_info: List[Tuple[int, str]],
     # Extract unique rounds for major ticks
     rounds = sorted(list(set(round_num for round_num, _ in col_info)))
     n_tracks = len(tracks)
-    n_rounds = len(rounds)
     total_cols = len(col_info)
 
     # Define 3-color discrete colormap: no participation, participation, inactive track
@@ -188,20 +187,18 @@ def create_visualization(matrix: np.ndarray, col_info: List[Tuple[int, str]],
 
     # Calculate figure size based on data dimensions
     fig_width = max(8, min(20, total_cols * 0.4))
-    fig_height = max(3, len(clients) * 0.4)  # Reduced height multiplier
+    fig_height = max(3, len(clients) * 0.4)
 
-    # Plot heatmap with rectangular cells (not square)
+    # Plot heatmap with rectangular cells
     fig, ax = plt.subplots(figsize=(fig_width, fig_height))
     ax.imshow(matrix, aspect='auto', cmap=cmap, vmin=0, vmax=2)  # Updated to handle 3 states
 
     # Setup ticks: major for rounds, minor for tracks
-    # Major ticks (center of each round group) and labels
     major_pos = []
     round_labels = []
 
     for ri, round_num in enumerate(rounds):
         start_idx = ri * n_tracks
-        end_idx = start_idx + n_tracks - 1
         center_pos = start_idx + (n_tracks - 1) / 2
         major_pos.append(center_pos)
         round_labels.append(f'Round {round_num}')
@@ -219,9 +216,9 @@ def create_visualization(matrix: np.ndarray, col_info: List[Tuple[int, str]],
     ax2.set_xticks(positions)
     ax2.set_xticklabels(track_labels, fontsize=8, rotation=90, ha='center', va='bottom')
     ax2.tick_params(axis='x', pad=6)
-    ax2.set_xlim(ax.get_xlim())  # Match the limits of the main axis
+    ax2.set_xlim(ax.get_xlim())
 
-    # Y-axis labels (convert client IDs to more readable format with subscripts)
+    # Y-axis labels
     client_labels = [f'C$_{{{client}}}$' for client in clients]
     ax.set_yticks(np.arange(len(clients)))
     ax.set_yticklabels(client_labels, fontsize=8)
@@ -274,7 +271,7 @@ def main():
 
     parser = argparse.ArgumentParser(
         description='Visualize track contributions for FL simulations',
-        add_help=False)  # We'll handle help manually
+        add_help=False)  # We handle help manually
 
     parser.add_argument('simulation_path',
                        help='Path to the FL simulation folder')

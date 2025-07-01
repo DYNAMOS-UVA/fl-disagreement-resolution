@@ -24,7 +24,6 @@ def aggregate_models_from_files(server, clients_dir, aggregation_weights=None):
     Returns:
         list: List of aggregated model parameter tensors
     """
-    # Start timing the entire aggregation process
     aggregation_start_time = time.time()
 
     server.round += 1
@@ -41,17 +40,14 @@ def aggregate_models_from_files(server, clients_dir, aggregation_weights=None):
         n_clients = len(client_dirs)
         aggregation_weights = {client_id: 1.0 / n_clients for client_id in client_ids}
 
-    # Time the disagreement resolution phase
     disagreement_start_time = time.time()
 
-    # Load disagreements
     etcd_dir = "mock_etcd"
     disagreements = load_disagreements(etcd_dir)
     active_disagreements = get_active_disagreements(disagreements, server.round)
 
     disagreement_loading_time = time.time() - disagreement_start_time
 
-    # Initialize timing metrics
     timing_metrics = {
         "disagreement_loading_time_seconds": disagreement_loading_time,
         "resolution_time_seconds": 0.0,
@@ -88,7 +84,6 @@ def aggregate_models_from_files(server, clients_dir, aggregation_weights=None):
         result = aggregate_standard(server, clients_dir, aggregation_weights)
         timing_metrics["aggregation_time_seconds"] = time.time() - standard_aggregation_start_time
 
-    # Calculate total time
     total_time = time.time() - aggregation_start_time
     timing_metrics["total_aggregation_time_seconds"] = total_time
 
@@ -111,7 +106,6 @@ def aggregate_models_from_files(server, clients_dir, aggregation_weights=None):
             server.training_history[history_key] = []
         server.training_history[history_key].append(metric_value)
 
-    # Print timing summary
     print(f"\n=== AGGREGATION TIMING SUMMARY FOR ROUND {server.round} ===")
     print(f"  Disagreement loading: {timing_metrics['disagreement_loading_time_seconds']:.4f}s")
     print(f"  Resolution time: {timing_metrics['resolution_time_seconds']:.4f}s")
@@ -149,16 +143,14 @@ def aggregate_standard(server, clients_dir, aggregation_weights):
     # Initialize new global parameters with zeros
     global_parameters = [torch.zeros_like(param) for param in server.global_model.parameters()]
 
-    # --- Load Global Finetuning Status (if applicable) ---
+    # Load global finetuning status (if applicable)
     current_global_finetuning_status = {}
     lifting_mechanism = server.disagreement_settings.get("lifting_mechanism", "shallow")
     finetune_total_rounds = server.disagreement_settings.get("deep_lifting_finetune_rounds", 3)
 
     if lifting_mechanism == "deep_incr_finetune" and server.round > 0: # server.round is current round
         print(f"  Deep incremental finetuning active for round {server.round}:")
-        # Path to global_finetuning_status.json for the current round
-        # It's saved in the main round directory by prepare_training_model
-        structure = get_structure_config(server) # Get structure for round_template
+        structure = get_structure_config(server)
         current_round_dir = os.path.join(
             server.results_dir,
             structure["round_template"].format(round=server.round)
@@ -172,12 +164,11 @@ def aggregate_standard(server, clients_dir, aggregation_weights):
                 if current_global_finetuning_status:
                     print(f"    Clients in finetuning: {current_global_finetuning_status}")
                 else:
-                    print(f"    No clients currently finetuning")
+                    print("    No clients currently finetuning")
             except Exception as e:
                 print(f"    Warning: Could not load global finetuning status for aggregation: {e}")
         else:
             print(f"    No finetuning status file found for round {server.round}")
-    # --- End Load Global Finetuning Status ---
 
     total_effective_weight = 0.0 # For normalization if weights are adjusted
     models_aggregated_count = 0
@@ -188,13 +179,10 @@ def aggregate_standard(server, clients_dir, aggregation_weights):
         model_path = os.path.join(client_dir, "model.pt")
         temp_model.load_state_dict(torch.load(model_path, map_location=server.device))
 
-        # Get client parameters
         client_parameters = temp_model.get_parameters()
-
-        # Get client weight
         weight = aggregation_weights.get(client_id, 1.0 / len(client_dirs))
 
-        # --- Apply Incremental Finetuning Weight Adjustment (Global) ---
+        # Apply incremental finetuning weight adjustment (global)
         finetune_multiplier = 1.0
         client_id_str = str(client_id)
         if lifting_mechanism == "deep_incr_finetune" and client_id_str in current_global_finetuning_status:
@@ -204,7 +192,6 @@ def aggregate_standard(server, clients_dir, aggregation_weights):
                 print(f"    Client {client_id_str}: Finetuning round {progress}/{finetune_total_rounds} → Weight multiplier: {finetune_multiplier:.3f} (original: {weight:.3f})")
 
         adjusted_weight = finetune_multiplier * weight
-        # --- End Incremental Finetuning Weight Adjustment (Global) ---
 
         total_effective_weight += adjusted_weight
         models_aggregated_count +=1
@@ -213,7 +200,7 @@ def aggregate_standard(server, clients_dir, aggregation_weights):
         for i, param in enumerate(client_parameters):
             global_parameters[i] += param * adjusted_weight
 
-    # Normalize global parameters if weights were adjusted or simply sum of weights isn't 1
+    # Normalize global parameters if weights were adjusted
     if models_aggregated_count > 0 and total_effective_weight > 0:
         if abs(total_effective_weight - 1.0) > 1e-6: # If not already normalized by weights
             print(f"  Normalizing global model by total effective weight: {total_effective_weight:.4f}")
@@ -253,10 +240,7 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
         output_dim=server.output_dim if server.experiment_type == "n_cmapss" else None
     ).to(server.device)
 
-    # Dictionary to store primary client models
     client_parameters_dict = {}
-
-    # Dictionary to store background client models
     background_parameters_dict = {}
 
     # Load all client models (both primary and background)
@@ -312,7 +296,7 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
         print(f"Warning: Could not load initial model as fallback: {e}")
 
     # First, create a true global model with standard FedAvg for reference
-    # This ensures we always have a properly trained global model even in complex disagreement scenarios
+    # This ensures we always have a properly trained global model available
     true_global_params = [torch.zeros_like(param) for param in server.global_model.parameters()]
     total_global_weight = 0.0
 
@@ -349,9 +333,6 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
             print(f"Skipping empty track: {track_name}")
             continue
 
-        # Note: Removed special case for global track to allow finetuning adjustments
-        # Global track will now go through normal aggregation process with finetuning support
-
         # Initialize parameters for this track
         track_parameters[track_name] = [torch.zeros_like(param) for param in server.global_model.parameters()]
 
@@ -373,11 +354,11 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
                 client_params = client_parameters_dict[client_id]
                 weight = aggregation_weights.get(client_id, 1.0 / len(track_clients)) # Default weight
 
-                # --- Apply Incremental Finetuning Weight Adjustment ---
+                # Apply incremental finetuning weight adjustment
                 finetune_multiplier = 1.0
                 if server.disagreement_settings.get("lifting_mechanism") == "deep_incr_finetune":
                     finetune_status_path = os.path.join(
-                        clients_dir, # clients_dir is actually round_X_clients_dir
+                        clients_dir, # round_X_clients_dir
                         "..", # up to round_X dir
                         "tracks",
                         track_name,
@@ -404,7 +385,6 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
                         print(f"    Finetuning status file not found at: {finetune_status_path}")
 
                 adjusted_weight = finetune_multiplier * weight
-                # --- End Incremental Finetuning Weight Adjustment ---
 
                 primary_weight += adjusted_weight
                 primary_clients_aggregated.append(client_id)
@@ -429,7 +409,7 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
                 # Use an equal weight for background participation
                 weight = aggregation_weights.get(client_id, 1.0 / len(track_clients))
 
-                # --- Apply Incremental Finetuning Weight Adjustment for Background Client ---
+                # Apply incremental finetuning weight adjustment for background client
                 finetune_multiplier = 1.0
                 if server.disagreement_settings.get("lifting_mechanism") == "deep_incr_finetune":
                     finetune_status_path = os.path.join(
@@ -456,7 +436,6 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
                             print(f"    Warning: Could not load finetuning status for background client {client_id_str} in track '{track_name}': {e}")
 
                 adjusted_weight = finetune_multiplier * weight
-                # --- End Incremental Finetuning Weight Adjustment for Background Client ---
 
                 background_weight += adjusted_weight
                 background_clients_aggregated.append(client_id)
@@ -502,8 +481,6 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
     # Save track models to disk
     save_track_models(server, track_parameters, track_info)
 
-    # Update server's global model with parameters from appropriate track
-    # Always use the true global model to ensure the global model is updated consistently
     server.global_model.set_parameters(track_parameters["true_global"])
     print("\nUpdated server's global model with parameters from true global model")
     print(f"=== END AGGREGATION FOR ROUND {server.round} ===\n")
@@ -535,7 +512,6 @@ def save_track_models(server, track_parameters, track_info):
         track_parameters: Dictionary of track parameters
         track_info: Dictionary of track information
     """
-    # Time the track saving process
     track_saving_start_time = time.time()
 
     structure = get_structure_config(server)
@@ -564,10 +540,8 @@ def save_track_models(server, track_parameters, track_info):
 
     # Check if there are any active disagreements - don't create tracks directory if not
     if not track_info.get("tracks", {}) or (len(track_info.get("tracks", {})) == 1 and "global" in track_info.get("tracks", {})):
-        # No active disagreements or only global track, skip creating tracks directory
         print(f"No active disagreements for round {server.round}, skipping track creation")
 
-        # Record the track saving time even if no tracks to save
         track_saving_time = time.time() - track_saving_start_time
         # Update the timing metrics in the aggregation history if available
         if hasattr(server, 'aggregation_timing_history') and server.aggregation_timing_history:
@@ -625,7 +599,6 @@ def save_track_models(server, track_parameters, track_info):
 
         print(f"Saved track model: {track_name}")
 
-    # Record the track saving time
     track_saving_time = time.time() - track_saving_start_time
     print(f"Track saving completed in {track_saving_time:.4f} seconds")
 

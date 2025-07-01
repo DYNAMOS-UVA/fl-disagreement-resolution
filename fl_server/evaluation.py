@@ -77,26 +77,25 @@ def evaluate_model(server, fl_round=None, client_results=None):
     # For RUL prediction, calculate RMSE and additional metrics
     if server.experiment_type == "n_cmapss":
         rmse = np.sqrt(test_loss)
-        test_loss = rmse  # Keep RMSE as the primary test loss metric
+        test_loss = rmse  # RMSE as the primary test loss metric
 
         # Convert to numpy arrays for calculation
         predictions = np.array(predictions)
         actual = np.array(actual)
 
-        # Calculate Mean Absolute Error (MAE)
+        # Calculate Mean Absolute Error
         mae = np.mean(np.abs(predictions - actual))
 
-        # Calculate R² (coefficient of determination)
+        # Calculate R-squared
         mean_actual = np.mean(actual)
         ss_total = np.sum((actual - mean_actual) ** 2)
         ss_residual = np.sum((actual - predictions) ** 2)
         r_squared = 1 - (ss_residual / ss_total)
 
-        # Calculate % of predictions within ±10 cycles (a more intuitive metric)
+        # Calculate % of predictions within 10 and 20 cycles
         within_10_cycles = np.mean(np.abs(predictions - actual) <= 10.0) * 100
         within_20_cycles = np.mean(np.abs(predictions - actual) <= 20.0) * 100
 
-        # Print all metrics
         print(f"Round {server.round} - RUL Prediction Metrics:")
         print(f"  RMSE: {rmse:.2f} cycles")
         print(f"  MAE: {mae:.2f} cycles")
@@ -147,7 +146,7 @@ def evaluate_model(server, fl_round=None, client_results=None):
             actual, predictions, average=None, zero_division=0
         )
 
-        # Calculate mean metrics (weighted by support)
+        # Calculate mean metrics
         mean_precision, mean_recall, mean_f1, _ = precision_recall_fscore_support(
             actual, predictions, average='weighted', zero_division=0
         )
@@ -156,13 +155,10 @@ def evaluate_model(server, fl_round=None, client_results=None):
         class_labels = np.unique(actual)
         per_class_accuracy = []
         for c in class_labels:
-            # Mask for this class
             mask = np.array(actual) == c
-            # Accuracy for this class
             class_acc = np.mean(np.array(predictions)[mask] == c) if np.sum(mask) > 0 else 0
             per_class_accuracy.append(class_acc)
 
-        # Print detailed metrics
         print(f"Round {server.round} - MNIST Classification Metrics:")
         print(f"  Overall Accuracy: {accuracy:.4f}")
         print(f"  Mean Precision: {mean_precision:.4f}")
@@ -231,10 +227,8 @@ def evaluate_model(server, fl_round=None, client_results=None):
             if "track_results" not in server.training_history:
                 server.training_history["track_results"] = {}
 
-            # Store track results in training history
             server.training_history["track_results"][str(fl_round)] = track_results
 
-            # Print summary of track results
             print(f"\n=== TRACK EVALUATION SUMMARY FOR ROUND {fl_round} ===")
             if accuracy is not None:
                 print(f"Global model - Accuracy: {accuracy:.6f}")
@@ -316,16 +310,12 @@ def save_evaluation_results(server, predictions, actual):
             plot_mnist_results(server, predictions, actual, cm_plot_path, acc_plot_path, timestamp, server.verbose_plots or is_last_round)
 
     # Plot track progress if we have more than one round
-    # Always generate track_metrics_comparison for last round, only other track plots if verbose
     if server.round > 1 and "track_results" in server.training_history:
         plot_track_progress(server, server.round, server.verbose_plots or is_last_round)
 
     # Plot timing metrics if available (only in verbose mode or last round)
     if (server.verbose_plots or is_last_round) and hasattr(server, 'aggregation_timing_history') and len(server.aggregation_timing_history) > 0:
         plot_timing_metrics(server, server.round)
-
-    # We don't need to save the model here as it's already saved in the round-specific directories
-    # When the server calls save_model() during aggregation
 
     plot_mode = "verbose" if server.verbose_plots else ("last round" if is_last_round else "minimal")
     print(f"Saved results for round {server.round} (plot mode: {plot_mode})")
@@ -805,16 +795,16 @@ def evaluate_track_models(server, round_num):
                 predictions = np.array(predictions)
                 actual = np.array(actual)
 
-                # Calculate Mean Absolute Error (MAE)
+                # Calculate Mean Absolute Error
                 mae = np.mean(np.abs(predictions - actual))
 
-                # Calculate R² (coefficient of determination)
+                # Calculate R²
                 mean_actual = np.mean(actual)
                 ss_total = np.sum((actual - mean_actual) ** 2)
                 ss_residual = np.sum((actual - predictions) ** 2)
                 r_squared = 1 - (ss_residual / ss_total)
 
-                # Calculate % of predictions within ±10 cycles (a more intuitive metric)
+                # Calculate % of predictions within 10 and 20 cycles
                 within_10_cycles = np.mean(np.abs(predictions - actual) <= 10.0) * 100
                 within_20_cycles = np.mean(np.abs(predictions - actual) <= 20.0) * 100
 
@@ -907,7 +897,7 @@ def plot_track_comparison(server, track_results, round_num):
 
     # Plot based on experiment type
     if server.experiment_type == "n_cmapss":
-        # RUL prediction metrics comparison (MAE removed, 2x2 layout)
+        # RUL prediction metrics comparison
         metrics = ['rmse', 'r_squared', 'within_10_cycles', 'within_20_cycles']
         titles = ['RMSE (lower is better)', 'R² (higher is better)',
                  'Within ±10 cycles %', 'Within ±20 cycles %']
@@ -1072,21 +1062,6 @@ def plot_track_progress(server, round_num, should_plot_all=True):
 
     all_tracks = sorted(list(all_tracks))
 
-    # Check if we have any track data for current round
-    # If not and we're past round 2, check if disagreements have expired
-    structure = server._get_structure_config()
-    current_tracks_dir = os.path.join(
-        server.results_dir,
-        structure["round_template"].format(round=round_num),
-        "tracks"
-    )
-
-    disagreements_expired = False
-    if round_num > 2 and not os.path.exists(current_tracks_dir):
-        # The disagreements likely expired, we should continue using global track
-        disagreements_expired = True
-        print(f"No tracks directory for round {round_num} - disagreements likely expired")
-
     # Define metrics based on experiment type
     if server.experiment_type == "mnist":
         metrics = [
@@ -1176,7 +1151,7 @@ def plot_track_progress(server, round_num, should_plot_all=True):
                        bbox_inches='tight')
             plt.close()
 
-    # Create a comprehensive multi-metric plot for comparison
+    # Create a multi-metric plot for comparison
     # Only generate this plot if in verbose mode or if this is the last round
     is_last_round = hasattr(server, 'fl_rounds') and round_num == server.fl_rounds
     if should_plot_all or is_last_round:
@@ -1197,7 +1172,9 @@ def plot_track_progress(server, round_num, should_plot_all=True):
             min_track_round = min(rounds) if rounds else 1
             max_track_round = max(rounds) if rounds else 1
 
-            # Create broken x-axis limits: (-0.1, 0.1) for narrow round 0 section, then (min_track_round-0.1, max_track_round+0.1) for tracks
+            # Create broken x-axis limits: (-0.1, 0.1) for narrow round 0
+            # section, then (min_track_round-0.1, max_track_round+0.1) for
+            # tracks
             xlims = ((-0.1, 0.1), (min_track_round - 0.1, max_track_round + 0.1))
 
             # Create a GridSpec for proper subplot management
@@ -1252,7 +1229,7 @@ def plot_track_progress(server, round_num, should_plot_all=True):
                     subplot_spec=gs[row, col],
                     fig=fig,
                     despine=False,
-                    diag_color='none'  # Remove the diagonal slashes
+                    diag_color='none'  # Remove the diagonal slashes from the broken axes (they are buggy; positioned in random places)
                 )
 
                 # Plot track data
@@ -1321,7 +1298,7 @@ def plot_track_progress(server, round_num, should_plot_all=True):
             plt.close()
 
         else:
-            # Use regular matplotlib subplots (original behavior)
+            # Use regular matplotlib subplots
             plt.figure(figsize=(15, 10))
 
             # Different subplot layout based on number of metrics
@@ -1410,16 +1387,18 @@ def plot_timing_metrics(server, round_num):
     # Extract timing data
     rounds = [entry["round"] for entry in server.aggregation_timing_history]
     has_disagreements = [entry["has_disagreements"] for entry in server.aggregation_timing_history]
+    # Not used for now
     num_clients = [entry["num_clients"] for entry in server.aggregation_timing_history]
 
     # Timing metrics - convert resolution time to milliseconds for better readability
     resolution_times_ms = [entry["resolution_time_seconds"] * 1000 for entry in server.aggregation_timing_history]
     aggregation_times = [entry["aggregation_time_seconds"] for entry in server.aggregation_timing_history]
     total_times = [entry["total_aggregation_time_seconds"] for entry in server.aggregation_timing_history]
+    # Not used for now
     disagreement_loading_times = [entry["disagreement_loading_time_seconds"] for entry in server.aggregation_timing_history]
     track_saving_times = [entry["track_saving_time_seconds"] for entry in server.aggregation_timing_history]
 
-    # Create comprehensive timing plot with 2x3 layout
+    # Create timing plot with 2x3 layout
     plt.figure(figsize=(18, 10))
 
     # Plot 1: Total Aggregation Time

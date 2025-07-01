@@ -56,7 +56,7 @@ class FederatedServer:
             "global_test_accuracy": []  # For classification tasks like MNIST
         }
 
-        # Experiment metadata (to be initialized later)
+        # Experiment metadata (is initialized in init_experiment)
         self.fl_rounds = None
         self.client_ids = None
         self.iid = None
@@ -67,10 +67,7 @@ class FederatedServer:
             "rounds": []
         }
 
-        # Initialize aggregation timing history
         self.aggregation_timing_history = []
-
-        # Load disagreement settings once
         self.disagreement_settings = self._get_disagreement_config()
 
         # Create output directories
@@ -317,7 +314,6 @@ class FederatedServer:
         Args:
             total_time_seconds: Total time in seconds for the complete FL process
         """
-        # Store total running time in timing metrics instead of main results
         if not hasattr(self, 'aggregation_timing_history'):
             self.aggregation_timing_history = []
 
@@ -348,11 +344,11 @@ class FederatedServer:
 
         print(f"Saved experiment results to {results_path}")
 
-        # Also save timing metrics separately for easier analysis
+        # Save timing metrics separately
         if hasattr(self, 'aggregation_timing_history') and self.aggregation_timing_history:
             timing_path = os.path.join(output_dir, "timing_metrics.json")
 
-            # Create timing metrics structure with total running time and round timing
+            # Create timing metrics structure
             timing_data = {
                 "total_running_time_seconds": getattr(self, 'total_running_time', None),
                 "experiment_init_time_seconds": getattr(self, 'experiment_init_time', None),
@@ -398,9 +394,9 @@ class FederatedServer:
         """
 
         if not self.results_dir:
-            return None, 0.0 # Return None and 0 time if results_dir is not set
+            return None, 0.0
 
-        # Start timing the track model initialization
+        # Timing the track model initialization
         preparation_start_time = time.time()
 
         print(f"\n=== SERVER PREPARATION FOR ROUND {round_num} ===")
@@ -534,7 +530,7 @@ class FederatedServer:
                             except Exception as e:
                                 print(f"      Warning: Could not load previous finetuning status: {e}")
                         else:
-                            print(f"      No previous finetuning status file found")
+                            print("      No previous finetuning status file found")
 
                         prev_track_clients_metadata = set()
                         prev_track_metadata_path_iter = os.path.join(prev_specific_track_dir, "metadata.json")
@@ -546,7 +542,7 @@ class FederatedServer:
                             except Exception as e:
                                 print(f"      Warning: Could not load previous metadata: {e}")
                         else:
-                            print(f"      No previous track metadata found")
+                            print("      No previous track metadata found")
 
                         # Analyze client finetuning needs
                         clients_new_to_track = []
@@ -554,7 +550,7 @@ class FederatedServer:
                         clients_completed_ft = []
                         clients_no_ft = []
 
-                        print(f"      Analyzing finetuning for each client:")
+                        print("      Analyzing finetuning for each client:")
                         for client_id_numeric in clients_in_this_track_list:
                             client_id_str_iter = str(client_id_numeric)
                             if client_id_numeric not in prev_track_clients_metadata and track_existed_previously_as_specific_dir:
@@ -684,7 +680,7 @@ class FederatedServer:
                     print(f"    Deep incremental finetuning check for round {round_num}:")
                     print(f"      - Mechanism: {lifting_mechanism}")
                     print(f"      - Total finetuning rounds: {finetune_total_rounds}")
-                    print(f"      - No active tracks detected")
+                    print("      - No active tracks detected")
                     current_global_finetuning_status = {}
                     prev_round_main_dir = os.path.join(self.results_dir, structure["round_template"].format(round=round_num - 1))
                     prev_global_finetune_status_path = os.path.join(prev_round_main_dir, "global_finetuning_status.json")
@@ -734,7 +730,7 @@ class FederatedServer:
                     if continuing:
                         print(f"      Continuing clients: {sorted(list(continuing))}")
 
-                    print(f"      Analyzing finetuning requirements for each client:")
+                    print("      Analyzing finetuning requirements for each client:")
 
                     clients_starting_new = []
                     clients_continuing = []
@@ -775,8 +771,7 @@ class FederatedServer:
                             clients_no_action.append(client_id_str_gf)
                         # Else: Client was present, no new trigger, and not in prev_global_finetuning_status_loaded -> no finetuning action for this client.
 
-                    # Summary of finetuning actions
-                    print(f"      Finetuning summary:")
+                    print("      Finetuning summary:")
                     if clients_starting_new:
                         print(f"        Starting new: {clients_starting_new}")
                     if clients_continuing:
@@ -795,11 +790,11 @@ class FederatedServer:
                         except Exception as e:
                             print(f"      Warning: Could not save global finetuning status: {e}")
                     else:
-                        print(f"      No clients require finetuning this round")
+                        print("      No clients require finetuning this round")
 
         print(f"=== END SERVER PREPARATION FOR ROUND {round_num} ===\\n")
 
-        # Calculate preparation time
+        # Timing the track model initialization
         preparation_time = time.time() - preparation_start_time
         print(f"Track model initialization completed in {preparation_time:.4f} seconds")
 
@@ -882,10 +877,8 @@ class FederatedServer:
             structure["round_template"].format(round=round_num)
         )
 
-        # Get the clients directory
         clients_dir = os.path.join(round_dir, structure["clients_dir"])
 
-        # Get the aggregated model directory
         aggregated_model_dir = os.path.join(round_dir, structure["global_model_aggregated"])
         os.makedirs(aggregated_model_dir, exist_ok=True)
 
@@ -917,8 +910,6 @@ class FederatedServer:
         }
 
         # Try to load from configuration file
-        # Construct path relative to the current file's directory or a known base
-        # Assuming fl_server is at the same level as mock_etcd
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         config_path = os.path.join(base_dir, "mock_etcd/configuration.json")
 
@@ -1004,12 +995,7 @@ class FederatedServer:
                         print(f"Warning: Parameter {name} not found in initial model structure during rewind. Skipping.")
             except Exception as e:
                 print(f"Error loading or aggregating model {model_path} during rewind: {e}. Skipping this model.")
-                # If a model fails to load, we effectively reduce num_models for others, which is complex.
-                # For simplicity, we average by total initial count. A more robust way would be to sum and count successes.
-                # However, the current loop structure would need adjustment.
-                # For now, this means a failed model effectively contributes zeros if it was not the first.
-                # If it was the first that failed, we return None.
-                pass # Continue with other models, but the average will be skewed if not all load.
+                pass # Continue with other models
 
         return aggregated_state_dict
 

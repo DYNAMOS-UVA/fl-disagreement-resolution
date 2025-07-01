@@ -41,7 +41,6 @@ def get_active_disagreements(disagreements, current_round):
     active_disagreements = {}
     expired_disagreements = {}
 
-    # If no disagreements exist, return empty dict immediately
     if not disagreements:
         print(f"Round {current_round}: No disagreements defined in the system")
         return {}
@@ -60,7 +59,7 @@ def get_active_disagreements(disagreements, current_round):
             if start_round <= current_round and (end_round is None or current_round <= end_round):
                 active_client_disagreements.append(disagreement)
 
-                # Log the active disagreement for debugging
+                # Log the active disagreement
                 target_info = ""
                 if "target" in disagreement:
                     target_info = f" with client {disagreement['target']}"
@@ -104,12 +103,11 @@ def create_model_tracks(active_disagreements, all_client_ids):
     Returns:
         dict: Dictionary mapping track IDs to sets of client IDs
     """
-    # Start timing the disagreement resolution process
     resolution_start_time = time.time()
 
     print(f"Creating model tracks for active disagreements: {active_disagreements}")
 
-    # Initial tracking structures
+    # Initial track structures
     tracks = {}
     client_primary_tracks = {}
     client_background_participations = defaultdict(set)
@@ -245,7 +243,7 @@ def create_model_tracks(active_disagreements, all_client_ids):
     # Create a single track for outbound-only clients if they exist
     if outbound_only_clients:
         # Check if these clients can just use the global track
-        # Outbound-only clients should use the global track if their view includes all clients
+        # Outbound-only clients should use the global track if their pattern includes all clients
         for client_id in outbound_only_clients:
             client_primary_tracks[client_id] = "global"
 
@@ -258,7 +256,6 @@ def create_model_tracks(active_disagreements, all_client_ids):
     global_track_clients = set(cid for cid in all_client_ids if cid not in fully_excluded_clients)
     tracks["global"] = global_track_clients
 
-    # Clients without disagreements
     clients_without_disagreements = set(all_client_ids) - clients_with_disagreements
 
     # Assign global track to clients without disagreements
@@ -306,15 +303,12 @@ def create_model_tracks(active_disagreements, all_client_ids):
                     tracks[track_name] = track_clients
                 client_primary_tracks[client_id] = track_name
 
-    # Print summary of clients not involved in disagreements
     if clients_without_disagreements:
         print(f"Clients not involved in disagreements: {clients_without_disagreements}")
 
-    # Print summary of fully excluded clients
     if fully_excluded_clients:
         print(f"Fully excluded clients: {fully_excluded_clients}")
 
-    # Print summary of track assignments
     print("\n=== MODEL TRACK ASSIGNMENTS ===")
     print(f"Total tracks created: {len(tracks)}")
 

@@ -342,7 +342,7 @@ def run_experiment(args):
 
     print(f"Logging output to: {log_file}")
 
-    # Execute the command with tee-like behavior
+    # Execute the command and log output
     try:
         with open(log_file, 'w') as log:
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -384,7 +384,7 @@ def run_experiment(args):
 def main():
     """Main function to parse arguments and run the experiment."""
     parser = argparse.ArgumentParser(description='Run federated learning experiments',
-                                   add_help=False)  # We'll handle help manually
+                                   add_help=False)  # We handle help manually
 
     parser.add_argument('-e', '--experiment', type=str,
                        help='Experiment type (n_cmapss or mnist)')
@@ -421,7 +421,7 @@ def main():
         usage()
         sys.exit(0)
 
-    # Change to script directory if we're being called from elsewhere
+    # Change to script directory if it is being called from elsewhere
     # This ensures relative paths work correctly
     script_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(script_dir)  # Go up one level from scripts/
