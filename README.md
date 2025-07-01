@@ -1,237 +1,326 @@
-# Federated Learning with Disagreement Resolution
+# Resolution Strategies for Client-Level Disagreement Scenarios in Federated Learning
 
-## Disagreement Resolution Timing Metrics
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 
-The federated learning system now includes comprehensive timing metrics to measure the performance of the disagreement resolution algorithm:
+> [!Note]
+> The entire system, its motivation, and experimental results are described in detail in [the accompanying master's thesis](docs/FL_Disagreement_Resolution_Thesis_DaanRosendal.pdf).
 
-### Timing Metrics Collected
+## 📄 Description
 
-- **Time to Resolution**: Time spent analyzing disagreements and creating model tracks
-- **Time to Aggregation**: Time spent performing the actual model aggregation
-- **Disagreement Loading Time**: Time spent loading and parsing disagreement configurations
-- **Track Saving Time**: Time spent saving track models to disk
-- **Total Aggregation Time**: End-to-end time for the entire aggregation process
+This project addresses a critical limitation in standard Federated Learning (FL): the assumption of unconditional collaboration among all clients. In real-world scenarios (e.g., competing companies, regulatory constraints), clients may need to exclude each other's data or model updates due to client-level disagreements.
 
-### Automatic Timing Analysis
+Our solution introduces a robust multi-track resolution approach that creates and manages multiple, isolated model update paths called "tracks". Each track corresponds to a unique set of client exclusion preferences, guaranteeing strict client exclusion and preventing cross-contamination and unfairness issues.
 
-The system automatically:
-- Records timing metrics for each round
-- Distinguishes between rounds with and without disagreements
-- Calculates overhead introduced by disagreement resolution
-- Generates comprehensive timing visualizations during each run
-- Saves timing data to JSON files for further analysis
+### Multi-Track Resolution in Action
 
-### Timing Visualizations
+![Track Contributions Visualization](results/collected_outputs/s4_mnist_track_contributions.png)
 
-The framework automatically generates detailed timing plots including:
-- Total aggregation time by round (color-coded by disagreement presence)
-- Resolution time for rounds with disagreements
-- Stacked timing breakdown showing component contributions
-- Time vs client count analysis with trend lines
-- Efficiency metrics showing resolution time as percentage of total time
-- Distribution comparisons between rounds with/without disagreements
-- Summary statistics and overhead calculations
+*This visualisation demonstrates temporal disagreement resolution ([Scenario 4](mock_etcd/scenarios/scenario4.json)) where Client 0 excludes Client 1 from rounds 1-3, creating separate tracks that automatically become inactive once the disagreement period expires.*
 
-### Timing Data Storage
+## 🛠 Installation
 
-Timing metrics are automatically saved to:
-- `output/timing_metrics.json` - Detailed timing data for each round including total running time
-- `output/fl_results.json` - Integrated timing metrics with other experiment results
-- `output/server/plots/` - Comprehensive timing visualization plots
+### Prerequisites
 
-The timing analysis provides:
-- Summary statistics for rounds with/without disagreements
-- Overhead calculation showing performance impact
-- Client scaling analysis
-- Efficiency trends over time
+- Python 3.12 or higher
+- [uv](https://docs.astral.sh/uv/) - Python package and project manager
 
-## Track-Specific Evaluation and Visualization
+### Setup Instructions
 
-The federated learning system supports track-specific evaluation, where each separate model track created due to client disagreements is evaluated individually. This provides insights into how the different tracks perform compared to the global model.
+1. **Install uv** (if not already installed):
+   ```bash
+   # On macOS and Linux
+   curl -LsSf https://astral.sh/uv/install.sh | sh
 
-Key features:
-- Each track's performance metrics (accuracy, precision, recall, F1 score) are evaluated and displayed at the end of each round
-- Track comparison plots show the relative performance of each track within a round
-- Track progress plots visualize how each track's performance evolves over time
-- Detailed track evaluation results are saved as JSON files for further analysis
+   # On Windows
+   powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+   ```
 
-The evaluation system automatically detects when multiple tracks are created due to client disagreements and evaluates each track's model independently against the test dataset.
+2. **Clone the repository**:
+   ```bash
+   git clone https://github.com/DaanRosendal/fl-disagreement-resolution.git
+   cd fl-disagreement-resolution
+   ```
 
-# Federated Learning Framework
+3. **Create virtual environment and install dependencies**:
+   ```bash
+   uv venv
+   uv sync
+   ```
 
-A modular, flexible framework for federated learning experiments that supports both N-CMAPSS RUL prediction and MNIST classification (with extension support for other datasets).
+4. **Activate the virtual environment** (optional, as `uv run` handles this automatically):
+   ```bash
+   # On Unix/macOS
+   source .venv/bin/activate
 
-## Project Structure
+   # On Windows
+   .venv\Scripts\activate
+   ```
 
-- `fl_orchestrator.py`: Central orchestrator that coordinates clients and server
-- `fl_client/`: Client-side implementation for local model training
-- `fl_server/`: Server-side implementation for model aggregation and evaluation
-- `fl_module/`: Models, data loading and preprocessing utilities
-  - `fl_module/n_cmapss/`: N-CMAPSS dataset utilities
-  - `fl_module/mnist/`: MNIST dataset utilities
-- `mock_etcd/`: Configuration management
-- `scripts/`: Scripts and utilities for running experiments
-  - `scripts/run_fl.py`: Convenient Python script to run experiments
-  - `scripts/test_disagreement_scenarios.py`: Testing script for disagreement scenarios
-  - `scripts/compare_fl_runs.py`: Script to compare multiple experiment runs
-- `results/`: Directory for storing models and outputs during federated learning simulation
+## 🚀 Usage
 
-## Features
+### Running Basic Experiments
 
-- Support for multiple datasets (N-CMAPSS and MNIST)
-- Modular architecture for easy extension
-- File-based model communication (simulating distributed environments)
-- IID and non-IID data distribution for MNIST
-- Smart data management (download once, reuse for multiple experiments)
-- Comprehensive metrics and visualizations:
-  - N-CMAPSS: RMSE, MAE, R², % within tolerance ranges, color-coded plots
-  - MNIST: Accuracy, precision, recall, F1 score, per-class performance, enhanced visualizations
-
-## Metrics and Visualizations
-
-### N-CMAPSS (RUL Prediction)
-
-The framework provides rich metrics for the N-CMAPSS Remaining Useful Life (RUL) prediction task:
-
-- **RMSE (Root Mean Squared Error)**: Traditional error metric (lower is better)
-- **MAE (Mean Absolute Error)**: Average absolute difference in cycles (lower is better)
-- **R² (Coefficient of Determination)**: How well the model explains the variance (higher is better, max 1.0)
-- **Within ±10 cycles**: Percentage of predictions within 10 cycles of actual RUL (higher is better)
-- **Within ±20 cycles**: Percentage of predictions within 20 cycles of actual RUL (higher is better)
-
-Visualizations include:
-- Color-coded scatter plots (green: within 10 cycles, orange: within 20 cycles, red: beyond 20 cycles)
-- Performance metrics over rounds (RMSE, MAE, R², within tolerance percentages)
-- Reference lines showing perfect prediction and tolerance ranges
-
-### MNIST (Image Classification)
-
-For the MNIST classification task, the framework provides:
-
-- **Overall Accuracy**: Percentage of correctly classified images
-- **Precision**: Overall precision (weighted) and per-class precision values
-- **Recall**: Overall recall (weighted) and per-class recall values
-- **F1 Score**: Overall F1 score (weighted) and per-class F1 values
-- **Per-class Accuracy**: Accuracy for each individual digit class
-- **Confusion Matrix**: Raw counts and normalized matrices to show classification performance across classes
-- **Per-round progression**: Tracks how all metrics improve over federated learning rounds
-
-Visualizations include:
-- Dual confusion matrices (raw counts and normalized by true label)
-- Comprehensive metrics dashboard with accuracy, precision, recall, and F1 score trends
-- Per-class metrics bar charts comparing accuracy, precision, recall, and F1 for each digit
-- Summary statistics displayed within visualizations for quick interpretation
-
-## Quick Start
-
-### Using the Convenience Script
-
-The easiest way to run experiments is with the provided Python script:
+Run a simple federated learning experiment with disagreement resolution:
 
 ```bash
-# Run N-CMAPSS experiment
-python3 scripts/run_fl.py -e n_cmapss -c "0 1 2 3 4 5" -r 3
+# Run scenario 1 with MNIST dataset
+uv run scripts/run_fl.py -S 1 -e mnist -r 5 -l 1
 
-# Run MNIST experiment with data setup and IID distribution
-python3 scripts/run_fl.py -e mnist -c "0 1 2 3 4 5" -r 3 -s -i
+# Run scenario 3 with N-CMAPSS dataset
+uv run scripts/run_fl.py -S 3 -e n_cmapss -r 5 -l 1
 
-# Run with a custom results directory
-python3 scripts/run_fl.py -e mnist -c "0 1 2" -r 2 -d "results/my_experiment"
+# Run all scenarios with MNIST dataset
+uv run scripts/run_fl.py -S all -e mnist -r 5 -l 1
 
-# Force recreate MNIST data with IID distribution
-python3 scripts/run_fl.py -e mnist -c "0 1 2 3" -s -f -i
+# Run with custom client configuration
+uv run scripts/run_fl.py -S 1 -e mnist -c 4 -r 10 -l 2
 
-# Get help for script options
-python3 scripts/run_fl.py --help
-```
-
-### Run Federated Learning with N-CMAPSS
-
-```bash
-python fl_orchestrator.py --experiment n_cmapss --clients 0 1 2 3 4 5 --fl_rounds 3
-```
-
-### Run Federated Learning with MNIST
-
-First, you need to set up the MNIST dataset (if you haven't already):
-
-```bash
-# This will be handled automatically when you run the orchestrator
-# with --setup_data flag
-```
-
-Then run the federated learning process:
-
-```bash
 # Run with IID data distribution
-python fl_orchestrator.py --experiment mnist --clients 0 1 2 3 4 5 --fl_rounds 3 --iid
-
-# Run with Non-IID data distribution
-python fl_orchestrator.py --experiment mnist --clients 0 1 2 3 4 5 --fl_rounds 3
-
-# Run with data setup (will only download if data doesn't exist)
-python fl_orchestrator.py --experiment mnist --clients 0 1 2 3 4 5 --fl_rounds 3 --setup_data
-
-# Force recreate data even if it exists
-python fl_orchestrator.py --experiment mnist --clients 0 1 2 3 4 5 --fl_rounds 3 --setup_data --force_setup_data
+uv run scripts/run_fl.py -S 1 -e mnist -c 6 -s -i
 ```
 
-### Customize Your Run
+### Command Line Options
+
+- `-S, --scenario <num>`: Scenario number (0-34) or 'all'
+- `-e, --experiment <type>`: Dataset type ('mnist' or 'n_cmapss')
+- `-c, --clients <ids>`: Number of clients or specific client IDs
+- `-r, --rounds <num>`: Number of FL rounds (default: 3)
+- `-l, --local-epochs <num>`: Local training epochs (default: 5)
+- `-s, --setup-data`: Setup MNIST data (first run only)
+- `-i, --iid`: Use IID data distribution
+- `--verbose-plots`: Generate comprehensive visualizations
+
+## 🔧 Configuration
+
+The system uses a [DYNAMOS](https://github.com/Jorrit05/DYNAMOS)-inspired configuration approach with JSON files in the `mock_etcd/` directory:
+
+### Main Configuration (`mock_etcd/configuration.json`)
+
+```json
+{
+  "experiment": {
+    "type": "mnist",
+    "fl_rounds": 5,
+    "client_ids": [0, 1, 2, 3, 4, 5]
+  },
+  "disagreement": {
+    "initiation_mechanism": "shallow",
+    "lifting_mechanism": "shallow",
+    "deep_lifting_finetune_rounds": 3
+  },
+  "training": {
+    "batch_size": 64,
+    "local_epochs": 10,
+    "learning_rate": 0.001
+  }
+}
+```
+
+### Scenario Definitions (`mock_etcd/scenarios/`)
+
+Scenarios define specific disagreement patterns:
+
+```json
+{
+  "name": "Simple Inbound Exclusion",
+  "description": "Client 0 excludes client 1 from round 1 onwards",
+  "num_clients": 6,
+  "disagreements": {
+    "client_0": [{
+      "type": "inbound",
+      "target": "client_1",
+      "active_rounds": {"start": 1, "end": null}
+    }]
+  }
+}
+```
+
+Available disagreement types:
+- **inbound**: Exclude another client's updates from your model
+- **outbound**: Prevent your updates from reaching another client
+- **bidirectional**: Mutual exclusion between two clients
+- **full**: Complete isolation from all other clients
+
+## 🧪 Testing
+
+### Validation Suite
+
+Run the comprehensive test suite to validate disagreement resolution across all scenarios:
 
 ```bash
-# N-CMAPSS example
-python fl_orchestrator.py \
-  --experiment n_cmapss \
-  --clients 0 1 2 \
-  --fl_rounds 5 \
-  --local_epochs 5
+# Test all scenarios with MNIST
+uv run scripts/test_disagreement_scenarios.py all -e mnist -r 5 -l 1
 
-# MNIST example with custom results directory
-python fl_orchestrator.py \
-  --experiment mnist \
-  --clients 0 1 2 3 4 5 \
-  --fl_rounds 5 \
-  --local_epochs 5 \
-  --iid \
-  --results_dir results/my_experiment
+# Test specific scenario
+uv run scripts/test_disagreement_scenarios.py 1 -e mnist -r 10 -l 2
+
+# Test with N-CMAPSS dataset (limited to ≤6 clients)
+uv run scripts/test_disagreement_scenarios.py all -e n_cmapss -r 5 -l 1
+
+# Test with verbose output and comprehensive plots
+uv run scripts/test_disagreement_scenarios.py 5 -v --verbose-plots
 ```
 
-## Component Usage
+The test suite automatically:
 
-### Running Individual Clients
+- ✅ Validates track creation matches expected patterns
+- ✅ Verifies client isolation is properly enforced
+- ✅ Checks temporal disagreement handling
 
-You can run individual clients separately:
+### Scalability Testing
+
+Evaluate system performance across multiple scenarios:
 
 ```bash
-# N-CMAPSS client
-python -m fl_client.main --client_id 0 --experiment n_cmapss
+# Run the first set of scalability scenarios (S7-S12) with MNIST dataset
+for run in {1..5}; do
+  for S in {7..12}; do # or, e.g., "for S in 25 26 29 30 31; do"
+    uv run scripts/run_fl.py -S "$S" -e mnist -r 5 -l 1 # or "-e n_cmapss" for S13-S19
+  done
+done
 
-# MNIST client
-python -m fl_client.main --client_id 0 --experiment mnist
+output_dirs=($(find results -maxdepth 1 -type d ! -name . ! -name results ! -name comparisons ! -name collected_outputs -printf "results/%f\n" | sort))
+
+# assuming the results directory contains only relevant results, i.e., was empty before executing the run_fl.py command
+uv run scripts/compare_fl_runs.py "${output_dirs[@]}"
 ```
 
-### Running the Server
+### Visualization Generation
 
-You can run the server alone for testing:
+Generate comprehensive analysis plots:
 
 ```bash
-# N-CMAPSS server
-python -m fl_server.main --experiment n_cmapss --test_units 11 14 15
+# Create track contribution visualizations (runs automatically at the end of each run)
+uv run scripts/visualize_track_contributions.py results/fl_simulation_*
 
-# MNIST server
-python -m fl_server.main --experiment mnist
+# Gather and compare outputs across scenarios (mostly useful for scalability testing)
+uv run scripts/gather_simulation_outputs.py
 ```
 
-## Data Distribution in MNIST
+## 📦 Dependencies / Technologies Used
 
-The framework supports two types of data distribution for MNIST:
+**Core Framework:**
+- **Python 3.12+**: Main programming language
+- **PyTorch 2.7+**: Deep learning framework for model training
+- **NumPy 2.2+**: Numerical computing for data handling
 
-- **IID (Independent and Identically Distributed)**: Each client gets a random subset of the MNIST dataset with similar class distributions.
-- **Non-IID**: Each client gets a biased subset of data with different class distributions:
-  - Each client has 2 primary classes (70% of data)
-  - Each client has 3 secondary classes (30% of data)
-  - This simulates real-world scenarios where clients have different data distributions
+**Machine Learning:**
+- **scikit-learn 1.6+**: ML utilities and metrics
+- **torchvision 0.22+**: Computer vision datasets and transforms
 
-## Results Structure
+**Visualization & Analysis:**
+- **matplotlib 3.10+**: Plotting and visualization
+- **seaborn 0.13+**: Statistical data visualization
+- **brokenaxes 0.6+**: Advanced plot formatting
 
-By default, each experiment creates a timestamped directory under `
+**Datasets:**
+- **MNIST**: Classic handwritten digit recognition
+- **N-CMAPSS**: NASA Commercial Modular Aero-Propulsion System Simulation for predictive maintenance of aircraft engines
+
+## 📄 License
+
+This project is licensed under the **GNU General Public License v3.0** - see the [LICENSE](LICENSE) file for details.
+
+## 👨‍🎓 Academic Context
+
+This repository contains the complete implementation for the Master's thesis:
+
+**"[Resolution Strategies for Client-Level Disagreement Scenarios in Federated Learning](docs/FL_Disagreement_Resolution_Thesis_DaanRosendal.pdf)"**
+*By Daan Eduard Rosendal*
+*University of Amsterdam, 2025*
+
+The work serves as a proof-of-concept for handling realistic federated learning scenarios where unconditional client collaboration cannot be assumed.
+
+## 🔗 Related Projects
+
+- **[DYNAMOS](https://github.com/Jorrit05/DYNAMOS)**: Microservice orchestration middleware that inspired our configuration architecture
+- **[N-CMAPSS Data Preparation](https://github.com/DaanRosendal/N-CMAPSS_DL)**: Toolkit for preparing the NASA turbofan engine dataset
+
+## 📊 Project Structure
+
+```
+fl-disagreement-resolution/
+├── 📁 fl_client/                    # Client-side federated learning implementation
+│   ├── __init__.py
+│   ├── client.py                    # Core FL client logic and communication
+│   ├── main.py                      # Client application entry point
+│   ├── training.py                  # Local model training procedures
+│   └── utils.py                     # Client utility functions
+│
+├── 📁 fl_server/                    # Server-side coordination and aggregation
+│   ├── __init__.py
+│   ├── aggregation.py               # Multi-track model aggregation strategies
+│   ├── disagreement.py              # Disagreement detection and resolution logic
+│   ├── evaluation.py                # Model evaluation and metrics collection
+│   ├── main.py                      # Server application entry point
+│   ├── server.py                    # Core FL server orchestration
+│   └── utils.py                     # Server utility functions
+│
+├── 📁 fl_module/                    # Dataset handlers and ML models
+│   ├── __init__.py
+│   ├── base.py                      # Base classes for datasets and models
+│   ├── models.py                    # Neural network architectures (CNN, MLP, LSTM)
+│   ├── 📁 mnist/                    # MNIST dataset implementation
+│   │   ├── __init__.py
+│   │   ├── dataset.py               # MNIST data loading and preprocessing
+│   │   └── utils.py                 # MNIST-specific utilities
+│   └── 📁 n_cmapss/                 # N-CMAPSS dataset implementation
+│       ├── __init__.py
+│       ├── dataset.py               # N-CMAPSS data loading and preprocessing
+│       └── utils.py                 # N-CMAPSS-specific utilities
+│
+├── 📁 scripts/                      # CLI tools and automation scripts
+│   ├── compare_fl_runs.py           # Compare results across multiple FL runs
+│   ├── gather_simulation_outputs.py # Collect and organize experimental outputs
+│   ├── run_fl.py                    # Main experiment runner (scenarios 0-34)
+│   ├── test_disagreement_scenarios.py # Validation suite for disagreement resolution
+│   └── visualize_track_contributions.py # Generate track contribution plots
+│
+├── 📁 mock_etcd/                    # Configuration and scenario management
+│   ├── configuration.json           # Main system configuration
+│   ├── disagreements.json           # Disagreement definitions and rules
+│   ├── etcd_loader.py              # Configuration loading utilities
+│   └── 📁 scenarios/                # Disagreement scenario definitions (35 scenarios)
+│       ├── scenario0.json           # Baseline: no disagreements
+│       ├── scenario1.json           # Simple inbound exclusion
+│       ├── scenario4.json           # Temporal disagreement (featured example)
+│       ├── ...                      # Scenarios 2-34 covering various patterns
+│       └── 📁 archive/              # Legacy scenario definitions
+│
+├── 📁 results/                      # Experimental outputs and analysis
+│   └── 📁 collected_outputs/        # Aggregated visualization outputs
+│       ├── s1_mnist_track_contributions.png
+│       ├── s4_mnist_track_contributions.png
+│       ├── s*_scalability_comparison.png
+│       └── ...                      # Generated plots for all scenarios
+│
+├── 📁 docs/                         # Documentation and technical diagrams
+│   ├── FL_Disagreement_Resolution_Thesis_DaanRosendal.pdf # Master's thesis
+│   └── 📁 drawio/                   # Technical architecture diagrams
+│       ├── system_flow.drawio       # Overall system architecture
+│       ├── fl-disagreement-resolution-design.drawio
+│       ├── resolution-strategies.drawio
+│       └── 📁 disagreement-scenarios-visualisations/
+│           ├── legend.drawio        # Visualization legend
+│           ├── full-exclusion.drawio
+│           ├── partial-data-exclusion.drawio
+│           ├── bidirectional-*.drawio # Various bidirectional patterns
+│           ├── inbound-*.drawio     # Inbound exclusion patterns
+│           └── outbound-*.drawio    # Outbound exclusion patterns
+│
+├── 📁 data/                         # Dataset storage (created during setup)
+├── 📁 logs/                         # Runtime logs and debugging output
+├── fl_orchestrator.py               # High-level orchestration coordinator
+├── pyproject.toml                   # Python project configuration and dependencies
+├── uv.lock                          # Dependency lock file
+├── LICENSE                          # GNU GPL v3.0 license
+└── README.md                        # This comprehensive documentation
+```
+
+---
+
+**🎯 Ready to explore federated learning with realistic client disagreements? Start with scenario 1:**
+
+```bash
+uv run scripts/run_fl.py -S 1 -e mnist -r 5 -l 1 -s -i
+```
