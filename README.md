@@ -258,74 +258,6 @@ The work serves as a proof-of-concept for handling realistic federated learning 
 
 ```text
 fl-disagreement-resolution/
-├── 📁 fl_client/                    # Client-side federated learning implementation
-│   ├── __init__.py
-│   ├── client.py                    # Core FL client logic and communication
-│   ├── main.py                      # Client application entry point
-│   ├── training.py                  # Local model training procedures
-│   └── utils.py                     # Client utility functions
-│
-├── 📁 fl_server/                    # Server-side coordination and aggregation
-│   ├── __init__.py
-│   ├── aggregation.py               # Multi-track model aggregation strategies
-│   ├── disagreement.py              # Disagreement detection and resolution logic
-│   ├── evaluation.py                # Model evaluation and metrics collection
-│   ├── main.py                      # Server application entry point
-│   ├── server.py                    # Core FL server orchestration
-│   └── utils.py                     # Server utility functions
-│
-├── 📁 fl_module/                    # Dataset handlers and ML models
-│   ├── __init__.py
-│   ├── base.py                      # Base classes for datasets and models
-│   ├── models.py                    # Neural network architectures (CNN, MLP, LSTM)
-│   ├── 📁 mnist/                    # MNIST dataset implementation
-│   │   ├── __init__.py
-│   │   ├── dataset.py               # MNIST data loading and preprocessing
-│   │   └── utils.py                 # MNIST-specific utilities
-│   └── 📁 n_cmapss/                 # N-CMAPSS dataset implementation
-│       ├── __init__.py
-│       ├── dataset.py               # N-CMAPSS data loading and preprocessing
-│       └── utils.py                 # N-CMAPSS-specific utilities
-│
-├── 📁 scripts/                      # CLI tools and automation scripts
-│   ├── compare_fl_runs.py           # Compare results across multiple FL runs
-│   ├── gather_simulation_outputs.py # Collect and organize experimental outputs
-│   ├── run_fl.py                    # Main experiment runner (scenarios 0-34)
-│   ├── test_disagreement_scenarios.py # Validation suite for disagreement resolution
-│   └── visualize_track_contributions.py # Generate track contribution plots
-│
-├── 📁 mock_etcd/                    # Configuration and scenario management
-│   ├── configuration.json           # Main system configuration
-│   ├── disagreements.json           # Disagreement definitions and rules
-│   ├── etcd_loader.py              # Configuration loading utilities
-│   └── 📁 scenarios/                # Disagreement scenario definitions (35 scenarios)
-│       ├── scenario0.json           # Baseline: no disagreements
-│       ├── scenario1.json           # Simple inbound exclusion
-│       ├── scenario4.json           # Temporal disagreement (featured example)
-│       ├── ...                      # Scenarios 2-34 covering various patterns
-│       └── 📁 archive/              # Legacy scenario definitions
-│
-├── 📁 results/                      # Experimental outputs and analysis
-│   └── 📁 collected_outputs/        # Aggregated visualisation outputs
-│       ├── s1_mnist_track_contributions.png
-│       ├── s4_mnist_track_contributions.png
-│       ├── s*_scalability_comparison.png
-│       └── ...                      # Generated plots for all scenarios
-│
-├── 📁 docs/                         # Documentation and technical diagrams
-│   ├── FL_Disagreement_Resolution_Thesis_DaanRosendal.pdf # Master's thesis
-│   └── 📁 drawio/                   # Technical architecture diagrams
-│       ├── system_flow.drawio       # Overall system architecture
-│       ├── fl-disagreement-resolution-design.drawio
-│       ├── resolution-strategies.drawio
-│       └── 📁 disagreement-scenarios-visualisations/
-│           ├── legend.drawio        # Visualisation legend
-│           ├── full-exclusion.drawio
-│           ├── partial-data-exclusion.drawio
-│           ├── bidirectional-*.drawio # Various bidirectional patterns
-│           ├── inbound-*.drawio     # Inbound exclusion patterns
-│           └── outbound-*.drawio    # Outbound exclusion patterns
-│
 ├── 📁 data/                         # Dataset storage
 │   ├── 📁 MNIST/                    # MNIST dataset (auto-downloaded)
 │   │   └── 📁 raw/                  # Raw MNIST files
@@ -348,12 +280,85 @@ fl-disagreement-resolution/
 │           └── 📁 client_5/         # Client 5 training data
 │               └── Unit20_win50_str1_smp10.npz
 │
+├── 📁 docs/                         # Documentation and technical diagrams
+│   ├── FL_Disagreement_Resolution_Thesis_DaanRosendal.pdf # Master's thesis
+│   └── 📁 drawio/                   # Technical architecture diagrams
+│       ├── data_exchange_archetypes.drawio
+│       ├── dynamos-design.drawio
+│       ├── fl-disagreement-resolution-design.drawio
+│       ├── fl-disagreements-graph.drawio
+│       ├── resolution-strategies.drawio
+│       ├── system_flow.drawio       # Overall system architecture
+│       └── 📁 disagreement-scenarios-visualisations/
+│           ├── bidirectional-*.drawio # Various bidirectional patterns
+│           ├── combination*.drawio  # Combination scenarios
+│           ├── full-exclusion.drawio
+│           ├── inbound-*.drawio     # Inbound exclusion patterns
+│           ├── legend.drawio        # Visualisation legend
+│           ├── outbound-*.drawio    # Outbound exclusion patterns
+│           ├── partial-data-exclusion.drawio
+│           └── template-scenario-*.drawio
+│
+├── 📁 fl_client/                    # Client-side federated learning implementation
+│   ├── __init__.py
+│   ├── client.py                    # Core FL client logic and communication
+│   ├── main.py                      # Client application entry point
+│   ├── training.py                  # Local model training procedures
+│   └── utils.py                     # Client utility functions
+│
+├── 📁 fl_module/                    # Dataset handlers and ML models
+│   ├── __init__.py
+│   ├── base.py                      # Base classes for datasets and models
+│   ├── models.py                    # Neural network architectures (CNN, MLP, LSTM)
+│   ├── 📁 mnist/                    # MNIST dataset implementation
+│   │   ├── __init__.py
+│   │   ├── dataset.py               # MNIST data loading and preprocessing
+│   │   └── utils.py                 # MNIST-specific utilities
+│   └── 📁 n_cmapss/                 # N-CMAPSS dataset implementation
+│       ├── __init__.py
+│       ├── dataset.py               # N-CMAPSS data loading and preprocessing
+│       └── utils.py                 # N-CMAPSS-specific utilities
+│
+├── 📁 fl_server/                    # Server-side coordination and aggregation
+│   ├── __init__.py
+│   ├── aggregation.py               # Multi-track model aggregation strategies
+│   ├── disagreement.py              # Disagreement detection and resolution logic
+│   ├── evaluation.py                # Model evaluation and metrics collection
+│   ├── main.py                      # Server application entry point
+│   ├── server.py                    # Core FL server orchestration
+│   └── utils.py                     # Server utility functions
+│
 ├── 📁 logs/                         # Runtime logs and debugging output
+├── 📁 mock_etcd/                    # Configuration and scenario management
+│   ├── configuration.json           # Main system configuration
+│   ├── disagreements.json           # Disagreement definitions and rules
+│   ├── etcd_loader.py              # Configuration loading utilities
+│   └── 📁 scenarios/                # Disagreement scenario definitions (35 scenarios)
+│       ├── scenario0.json           # Baseline: no disagreements
+│       ├── scenario1.json           # Simple inbound exclusion
+│       ├── scenario4.json           # Temporal disagreement (featured example)
+│       ├── ...                      # Scenarios 2-34 covering various patterns
+│       └── 📁 archive/              # Legacy scenario definitions
+│
+├── 📁 results/                      # Experimental outputs and analysis
+│   └── 📁 collected_outputs/        # Aggregated visualisation outputs
+│       ├── s1_mnist_track_contributions.png
+│       ├── s4_mnist_track_contributions.png
+│       ├── s*_scalability_comparison.png
+│       └── ...                      # Generated plots for all scenarios
+│
+├── 📁 scripts/                      # CLI tools and automation scripts
+│   ├── compare_fl_runs.py           # Compare results across multiple FL runs
+│   ├── gather_simulation_outputs.py # Collect and organize experimental outputs
+│   ├── run_fl.py                    # Main experiment runner (scenarios 0-34)
+│   ├── test_disagreement_scenarios.py # Validation suite for disagreement resolution
+│   └── visualize_track_contributions.py # Generate track contribution plots
+│
 ├── fl_orchestrator.py               # High-level orchestration coordinator
-├── pyproject.toml                   # Python project configuration and dependencies
-├── uv.lock                          # Dependency lock file
 ├── LICENSE                          # GNU GPL v3.0 license
-└── README.md                        # This comprehensive documentation
+├── pyproject.toml                   # Python project configuration and dependencies
+├── README.md                        # This comprehensive documentation
+└── uv.lock                          # Dependency lock file
 ```
 
 ---
