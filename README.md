@@ -58,21 +58,18 @@ Our solution introduces a robust multi-track resolution approach that creates an
    cd fl-disagreement-resolution
    ```
 
-3. **Create virtual environment and install dependencies**:
+3. **Create and activate virtual environment, then install dependencies**:
 
    ```bash
    uv venv
-   uv sync
-   ```
 
-4. **Activate the virtual environment** (optional, as `uv run` handles this automatically):
-
-   ```bash
    # On Unix/macOS
    source .venv/bin/activate
 
    # On Windows
    .venv\Scripts\activate
+
+   uv sync
    ```
 
 ## 📊 Data preparation
