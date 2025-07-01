@@ -7,13 +7,13 @@
 
 ## 📄 Description
 
-This project addresses a critical limitation in standard Federated Learning (FL): the assumption of unconditional collaboration among all clients. In real-world scenarios (e.g., competing companies, regulatory constraints), clients may need to exclude each other's data or model updates due to client-level disagreements.
+This project addresses a critical limitation in standard Federated Learning (FL): the assumption of unconditional collaboration amongst all clients. In real-world scenarios (e.g., competing companies, regulatory constraints), clients may need to exclude each other's data or model updates due to client-level disagreements.
 
 Our solution introduces a robust multi-track resolution approach that creates and manages multiple, isolated model update paths called "tracks". Each track corresponds to a unique set of client exclusion preferences, guaranteeing strict client exclusion and preventing cross-contamination and unfairness issues.
 
-### Multi-Track Resolution in Action
+### Multi-track resolution in action
 
-![Track Contributions Visualization](results/collected_outputs/s4_mnist_track_contributions.png)
+![Track Contributions Visualisation](results/collected_outputs/s4_mnist_track_contributions.png)
 
 *This visualisation demonstrates temporal disagreement resolution ([Scenario 4](mock_etcd/scenarios/scenario4.json)) where Client 0 excludes Client 1 from rounds 1-3, creating separate tracks that automatically become inactive once the disagreement period expires.*
 
@@ -24,7 +24,7 @@ Our solution introduces a robust multi-track resolution approach that creates an
 - Python 3.12 or higher
 - [uv](https://docs.astral.sh/uv/) - Python package and project manager
 
-### Setup Instructions
+### Setup instructions
 
 1. **Install uv** (if not already installed):
    ```bash
@@ -58,7 +58,7 @@ Our solution introduces a robust multi-track resolution approach that creates an
 
 ## 🚀 Usage
 
-### Running Basic Experiments
+### Running basic experiments
 
 Run a simple federated learning experiment with disagreement resolution:
 
@@ -79,22 +79,22 @@ uv run scripts/run_fl.py -S 1 -e mnist -c 4 -r 10 -l 2
 uv run scripts/run_fl.py -S 1 -e mnist -c 6 -s -i
 ```
 
-### Command Line Options
+### Command line options
 
 - `-S, --scenario <num>`: Scenario number (0-34) or 'all'
 - `-e, --experiment <type>`: Dataset type ('mnist' or 'n_cmapss')
 - `-c, --clients <ids>`: Number of clients or specific client IDs
 - `-r, --rounds <num>`: Number of FL rounds (default: 3)
 - `-l, --local-epochs <num>`: Local training epochs (default: 5)
-- `-s, --setup-data`: Setup MNIST data (first run only)
+- `-s, --setup-data`: Set up MNIST data (first run only)
 - `-i, --iid`: Use IID data distribution
-- `--verbose-plots`: Generate comprehensive visualizations
+- `--verbose-plots`: Generate comprehensive visualisations
 
 ## 🔧 Configuration
 
 The system uses a [DYNAMOS](https://github.com/Jorrit05/DYNAMOS)-inspired configuration approach with JSON files in the `mock_etcd/` directory:
 
-### Main Configuration (`mock_etcd/configuration.json`)
+### Main configuration (`mock_etcd/configuration.json`)
 
 ```json
 {
@@ -116,7 +116,7 @@ The system uses a [DYNAMOS](https://github.com/Jorrit05/DYNAMOS)-inspired config
 }
 ```
 
-### Scenario Definitions (`mock_etcd/scenarios/`)
+### Scenario definitions (`mock_etcd/scenarios/`)
 
 Scenarios define specific disagreement patterns:
 
@@ -136,6 +136,7 @@ Scenarios define specific disagreement patterns:
 ```
 
 Available disagreement types:
+
 - **inbound**: Exclude another client's updates from your model
 - **outbound**: Prevent your updates from reaching another client
 - **bidirectional**: Mutual exclusion between two clients
@@ -143,7 +144,7 @@ Available disagreement types:
 
 ## 🧪 Testing
 
-### Validation Suite
+### Validation suite
 
 Run the comprehensive test suite to validate disagreement resolution across all scenarios:
 
@@ -167,7 +168,7 @@ The test suite automatically:
 - ✅ Verifies client isolation is properly enforced
 - ✅ Checks temporal disagreement handling
 
-### Scalability Testing
+### Scalability testing
 
 Evaluate system performance across multiple scenarios:
 
@@ -185,12 +186,12 @@ output_dirs=($(find results -maxdepth 1 -type d ! -name . ! -name results ! -nam
 uv run scripts/compare_fl_runs.py "${output_dirs[@]}"
 ```
 
-### Visualization Generation
+### Visualisation generation
 
 Generate comprehensive analysis plots:
 
 ```bash
-# Create track contribution visualizations (runs automatically at the end of each run)
+# Create track contribution visualisations (runs automatically at the end of each run)
 uv run scripts/visualize_track_contributions.py results/fl_simulation_*
 
 # Gather and compare outputs across scenarios (mostly useful for scalability testing)
@@ -208,9 +209,9 @@ uv run scripts/gather_simulation_outputs.py
 - **scikit-learn 1.6+**: ML utilities and metrics
 - **torchvision 0.22+**: Computer vision datasets and transforms
 
-**Visualization & Analysis:**
-- **matplotlib 3.10+**: Plotting and visualization
-- **seaborn 0.13+**: Statistical data visualization
+**Visualisation & analysis:**
+- **matplotlib 3.10+**: Plotting and visualisation
+- **seaborn 0.13+**: Statistical data visualisation
 - **brokenaxes 0.6+**: Advanced plot formatting
 
 **Datasets:**
@@ -221,7 +222,7 @@ uv run scripts/gather_simulation_outputs.py
 
 This project is licensed under the **GNU General Public License v3.0** - see the [LICENSE](LICENSE) file for details.
 
-## 👨‍🎓 Academic Context
+## 👨‍🎓 Academic context
 
 This repository contains the complete implementation for the Master's thesis:
 
@@ -231,14 +232,14 @@ This repository contains the complete implementation for the Master's thesis:
 
 The work serves as a proof-of-concept for handling realistic federated learning scenarios where unconditional client collaboration cannot be assumed.
 
-## 🔗 Related Projects
+## 🔗 Related projects
 
 - **[DYNAMOS](https://github.com/Jorrit05/DYNAMOS)**: Microservice orchestration middleware that inspired our configuration architecture
 - **[N-CMAPSS Data Preparation](https://github.com/DaanRosendal/N-CMAPSS_DL)**: Toolkit for preparing the NASA turbofan engine dataset
 
-## 📊 Project Structure
+## 📊 Project structure
 
-```
+```text
 fl-disagreement-resolution/
 ├── 📁 fl_client/                    # Client-side federated learning implementation
 │   ├── __init__.py
@@ -288,7 +289,7 @@ fl-disagreement-resolution/
 │       └── 📁 archive/              # Legacy scenario definitions
 │
 ├── 📁 results/                      # Experimental outputs and analysis
-│   └── 📁 collected_outputs/        # Aggregated visualization outputs
+│   └── 📁 collected_outputs/        # Aggregated visualisation outputs
 │       ├── s1_mnist_track_contributions.png
 │       ├── s4_mnist_track_contributions.png
 │       ├── s*_scalability_comparison.png
@@ -301,7 +302,7 @@ fl-disagreement-resolution/
 │       ├── fl-disagreement-resolution-design.drawio
 │       ├── resolution-strategies.drawio
 │       └── 📁 disagreement-scenarios-visualisations/
-│           ├── legend.drawio        # Visualization legend
+│           ├── legend.drawio        # Visualisation legend
 │           ├── full-exclusion.drawio
 │           ├── partial-data-exclusion.drawio
 │           ├── bidirectional-*.drawio # Various bidirectional patterns
