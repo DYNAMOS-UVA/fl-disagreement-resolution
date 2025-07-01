@@ -11,7 +11,7 @@ If you use this work in your research, please cite it as:
 
 ```bibtex
 @mastersthesis{rosendal2025fldisagreementresolution,
-  author  = {Daan Rosendal},
+  author  = {Daan E. Rosendal},
   title   = {Resolution Strategies for Client-Level Disagreement Scenarios in Federated Learning},
   school  = {University of Amsterdam},
   year    = {2025},
