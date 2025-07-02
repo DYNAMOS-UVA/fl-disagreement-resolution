@@ -1,6 +1,6 @@
 # Resolution Strategies for Client-Level Disagreement Scenarios in Federated Learning
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 
 > [!Note]
 > The entire system, its motivation, and experimental results are described in detail in [the accompanying master's thesis](docs/FL_Disagreement_Resolution_Thesis_DaanRosendal.pdf).
@@ -249,7 +249,7 @@ uv run scripts/gather_simulation_outputs.py
 
 ## 📄 License
 
-This project is licensed under the **GNU General Public License v3.0** - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 ## 👨‍🎓 Academic context
 
@@ -367,7 +367,7 @@ fl-disagreement-resolution/
 │   └── visualize_track_contributions.py # Generate track contribution plots
 │
 ├── fl_orchestrator.py               # High-level orchestration coordinator
-├── LICENSE                          # GNU GPL v3.0 license
+├── LICENSE                          # MIT license
 ├── pyproject.toml                   # Python project configuration and dependencies
 ├── README.md                        # This comprehensive documentation
 └── uv.lock                          # Dependency lock file
