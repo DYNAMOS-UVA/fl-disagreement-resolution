@@ -30,7 +30,7 @@ Our solution introduces a robust multi-track resolution approach that creates an
 
 ![Track Contributions Visualisation](results/collected_outputs/s4_mnist_track_contributions.png)
 
-*This visualisation demonstrates temporal disagreement resolution ([Scenario 4](mock_etcd/scenarios/scenario4.json)) where Client 0 excludes Client 1 from rounds 1-3, creating separate tracks that automatically become inactive once the disagreement period expires.*
+*This visualisation demonstrates temporal disagreement resolution ([Scenario 4](mock_etcd/scenarios/scenario4.json)) where Client 0 "inbound" excludes Client 1 from rounds 1-3, creating a separate track that automatically becomes inactive once the disagreement period expires.*
 
 ## 🛠 Installation
 
