@@ -198,6 +198,8 @@ The test suite automatically:
 Evaluate system performance across multiple scenarios:
 
 ```bash
+#!/bin/bash
+
 # Run the first set of scalability scenarios (S7-S12) with MNIST dataset
 for run in {1..5}; do
   for S in {7..12}; do # or, e.g., "for S in 25 26 29 30 31; do"
