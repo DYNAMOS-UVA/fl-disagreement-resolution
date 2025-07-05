@@ -320,12 +320,12 @@ def create_model_tracks(active_disagreements, all_client_ids):
 
     print("\nClient primary track assignments:")
     for client_id, track_name in sorted(client_primary_tracks.items()):
-        print(f"  Client {client_id} → Primary track: {track_name}")
+        print(f"  Client {client_id} -> Primary track: {track_name}")
 
     print("\nClient background participations:")
     for client_id, bg_tracks in sorted(client_background_participations.items()):
         primary_track = client_primary_tracks.get(client_id, "none")
-        print(f"  Client {client_id} (primary: {primary_track}) → Background participations: {sorted(bg_tracks)}")
+        print(f"  Client {client_id} (primary: {primary_track}) -> Background participations: {sorted(bg_tracks)}")
     print("=== END TRACK ASSIGNMENTS ===\n")
 
     # Convert client_primary_tracks keys to strings for JSON compatibility

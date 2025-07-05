@@ -189,7 +189,7 @@ def aggregate_standard(server, clients_dir, aggregation_weights):
             progress = current_global_finetuning_status[client_id_str]
             if finetune_total_rounds > 0:
                 finetune_multiplier = min(float(progress) / finetune_total_rounds, 1.0)
-                print(f"    Client {client_id_str}: Finetuning round {progress}/{finetune_total_rounds} → Weight multiplier: {finetune_multiplier:.3f} (original: {weight:.3f})")
+                print(f"    Client {client_id_str}: Finetuning round {progress}/{finetune_total_rounds} -> Weight multiplier: {finetune_multiplier:.3f} (original: {weight:.3f})")
 
         adjusted_weight = finetune_multiplier * weight
 
@@ -376,9 +376,9 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
                                 total_rounds = server.disagreement_settings.get("deep_lifting_finetune_rounds", 3)
                                 if total_rounds > 0:
                                     finetune_multiplier = min(float(progress) / total_rounds, 1.0) # Cap at 1.0
-                                    print(f"    Client {client_id_str} in track '{track_name}': Finetuning round {progress}/{total_rounds} → Weight multiplier: {finetune_multiplier:.3f} (original weight: {weight:.3f})")
+                                    print(f"    Client {client_id_str} in track '{track_name}': Finetuning round {progress}/{total_rounds} -> Weight multiplier: {finetune_multiplier:.3f} (original weight: {weight:.3f})")
                             else:
-                                print(f"    Client {client_id_str} in track '{track_name}': Not in finetuning status → Using normal weight: {weight:.3f}")
+                                print(f"    Client {client_id_str} in track '{track_name}': Not in finetuning status -> Using normal weight: {weight:.3f}")
                         except Exception as e:
                             print(f"    Warning: Could not load finetuning status for track '{track_name}': {e}")
                     else:
@@ -431,7 +431,7 @@ def aggregate_with_tracks(server, clients_dir, track_info, aggregation_weights):
                                 total_rounds = server.disagreement_settings.get("deep_lifting_finetune_rounds", 3)
                                 if total_rounds > 0:
                                     finetune_multiplier = min(float(progress) / total_rounds, 1.0) # Cap at 1.0
-                                    print(f"    Background client {client_id_str} in track '{track_name}': Finetuning round {progress}/{total_rounds} → Weight multiplier: {finetune_multiplier:.3f} (original weight: {weight:.3f})")
+                                    print(f"    Background client {client_id_str} in track '{track_name}': Finetuning round {progress}/{total_rounds} -> Weight multiplier: {finetune_multiplier:.3f} (original weight: {weight:.3f})")
                         except Exception as e:
                             print(f"    Warning: Could not load finetuning status for background client {client_id_str} in track '{track_name}': {e}")
 

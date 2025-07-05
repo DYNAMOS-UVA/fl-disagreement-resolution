@@ -554,17 +554,17 @@ class FederatedServer:
                         for client_id_numeric in clients_in_this_track_list:
                             client_id_str_iter = str(client_id_numeric)
                             if client_id_numeric not in prev_track_clients_metadata and track_existed_previously_as_specific_dir:
-                                print(f"        Client {client_id_str_iter}: New to track → Starting finetuning (1/{finetune_total_rounds})")
+                                print(f"        Client {client_id_str_iter}: New to track -> Starting finetuning (1/{finetune_total_rounds})")
                                 current_track_finetuning_status[client_id_str_iter] = 1
                                 clients_new_to_track.append(client_id_str_iter)
                             elif client_id_str_iter in prev_track_finetuning_status_loaded:
                                 progress = prev_track_finetuning_status_loaded[client_id_str_iter] + 1
                                 if progress <= finetune_total_rounds:
-                                    print(f"        Client {client_id_str_iter}: Continuing finetuning → Round {progress}/{finetune_total_rounds}")
+                                    print(f"        Client {client_id_str_iter}: Continuing finetuning -> Round {progress}/{finetune_total_rounds}")
                                     current_track_finetuning_status[client_id_str_iter] = progress
                                     clients_continuing_ft.append(f"{client_id_str_iter}({progress}/{finetune_total_rounds})")
                                 else:
-                                    print(f"        Client {client_id_str_iter}: Completed finetuning → No further action")
+                                    print(f"        Client {client_id_str_iter}: Completed finetuning -> No further action")
                                     clients_completed_ft.append(client_id_str_iter)
                             else:
                                 print(f"        Client {client_id_str_iter}: No finetuning required")
@@ -741,17 +741,17 @@ class FederatedServer:
                         client_id_str_gf = str(client_id_numeric)
                         start_new_finetuning_for_client = False
                         if client_id_numeric not in prev_round_submitted_model_ids:
-                            print(f"        Client {client_id_str_gf}: Was absent in R{round_num-1}, now joining → Starting finetuning")
+                            print(f"        Client {client_id_str_gf}: Was absent in R{round_num-1}, now joining -> Starting finetuning")
                             start_new_finetuning_for_client = True
                         elif prev_round_had_active_tracks:
                             client_prev_track = prev_round_client_track_map.get(client_id_str_gf)
                             if client_prev_track and client_prev_track != "global":
-                                print(f"        Client {client_id_str_gf}: Rejoining from track '{client_prev_track}' → Starting finetuning")
+                                print(f"        Client {client_id_str_gf}: Rejoining from track '{client_prev_track}' -> Starting finetuning")
                                 start_new_finetuning_for_client = True
                             else:
                                 # Client was present, tracks existed, but client was on 'global' track or track info missing for them.
                                 # No NEW finetuning initiation due to track dissolution itself.
-                                print(f"        Client {client_id_str_gf}: Was on '{client_prev_track or 'global'}' track → No new finetuning from track dissolution")
+                                print(f"        Client {client_id_str_gf}: Was on '{client_prev_track or 'global'}' track -> No new finetuning from track dissolution")
 
                         if start_new_finetuning_for_client:
                             current_global_finetuning_status[client_id_str_gf] = 1
@@ -760,11 +760,11 @@ class FederatedServer:
                             # Not starting NEW, but might be CONTINUING a previous global finetune cycle
                             progress_gf = prev_global_finetuning_status_loaded[client_id_str_gf] + 1
                             if progress_gf <= finetune_total_rounds:
-                                print(f"        Client {client_id_str_gf}: Continuing finetuning → Round {progress_gf}/{finetune_total_rounds}")
+                                print(f"        Client {client_id_str_gf}: Continuing finetuning -> Round {progress_gf}/{finetune_total_rounds}")
                                 current_global_finetuning_status[client_id_str_gf] = progress_gf
                                 clients_continuing.append(f"{client_id_str_gf}({progress_gf}/{finetune_total_rounds})")
                             else:
-                                print(f"        Client {client_id_str_gf}: Completed finetuning → No further action needed")
+                                print(f"        Client {client_id_str_gf}: Completed finetuning -> No further action needed")
                                 clients_completed.append(client_id_str_gf)
                         else:
                             print(f"        Client {client_id_str_gf}: No finetuning action required")
